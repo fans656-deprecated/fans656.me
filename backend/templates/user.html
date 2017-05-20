@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="card dark">
+  <h1>{{session.username}}</h1>
+  {% if session.username == session.visitor %}
+  <a href="/logout" class="submit">Logout</a>
+</div>
+{% endif %}
+{% endblock %}
