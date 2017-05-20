@@ -3,23 +3,24 @@ import os
 from flask import Flask, url_for, g, render_template
 
 import views
+import apps
 import session
+from utils import require_login
 
 app = Flask(__name__)
 
 app.route('/register', methods=['GET', 'POST'])(views.login.register)
 app.route('/login', methods=['GET', 'POST'])(views.login.login)
 app.route('/logout')(views.login.logout)
+app.route('/profile/<username>')(views.login.profile)
+
+app.route('/clip')(apps.clip.clip)
+app.route('/clip/get')(apps.clip.clip_get)
+app.route('/clip/save', methods=['POST'])(apps.clip.clip_save)
 
 @app.route('/')
 def index():
     return render_template('index.html', session=session.session_object())
-
-@app.route('/user/<username>')
-def user(username):
-    s = session.session_object()
-    s.visitor = username
-    return render_template('user.html', session=s)
 
 @app.teardown_appcontext
 def close_db(err):

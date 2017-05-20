@@ -28,11 +28,11 @@ def getdb():
 def connect_db():
     return DB.connect(**conn_params)
 
-def dbexecute(*sql):
+def execute(*sql):
     with getdb() as c:
         c.execute(*sql)
 
-def dbquery(*sql):
+def query(*sql):
     with getdb() as c:
         c.execute(*sql)
         r = c.fetchall()
@@ -40,13 +40,9 @@ def dbquery(*sql):
             r = [t[0] for t in r]
         return r
 
-def dbquery1(*sql):
-    r = dbquery(*sql)
+def queryone(*sql):
+    r = query(*sql)
     return r[0] if r else None
-
-def user_existed(username):
-    r = dbquery1('select count(*) from users where username = ?', (username,))
-    return r == 1
 
 def init_db(purge=False):
     db = getdb()
@@ -69,6 +65,14 @@ create table if not exists sessions (
     username varchar(255),
     ctime datetime,
     expires datetime
+)
+              ''')
+    if purge:
+        c.execute('drop table if exists clips')
+    c.execute('''
+create table if not exists clips (
+    username varchar(255) primary key,
+    data text
 )
               ''')
 

@@ -1,6 +1,6 @@
 import os, hashlib, binascii
 
-from db import dbquery, dbquery1, dbexecute
+import db
 
 class UserExisted(Exception): pass
 
@@ -10,7 +10,7 @@ class InvalidAuth(Exception):
         super(InvalidAuth, self).__init__(msg)
 
 def is_existed(username):
-    return bool(dbquery1('select count(*) from users where username = %s',
+    return bool(db.queryone('select count(*) from users where username = %s',
                          (username,)))
 
 def hash_pass(password, salt=None, iterations=100000):
@@ -23,14 +23,14 @@ def hash_pass(password, salt=None, iterations=100000):
 def register(username, password):
     if is_existed(username):
         raise UserExisted('username is taken by someone else')
-    dbexecute('insert into users (username, salt, hashed_pwd, iterations) values'
+    db.execute('insert into users (username, salt, hashed_pwd, iterations) values'
               '(%s, %s, %s, %s)', (username,) + hash_pass(password))
     print 'user "{}" registered'.format(username)
 
 def login(username, password):
     if not is_existed(username):
         raise InvalidAuth()
-    salt, expected_hashed_pwd, iterations = dbquery1(
+    salt, expected_hashed_pwd, iterations = db.queryone(
         'select salt, hashed_pwd, iterations from users where username = %s',
         (username,))
     _, hashed_pwd, _ = hash_pass(password, salt=salt, iterations=iterations)

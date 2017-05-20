@@ -1,9 +1,6 @@
 <!doctype html>
 <html>
   <head>
-    <link rel="stylesheet" href="{{url_for('static', filename='css/base.css')}}"/>
-    <link rel="stylesheet" href="{{url_for('static', filename='css/form.css')}}"/>
-    <link rel="stylesheet" href="{{url_for('static', filename='css/card.css')}}"/>
     {% block css %}
     {% endblock %}
     <script src="{{url_for('static', filename='js/jquery.js')}}"></script>
@@ -15,21 +12,8 @@
     {% endblock %}
   </head>
   <body>
-    <div class="header dark">
-      <ul>
-        <li><a href="/" class="active">Home</a></li>
-        <li><a href="/apps">Apps</a></li>
-        <li><a href="/about">About</a></li>
-        {% if not no_nav_right %}
-          {% if session.username %}
-          <li style="float:right"><a id="username" href="/user/{{session.username}}">{{session.username}}</a></li>
-          {% else %}
-          <li style="float:right"><a href="/login">Login</a></li>
-          {% endif %}
-          <li style="float:right"><input id="search" type="text" /></li>
-        {% endif %}
-      </ul>
-    </div>
+    {% block nav %}
+    {% endblock %}
     {% block body %}
     {% endblock %}
   </body>

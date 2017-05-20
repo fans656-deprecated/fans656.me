@@ -40,3 +40,8 @@ def logout():
     resp = redirect('/', 302)
     resp.set_cookie('session', value='')
     return resp
+
+def profile(username):
+    s = session.session_object()
+    s.visitor = username
+    return render_template('user.html', session=s)

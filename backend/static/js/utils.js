@@ -12,6 +12,10 @@ function validateUsernamePassword(username, password) {
     $('#username').focus();
     return false;
   }
+  if (!username.match(/^[a-zA-Z0-9 _.-]*$/)) {
+    alert('Username can only contains alphas, digits and symbols described by regex [ _.-]');
+    return false;
+  }
   if (!password) {
     alert('Password can not be empty');
     $('#password').focus();
