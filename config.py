@@ -14,3 +14,8 @@ except ImportError:
         from secret_config import *
     except ImportError:
         print 'Failed to import secret_config'
+
+local = True
+import os
+if os.path.exists('nginx.conf'):
+    local = False

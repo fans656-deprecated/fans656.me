@@ -9,7 +9,7 @@ class InvalidAuth(Exception):
     def __init__(self, msg='username or password incorrect'):
         super(InvalidAuth, self).__init__(msg)
 
-def is_existed(username):
+def exists(username):
     return bool(db.queryone('select count(*) from users where username = %s',
                          (username,)))
 
@@ -21,14 +21,14 @@ def hash_pass(password, salt=None, iterations=100000):
     return salt, hashed_pwd, iterations
 
 def register(username, password):
-    if is_existed(username):
+    if exists(username):
         raise UserExisted('username is taken by someone else')
     db.execute('insert into users (username, salt, hashed_pwd, iterations) values'
               '(%s, %s, %s, %s)', (username,) + hash_pass(password))
     print 'user "{}" registered'.format(username)
 
 def login(username, password):
-    if not is_existed(username):
+    if not exists(username):
         raise InvalidAuth()
     salt, expected_hashed_pwd, iterations = db.queryone(
         'select salt, hashed_pwd, iterations from users where username = %s',

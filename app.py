@@ -2,12 +2,16 @@ import os
 
 from flask import Flask, url_for, g, render_template
 
+import config
 import views
 import apps
+import user
 import session
 from utils import require_login
 
 app = Flask(__name__)
+if config.local:
+    app.config['SERVER_NAME'] = 'local.dev:8080'
 
 app.route('/register', methods=['GET', 'POST'])(views.login.register)
 app.route('/login', methods=['GET', 'POST'])(views.login.login)
@@ -21,6 +25,12 @@ app.route('/clip/save', methods=['POST'])(apps.clip.clip_save)
 @app.route('/')
 def index():
     return render_template('index.html', session=session.session_object())
+
+@app.route('/', subdomain='<subdomain>')
+def subdomain_dispatch(subdomain):
+    if user.exists(subdomain):
+        return '{}\'s space'.format(subdomain)
+    return 'subdomain: "{}"'.format(subdomain)
 
 @app.teardown_appcontext
 def close_db(err):
