@@ -12,8 +12,10 @@ function validateUsernamePassword(username, password) {
     $('#username').focus();
     return false;
   }
-  if (!username.match(/^[a-zA-Z0-9 _.-]*$/)) {
-    alert('Username can only contains alphas, digits and symbols described by regex [ _.-]');
+  var pattern = /^[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9]+$/;
+  if (!username.match(pattern)) {
+    alert('Username can only contains alphas, digits and hypens\n'
+          + '(regex: /^[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9]+$/)');
     return false;
   }
   if (!password) {
