@@ -5,10 +5,16 @@ $(function() {
     console.log('textarea change');
     clearTimeout(timeoutId);
     timeoutId = setTimeout(function() {
-      $.post('/clip/save', {
-        data: $('#clip').val()
-      }).done(function() {
-        console.log('saved');
+      fetch('/clip/save', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          data: $('#clip').val()
+        })
+      }).then(function(resp) {
+        console.log(resp);
+        console.log('saved at ' + new Date);
       });
     }, 1000);
   });

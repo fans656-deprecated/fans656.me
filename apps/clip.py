@@ -19,7 +19,7 @@ def clip_get(session):
 
 @allow_public_access
 def clip_save(session):
-    data = request.form.get('data', None)
+    data = request.get_json(force=True, silent=True).get('data', None)
     if data is None:
         return error('no data')
     data = data.encode('utf8')

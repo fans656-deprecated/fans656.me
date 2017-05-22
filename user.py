@@ -36,3 +36,10 @@ def login(username, password):
     _, hashed_pwd, _ = hash_pass(password, salt=salt, iterations=iterations)
     if hashed_pwd != expected_hashed_pwd:
         raise InvalidAuth()
+
+def valid_auth(username, password):
+    try:
+        login(username, password)
+        return True
+    except InvalidAuth:
+        return False

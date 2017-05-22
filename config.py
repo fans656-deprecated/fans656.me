@@ -19,3 +19,7 @@ local = True
 import os
 if os.path.exists('nginx.conf'):
     local = False
+
+server_name = 'fans656.me'
+if local:
+    server_name = 'local.dev'

@@ -10,3 +10,10 @@
 2017-05-21 14:32:56
 http://stackoverflow.com/questions/21388921/subdomains-with-flask
 handle subdomains in flask
+
+2017-05-22 22:55:59
+) implement "command line clip get/post"
+    . export /get-cookie by POST username/password
+    . curl -H 'application/json' -X POST -d '{"username": "foo", "password: "bar"}' https://fans656.me/api/get-cookie
+
+    ) (depracated)understand API key mechanism
