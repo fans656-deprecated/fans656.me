@@ -1,3 +1,6 @@
+leetcode_url = 'https://raw.githubusercontent.com/fans656/leetcode/master/leetcode.txt'
+leetcode_css_url = 'https://raw.githubusercontent.com/fans656/leetcode/master/style.css'
+
 session_duration_days = 7
 sweep_expires_probability = 1.0 / 1000
 
