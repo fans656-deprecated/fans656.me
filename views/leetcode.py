@@ -9,13 +9,19 @@ import config
 def leetcode():
     try:
         text = requests.get(config.leetcode_url).text
+        css = requests.get(config.leetcode_css_url).text
     except Exception:
         text = 'Get {} failed, go to debug?'.format(url)
-    return flask.render_template_string('''
+        css = ''
+    s = flask.render_template_string('''
 <head>
-    <link rel="stylesheet" href="{{css}}"/>
+<style>
+{}
+</style>
 </head>
 <body>
-    {{text|markdown}}
+    {{{{text|markdown}}}}
 </body>
-            ''', text=text, css=config.leetcode_css_url)
+            '''.format(css), text=text)
+    print s
+    return s
