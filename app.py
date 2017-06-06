@@ -27,6 +27,9 @@ app.route('/leetcode')(views.leetcode.leetcode)
 
 app.route('/api/get-cookie', methods=['POST'])(api.get_cookie)
 
+app.route('/blog/post')(views.blog.post_blog)
+app.route('/api/blog/', methods=['POST'])(api.blog.api_post_blog)
+
 #@app.before_request
 #def before_request():
 #    from flask import request

@@ -75,7 +75,29 @@ create table if not exists clips (
     data text
 )
               ''')
+    if purge:
+        c.execute('drop table if exists blogs')
+    c.execute('''
+create table if not exists blogs (
+    id serial,
+    title text,
+    content text,
+    ctime datetime,
+    mtime datetime,
+    username varchar(255)
+)
+              ''')
+    if purge:
+        c.execute('drop table if exists blog_tags')
+    c.execute('''
+    create table if not exists blog_tags (
+        blog_id bigint,
+        tag varchar(255),
+        primary key (blog_id, tag)
+    )
+              ''')
 
 if __name__ == '__main__':
     init_db()
-    print 'database inited'
+    print
+    print 'database init successfully finished'

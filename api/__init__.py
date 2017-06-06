@@ -2,6 +2,7 @@ from flask import request
 
 import user
 import session
+import blog
 
 def get_cookie():
     data = request.get_json(force=True, silent=True)
