@@ -1,8 +1,11 @@
 :root {
   --bg-color: #DCE0E4;
+  --bg-lighter-color: #DDE2E8;
   --fg-color: #333333;
   --fg-lighter-color: #444444;
   --info-color: #aaaaaa;
+  --hidden-color: #bbbbbb;
+  --input-bg-color: #fcfcfc;
   --btn-bg-color: #eeeeee;
   --btn-hover-bg-color: #dddddd;
   --btn-fg-color: var(--fg-color);
@@ -64,30 +67,39 @@ nav ul li {
 }
 
 main {
-  width: 40%;
-  margin: 2em auto;
-  line-height: 2;
-  display: flex;
   flex: 1;
-  align-items: flex-start;
-  justify-content: center;
 }
 
-main a {
+.center {
+  margin: 0 auto;
+}
+
+.center-children {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.narrow {
+  width: 40%;
+}
+
+.wide {
+  width: 60%;
+}
+
+a {
   color: var(--fg-color);
   text-decoration: none;
+}
+
+.content a[!icon] {
   border-bottom: 1px solid var(--info-color);
   padding-bottom: 2px;
 }
 
-main a:hover {
+.content a:hover {
   color: var(--fg-color);
-}
-
-.datetime {
-  text-align: right;
-  font-size: 8px;
-  color: var(--info-color);
 }
 
 .about p {
@@ -136,11 +148,14 @@ form > * {
   margin-top: 1em;
 }
 
-form input {
+input, .editor {
   padding: .3em;
+  background: var(--input-bg-color);
+  border: none;
+  box-shadow: inset 0 0 3px #999;
 }
 
-form button {
+button {
   width: 80px;
   height: 32px;
 }
@@ -149,4 +164,79 @@ form label {
   width: 8em;
   text-align: right;
   padding-right: 1em;
+}
+
+.sticky {
+  position: fixed;
+  right: 5%;
+  bottom: 10%;
+  display: flex;
+  flex-direction: column;
+  z-index: 999;
+}
+
+.sticky > * {
+  filter: opacity(20%);
+}
+
+.sticky > *:hover {
+  filter: opacity(100%);
+}
+
+.tooltip-container {
+  position: relative;
+  display: flex;
+  align-items: flex-center;
+}
+
+.tooltip-container .tooltip {
+  position: absolute;
+  visibility: hidden;
+  min-width: 8em;
+  text-align: center;
+  right: 30px;
+  order: -1;
+  opacity: 0;
+  border-radius: 2px;
+}
+
+/* arrow */
+.tooltip-container .tooltip::after {
+  content: " ";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  margin-top: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent transparent var(--fg-color);
+  z-order: 1
+}
+
+.tooltip-container:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.8s;
+}
+
+.blogs {
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+
+article {
+  box-shadow: 0 1px 5px #ccc;
+  padding: 30px;
+  margin: 20px auto 0px auto;
+  //background: var(--bg-lighter-color);
+}
+
+article h1 {
+  margin: 0;
+}
+
+.datetime {
+  text-align: right;
+  font-size: .4em;
+  color: var(--hidden-color);
 }

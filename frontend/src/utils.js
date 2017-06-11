@@ -1,6 +1,3 @@
-// month - 1-based, i.e. 1 for January, 2 for February...
-const daysInMonth = (year, month) => new Date(year, month, 0).getDate();
-
 const addYears = (dt, years) => {dt.setFullYear(dt.getFullYear() + years); return dt;}
 const yearsAdded = (dt, years) => addYears(new Date(dt), years);
 
@@ -63,10 +60,28 @@ export async function fetchJSON(method, url, data) {
     Object.assign(options, {
       body: JSON.stringify(data)
     });
+  } else if (method === 'GET' && data) {
+    let args = [];
+    Object.keys(data).forEach((key) => {
+      const value = data[key];
+      if (value !== undefined && value !== null) {
+        args.push(encodeURIComponent(key)
+            + '='
+            + encodeURIComponent(data[key]));
+      }
+    });
+    if (args) {
+      url += '?' + args.join('&');
+    }
   }
 
+  console.log('fetchJSON ' + url + ' :');
+  console.log(options);
   const resp = await fetch(url, options);
-  return resp.json();
+  const json = resp.json();
+  console.log('fetchJSON ' + url + ' got json:');
+  console.log(json);
+  return json;
 }
 
 export async function getCurrentUser(then) {

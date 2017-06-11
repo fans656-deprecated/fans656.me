@@ -45,36 +45,52 @@ def queryone(*sql):
     return r[0] if r else None
 
 def init_db(purge=False):
+
+    outter_purge = purge
+
+    def create_table(name, columns, purge=None):
+        if purge is None:
+            purge = outter_purge
+        if purge:
+            c.execute('drop table if exists {}'.format(name))
+        c.execute('create table if not exists {} ({})'.format(name, columns))
+
     db = getdb()
     c = db.cursor()
-    if purge:
-        c.execute('drop table if exists users')
-    c.execute('''
-create table if not exists users (
-    username varchar(255) unique,
-    salt char(64),
-    hashed_pwd char(64),
-    iterations int
-)
-              ''')
-    if purge:
-        c.execute('drop table if exists sessions')
-    c.execute('''
-create table if not exists sessions (
-    id char(64) unique,
-    username varchar(255),
-    ctime datetime,
-    expires datetime
-)
-              ''')
-    if purge:
-        c.execute('drop table if exists clips')
-    c.execute('''
-create table if not exists clips (
-    username varchar(255) primary key,
-    data text
-)
-              ''')
+
+    create_table('users', (
+        'username varchar(255) unique,'
+        'salt char(64),'
+        'hashed_pwd char(64),'
+        'iterations int'
+    ))
+    create_table('sessions', (
+        'id char(64) unique,'
+        'username varchar(255),'
+        'ctime datetime,'
+        'expires datetime'
+    ))
+    create_table('blogs', (
+        'id serial,'
+        'username varchar(255),'
+        'content text,'
+        'json text'
+    ))
+    create_table('blogs', (
+        'id serial,'
+        'username varchar(255),'
+        'title text,'
+        'content text,'
+        'json text,'
+        'visible_to varchar(255),'
+        'ctime datetime,'
+        'mtime datetime'
+    ), purge=True)
+    create_table('blog_tags', (
+        'id serial,'
+        'blog_id bigint,'
+        'tag text'
+    ))
 
 if __name__ == '__main__':
     init_db()

@@ -10,7 +10,8 @@
     "react-dom": "^15.5.4",
     "react-icons": "^2.2.5",
     "react-router-dom": "^4.1.1",
-    "react-tap-event-plugin": "^2.0.1"
+    "react-tap-event-plugin": "^2.0.1",
+    "slate": "^0.20.3"
   },
   "devDependencies": {
     "react-scripts": "1.0.7"
