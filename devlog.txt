@@ -22,4 +22,5 @@ handle subdomains in flask
 rewrite using react
 
 . about page
-) login
+. login
+) user panel (post blog, etc..)

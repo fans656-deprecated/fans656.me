@@ -45,3 +45,30 @@ export function getDateDiff(pre, now) {
   const hours = val;
   return [years, months, days, hours, minutes, seconds];
 }
+
+const PREFIX = 'http://ub:6561';
+
+export async function fetchJSON(method, url, data) {
+  url = PREFIX + url;
+
+  const headers = new Headers();
+  headers.append('Content-Type', 'application/json');
+  const options = {
+    method: method,
+    headers: headers,
+    credentials: 'include',
+  }
+
+  if (method === 'POST') {
+    Object.assign(options, {
+      body: JSON.stringify(data)
+    });
+  }
+
+  const resp = await fetch(url, options);
+  return resp.json();
+}
+
+export async function getCurrentUser(then) {
+  fetchJSON('GET', '/api/me').then(then);
+}

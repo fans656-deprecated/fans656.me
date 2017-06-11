@@ -23,12 +23,13 @@ def require_login(f):
     return f_
 
 def ok(data={}):
-    res = {'status': 'ok'}
-    res.update(data)
-    return jsonify(**res)
+    data.update({'errno': 0, 'ok': True})
+    return jsonify(**data)
 
 def error(detail):
-    return jsonify(**{
-        'status': 'error',
+    resp = jsonify(**{
+        'errno': 400,
+        'ok': False,
         'detail': detail,
     })
+    return resp

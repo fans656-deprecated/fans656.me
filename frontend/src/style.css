@@ -1,7 +1,11 @@
 :root {
   --bg-color: #DCE0E4;
   --fg-color: #333333;
+  --fg-lighter-color: #444444;
   --info-color: #aaaaaa;
+  --btn-bg-color: #eeeeee;
+  --btn-hover-bg-color: #dddddd;
+  --btn-fg-color: var(--fg-color);
 }
 
 .reverse-color {
@@ -21,19 +25,23 @@ body {
 }
 
 header {
-  margin-bottom: 2em;
   display: flex;
   align-items: center;
 }
 
-header > div:last-child {
+header > *:last-child {
   margin-left: auto;
+  margin-right: 2em;
+  text-align: center;
+}
+
+header .username {
+  text-align: right;
 }
 
 footer {
   text-align: center;
   line-height: 3;
-  margin-top: 2em;
 }
 
 nav {
@@ -57,15 +65,33 @@ nav ul li {
 
 main {
   width: 40%;
-  margin: 0 auto;
+  margin: 2em auto;
   line-height: 2;
-  flex: 2;
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+main a {
+  color: var(--fg-color);
+  text-decoration: none;
+  border-bottom: 1px solid var(--info-color);
+  padding-bottom: 2px;
+}
+
+main a:hover {
+  color: var(--fg-color);
 }
 
 .datetime {
   text-align: right;
   font-size: 8px;
   color: var(--info-color);
+}
+
+.about p {
+  margin: .4em;
 }
 
 .about .age {
@@ -91,6 +117,36 @@ main {
   min-width: 2em;
 }
 
-.todo {
-  text-align: center;
+.about .links {
+  display: flex;
+  align-items: center;
+  margin-top: 1em;
+}
+
+.about .links > *:first-child {
+  margin-right: 1em;
+}
+
+.about .links > * {
+  line-height: 20px;
+}
+
+form > * {
+  display: block;
+  margin-top: 1em;
+}
+
+form input {
+  padding: .3em;
+}
+
+form button {
+  width: 80px;
+  height: 32px;
+}
+
+form label {
+  width: 8em;
+  text-align: right;
+  padding-right: 1em;
 }
