@@ -17,3 +17,9 @@ handle subdomains in flask
     . curl -H 'application/json' -X POST -d '{"username": "foo", "password: "bar"}' https://fans656.me/api/get-cookie
 
     ) (depracated)understand API key mechanism
+
+2017-06-11 09:11:07
+rewrite using react
+
+. about page
+) login

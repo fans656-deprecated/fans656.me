@@ -1,0 +1,96 @@
+:root {
+  --bg-color: #DCE0E4;
+  --fg-color: #333333;
+  --info-color: #aaaaaa;
+}
+
+.reverse-color {
+  background: var(--fg-color);
+  color: var(--bg-color);
+}
+
+.reverse-color a {
+  text-decoration: none;
+  color: var(--bg-color);
+}
+
+body {
+  margin: 0;
+  background: var(--bg-color);
+  color: var(--fg-color);
+}
+
+header {
+  margin-bottom: 2em;
+  display: flex;
+  align-items: center;
+}
+
+header > div:last-child {
+  margin-left: auto;
+}
+
+footer {
+  text-align: center;
+  line-height: 3;
+  margin-top: 2em;
+}
+
+nav {
+  line-height: 3;
+}
+
+nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 2em;
+}
+
+nav ul li {
+  display: inline-block;
+  margin: 0 1em;
+}
+
+.login {
+  margin-right: 2em;
+}
+
+main {
+  width: 40%;
+  margin: 0 auto;
+  line-height: 2;
+  flex: 2;
+}
+
+.datetime {
+  text-align: right;
+  font-size: 8px;
+  color: var(--info-color);
+}
+
+.about .age {
+  display: table;
+  margin: 0 auto;
+}
+
+.about .age div {
+  display: table-row;
+}
+
+.about .age span {
+  display: table-cell;
+}
+
+.about .age span.unit {
+  font-size: 0.6em;
+  filter: opacity(50%);
+}
+
+.about .num {
+  display: inline-block;
+  min-width: 2em;
+}
+
+.todo {
+  text-align: center;
+}
