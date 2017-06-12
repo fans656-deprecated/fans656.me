@@ -107,8 +107,9 @@ def get_blog(title=None):
         str_args.append('username = %s')
         args.append(username)
     querystr = 'select id, json from blogs {} order by ctime desc'.format(
-        ' where ' + ','.join(str_args)
+        ' where ' + ','.join(str_args) if str_args else ''
     )
+    print 'Query:', querystr
     ids_jsons = db.query(querystr, args)
     blogs = []
     for blog_id, blog_json in ids_jsons:

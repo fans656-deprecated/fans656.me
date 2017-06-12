@@ -24,7 +24,12 @@ rewrite using react
 . about page
 . login
 . user panel (post blog, etc..)
-) post blog editor
-) post blog api
+. post blog editor
+. post blog api
+
+2017-06-12 08:45:10
+) show post date right bottom
+    ) click date for detail view (with comment)
+    ) click "edit for edit (auto save)
 
 ) comments
