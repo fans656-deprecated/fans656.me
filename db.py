@@ -70,28 +70,29 @@ def init_db(purge=False):
         'ctime datetime,'
         'expires datetime'
     ))
-    create_table('blogs', (
+    create_table('nodes', (
         'id serial,'
-        'username varchar(255),'
-        'content text,'
-        'json text'
-    ))
-    create_table('blogs', (
-        'id serial,'
-        'username varchar(255),'
-        'title text,'
-        'content text,'
-        'json text,'
-        'visible_to varchar(255),'
-        'ctime datetime,'
-        'mtime datetime'
+        'type text,'
+        'content blob,'
+        'hash char(40),'
+        'ctime datetime'
     ), purge=True)
-    create_table('blog_tags', (
+    create_table('links', (
         'id serial,'
-        'blog_id bigint,'
-        'tag text'
-    ))
+        'rel text,'
+        'src char(40),'
+        'dst char(40),'
+        'hash char(40),'
+        'ctime datetime'
+    ), purge=True)
+    print 'database inited'
+
+def managedb():
+    import os
+    os.system('mysql -u{} -p{} -Dfans656_me'.format(
+              config.db_username,
+              config.db_password))
 
 if __name__ == '__main__':
     init_db()
-    print 'database inited'
+    managedb()

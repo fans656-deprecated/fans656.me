@@ -33,3 +33,11 @@ rewrite using react
     ) click "edit for edit (auto save)
 
 ) comments
+
+2017-06-12 22:26:12
+理一下思路：
+
+https://fans656.me/                 => blogs
+https://fans656.me/blog             => blogs
+https://fans656.me/blog/123         => blog by id
+https://fans656.me/blog/123/edit    => blog by id edit

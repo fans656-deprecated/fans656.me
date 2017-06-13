@@ -15,6 +15,7 @@ from utils import (
     ok, error, require_login, allow_public_access,
     strftime, strptime,
 )
+from node import Blog
 
 build_dir = './frontend/build'
 
@@ -60,67 +61,41 @@ def get_logout():
 def get_me():
     return ok({'user': session.current_user()})
 
-@app.route('/api/blog', methods=['POST'])
-@allow_public_access
-def post_blog(session):
-    username = session.username
-    ct = request.headers.get('Content-Type')
-    if ct == 'application/json':
-        blog = request.json
-    elif ct == 'text/plain':
-        blog = {'content': request.data.decode('utf-8')}
-    now = datetime.now()
-    for k, v in {
-        'username': username,
-        'title': '',
-        'content': '',
-        'visible_to': 'everyone',
-        'tags': [],
-        'ctime': strftime(now),
-        'mtime': strftime(now),
-    }.items():
-        blog.setdefault(k, v)
-    db.execute(u'insert into blogs '
-               '(username, title, content, json, visible_to, ctime, mtime)'
-               ' values (%s,%s,%s,%s,%s,%s,%s)', (
-                   blog['username'], blog['title'].encode(config.encoding),
-                   blog['content'].encode(config.encoding), json.dumps(blog),
-                   blog['visible_to'], blog['ctime'], blog['mtime']
-               ))
-    blog_id = db.queryone('select last_insert_id()')
-    return ok({'id': blog_id})
+@app.route('/api/node', methods=['POST'])
+def post_node():
+    args = request.json
+    if not args:
+        return error('args required')
+    node_type = args.get('type')
+    if not node_type:
+        return error('arg `type` required')
+    if node_type == 'blog':
+        content = args.get('content')
+        if not content:
+            return error('content required')
+        blog = Blog(content, title=args.get('title'), tags=args.get('tags'))
+        with db.getdb() as c:
+            blog.persist(c)
+        return ok({
+            'blog': dict(blog)
+        })
+    elif node_type == 'image':
+        return error('todo image node')
+    else:
+        return error('unrecognized node type: {}'.format(node_type))
+
+@app.route('/api/node', methods=['PUT'])
+def put_node():
+    pass
 
 @app.route('/api/blog')
-@app.route('/api/blog/<title>')
-def get_blog(title=None):
-    blog_id = request.args.get('id')
-    username = request.args.get('username')
-    str_args = []
-    args = []
-    if blog_id:
-        str_args.append('id = %s')
-        args.append(blog_id)
-    if title:
-        str_args.append('title = %s')
-        args.append(title)
-    if username:
-        str_args.append('username = %s')
-        args.append(username)
-    querystr = 'select id, json from blogs {} order by ctime desc'.format(
-        ' where ' + ','.join(str_args) if str_args else ''
-    )
-    print 'Query:', querystr
-    ids_jsons = db.query(querystr, args)
-    blogs = []
-    for blog_id, blog_json in ids_jsons:
-        blog = json.loads(blog_json)
-        blog.update(id=blog_id)
-        blog['ctime'] = strptime(blog['ctime'])
-        blog['mtime'] = strptime(blog['mtime'])
-        blogs.append(blog)
-    return ok({
-        'blogs': blogs,
-    })
+def get_blog():
+    with getdb() as c:
+        c.execute('select s')
+
+@app.route('/api/node/<id>')
+def get_node():
+    pass
 
 #@app.route('/', subdomain='<subdomain>')
 #def subdomain_dispatch(subdomain):
