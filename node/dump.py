@@ -2,7 +2,7 @@
 import json
 from pprint import pprint
 
-from node import Node, Link
+from node import Node, Link, Graph
 
 def json_load(fname):
     with open(fname) as f:
@@ -15,16 +15,16 @@ def json_load(fname):
                   src=hash_to_node[d['src']],
                   dst=hash_to_node[d['dst']])
              for d in dict_links]
-    return {
-        'nodes': nodes,
-        'links': links,
-    }
+    for link in links:
+        link.src.dst_links.append(link)
+        link.dst.src_links.append(link)
+    return Graph(nodes, links)
 
 def json_dump(node, fname=None, purge=False, **kwargs):
     nodes, links = node.reachable_nodes_and_links
     try:
-        old = json_load(fname)
-    except Exception:
+        old = dict(json_load(fname))
+    except Exception as e:
         old = {'nodes': [], 'links': []}
     new = {
         'nodes': map(dict, list(set(nodes) | set(old['nodes']))),
@@ -37,11 +37,20 @@ def json_dump(node, fname=None, purge=False, **kwargs):
         return json.dumps(new, **kwargs)
 
 if __name__ == '__main__':
+    import sys
+    reload(sys)
+    sys.setdefaultencoding('utf8')
+
     from blog import Blog
     blog = Blog(u'这是内容', title=u'今天好吗', tags=['test', u'测试'])
     json_dump(blog, 't.json', indent=2)
-    #blog = Blog(u'change', title=u'noname', tags=[])
-    #json_dump(blog, 't.json', indent=2)
-    #print json_dump(blog, indent=2)
-    #r = json_load('t.json')
-    #pprint(r)
+    blog = Blog(u'change', title=u'noname', tags=[])
+    json_dump(blog, 't.json', indent=2)
+
+    graph = json_load('t.json')
+    blogs = map(Blog, graph[lambda node: node.type == 'text.blog'])
+    for blog in blogs:
+        print 'Title:', blog.title
+        print 'Tags:', blog.tags
+        print 'Content:', blog.content.encode('utf8')
+        print

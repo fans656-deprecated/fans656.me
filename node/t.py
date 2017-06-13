@@ -1,6 +1,11 @@
 # coding: utf-8
+from dump import json_dump, json_load
 from blog import Blog
-from dump import dump
 
-blog = Blog(u'这是内容', title=u'今天好吗', tags=['test', u'测试'])
-dump(blog)
+json_dump(Blog(
+    title=u'貌似可以了',
+    content='skdjfqowifjqwoeijfwoeqifj'
+), 't.json')
+g = json_load('t.json')
+import sys; reload(sys); sys.setdefaultencoding('utf-8')
+print g[lambda n: n.type == 'text.blog']

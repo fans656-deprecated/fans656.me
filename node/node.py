@@ -3,14 +3,15 @@ import hashlib
 from datetime import datetime
 from collections import deque
 
-encoding = 'utf8'
+from utils import abstract
+from config import codec
 
 class Hashable(object):
 
     @property
+    @abstract
     def hash_material(self):
-        # child should override
-        return ''
+        pass
 
     @property
     def hash(self):
@@ -23,18 +24,32 @@ class Hashable(object):
     def __eq__(self, o):
         return self.hash == o.hash
 
+    def __hash__(self):
+        return hash(self.hash)
+
 class Node(Hashable):
 
-    def __init__(self, val, type):
-        self.val = val
-        self.type = type
-        self.src_links = []
-        self.dst_links = []
+    def __init__(self, val_or_node, type=None):
+        if isinstance(val_or_node, Node):
+            node = val_or_node
+            self.__dict__.update(node.__dict__)
+        elif isinstance(val_or_node, (str, unicode)):
+            val = val_or_node
+            self.val = val
+            self.type = type
+            self.src_links = []
+            self.dst_links = []
+        else:
+            raise ValueError('unsupported value of type {}'.format(type(val_or_node)))
 
     def link(self, node, type):
         link = Link(type, src=self, dst=node)
         self.dst_links.append(link)
         node.src_links.append(link)
+
+    def from_node(self, node):
+        assert isinstance(node, Node), 'must be of type Node'
+        self.__dict__.update(node.__dict__)
 
     def __getitem__(self, attr):
         try:
@@ -44,10 +59,10 @@ class Node(Hashable):
             raise KeyError('{} has no link {}'.format(self, attr))
 
     def __repr__(self):
-        return u'<Node {}: {}>'.format(self.type, self.val).encode(encoding)
+        return u'<Node {}: {}>'.format(self.type, self.val)
 
     def __str__(self):
-        return self.val.encode(encoding)
+        return self.val
 
     def __iter__(self):
         return iter((
@@ -81,7 +96,7 @@ class Node(Hashable):
 
     @property
     def hash_material(self):
-        return self.type.encode(encoding) + self.val.encode(encoding)
+        return (self.type + self.val).encode(codec)
 
 class Link(Hashable):
 
@@ -102,8 +117,17 @@ class Link(Hashable):
             ('hash', self.hash),
         ))
 
-def is_persisted(obj, cursor, table):
-    cursor.execute('select count(*) from {} where hash = %s'.format(table),
-                   (obj.hash,))
-    persisted, = cursor.fetchone()
-    return persisted
+class Graph(object):
+
+    def __init__(self, nodes, links):
+        self.nodes = nodes
+        self.links = links
+
+    def __getitem__(self, pred):
+        return [node for node in self.nodes if pred(node)]
+
+    def __iter__(self):
+        return iter((
+            ('nodes', self.nodes),
+            ('links', self.links),
+        ))
