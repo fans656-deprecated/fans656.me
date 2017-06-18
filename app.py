@@ -17,6 +17,7 @@ import config
 from utils import (
     api,
     ok, error, notfound,
+    check,
     require_login, allow_public_access,
     strftime, strptime,
 )
@@ -77,23 +78,25 @@ def post_node():
 
     links = []
     for link in node.get('links', []):
-        if not isinstance(link, dict):
-            return error('link must have dict rel: {}'.format(link))
+        check(isinstance(link, dict),
+              'link must have dict rel: {}'.format(link))
 
         rel = link.get('rel', None)
-        if rel is None:
-            return error('link must have rel: {}'.format(link))
+        assert rel, 'link must have rel: {}'.format(link)
 
-        id_or_ref = link.get('dst', None)
-        if id_or_ref is None:
+        dst_recipe = link.get('dst', None)  # id / ref / node_literal
+        #dst_node = Node(dst_recipe)
+        if dst_recipe is None:
             return error('link must have dst: {}'.format(link))
-        if isinstance(id_or_ref, (str, unicode)):
-            ref = id_or_ref
+        if isinstance(dst_recipe, (str, unicode)):
+            ref = dst_recipe
             dst_node_id = node_ref_to_node_id(ref)
             if dst_node_id is None:
                 return error('no node ref {}'.format(link))
-        elif isinstance(id_or_ref, int):
-            dst_node_id = id_or_ref
+        elif isinstance(dst_recipe, int):
+            dst_node_id = dst_recipe
+        elif isinstance(dst_recipe, dict):
+            assert False, 'todo'
         else:
             return error('link dst must be ref or id: {}'.format(link))
         if dst_node_id > 0:

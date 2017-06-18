@@ -54,4 +54,16 @@ https://fans656.me/blog/123/edit    => blog by id edit
 
 === non api
 . blog list
-) put node (no delete, backup)
+. put node (no delete, backup)
+
+2017-06-19 00:45:41
+) node literal in links
+    {
+        "data": "this is content",
+        "links": [
+            {"rel": "type", "dst": "blog"},
+            {"rel": "title", "dst": {
+                "data": "this is title"
+            }}
+        ]
+    }

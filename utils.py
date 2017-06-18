@@ -76,3 +76,6 @@ def api(schema):
                 return error(e.message, 400)
         return f_
     return deco
+
+def check(pred, errmsg):
+    assert pred, errmsg

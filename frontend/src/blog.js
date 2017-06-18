@@ -124,7 +124,7 @@ class EditBlog extends Component {
 
   render() {
     return <div className="wide center edit-blog">
-      <input defaultValue={this.state.}/>
+      {/*<input defaultValue={this.state.}/>*/}
       <textarea
         id="editor"
         value={this.state.text}
