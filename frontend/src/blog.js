@@ -74,6 +74,7 @@ class EditBlog extends Component {
     super(props);
     this.state = {
       blogNode: {},
+      title: '',
       text: '',
     };
   }
@@ -104,12 +105,11 @@ class EditBlog extends Component {
     node.data = this.state.text;
     let res;
     if (node.id) {
-      console.log('node');
-      console.log(node);
       res = await fetchJSON('PUT', `/api/node/${node.id}`, node);
     } else {
       node.links = [
         {'rel': 'type', 'dst': 'blog'},
+        //{'rel': 'title', 'dst': 
       ];
       res = await fetchJSON('POST', '/api/node', node);
     }
@@ -124,6 +124,7 @@ class EditBlog extends Component {
 
   render() {
     return <div className="wide center edit-blog">
+      <input defaultValue={this.state.}/>
       <textarea
         id="editor"
         value={this.state.text}

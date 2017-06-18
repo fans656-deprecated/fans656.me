@@ -5,6 +5,8 @@ from flask import redirect, jsonify
 
 import session
 
+class NotFound(Exception): pass
+
 def allow_public_access(f):
     @functools.wraps(f)
     def f_(*args, **kwds):
@@ -61,3 +63,16 @@ def strftime(dt):
 
 def strptime(s):
     return datetime.strptime(s, _datetime_format)
+
+def api(schema):
+    def deco(f):
+        @functools.wraps(f)
+        def f_(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except NotFound as e:
+                return error(e.message, 404)
+            except AssertionError as e:
+                return error(e.message, 400)
+        return f_
+    return deco

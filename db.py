@@ -94,5 +94,5 @@ def managedb():
               config.db_password))
 
 if __name__ == '__main__':
-    init_db()
+    #init_db()
     managedb()

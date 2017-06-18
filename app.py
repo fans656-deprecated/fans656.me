@@ -11,8 +11,11 @@ import session
 import db
 import user
 import utils
+import node
+from node import Node
 import config
 from utils import (
+    api,
     ok, error, notfound,
     require_login, allow_public_access,
     strftime, strptime,
@@ -63,10 +66,10 @@ def get_me():
     return ok({'user': session.current_user()})
 
 @app.route('/api/node', methods=['POST'])
+@api({})
 def post_node():
     node = request.json
-    if not node:
-        return error('invalid node')
+    assert node, 'invalid node'
 
     node_data = node.get('data')
     if node_data is None:
@@ -125,34 +128,18 @@ def put_node(node_id):
 
 @app.route('/api/node')
 def get_nodes():
-    args = request.args
-    rels, vals = zip(*args.items())
-    preds = ['l.rel = %s and n.data = %s'] * len(rels)
-    sql_args = list(itertools.chain(rels, vals))
-
-    sql = '''
-            select id from nodes
-            where id in (
-                select l.src from links as l inner join nodes as n
-                where {preds}
-            ) order by ctime desc
-          '''.format(preds=' and '.join(preds))
-    node_ids = db.query(sql, sql_args)
-    return ok({'nodes': map(do_get_node_by_id, node_ids)})
+    nodes = node.query(options=request.args)
+    return ok({'nodes': map(dict, nodes)})
 
 @app.route('/api/node/<int:node_id>')
+@api({})
 def get_node_by_id(node_id):
-    node = do_get_node_by_id(node_id)
-    if not node:
-        return error('not found', 404)
-    return ok({'node': node})
+    return ok({'node': dict(Node(node_id))})
 
 @app.route('/api/node/<ref>')
 def get_node_by_ref(ref):
-    node_id = node_ref_to_node_id(ref)
-    if not node_id:
-        return error('not found', 404)
-    return ok({'node': do_get_node_by_id(node_id)})
+    node = node.query({'ref': ref})[0]
+    return ok({'node': node})
 
 def do_post_node(data, links=None, ctime=None):
     ctime = ctime or datetime.now()
