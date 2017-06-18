@@ -1,33 +1,17 @@
-import React, { Component } from 'react';
-import { Link } from 'react-router-dom';
+import React, { Component } from 'react'
+import { withRouter } from 'react-router-dom'
+import IconTop from 'react-icons/lib/fa/chevron-up'
+import IconPlus from 'react-icons/lib/fa/plus'
 
-class BlogContent extends Component {
-  render() {
-    const blog = this.props.blog;
-    return (
-      <article key={blog.id}>
-        <div className="title">
-          {blog.title ? <h1>{blog.title}</h1> : null}
-        </div>
-        <div className="paragraphs">
-          {blog.content.split('\n').map(paragraph => <p>{paragraph}</p>)}
-        </div>
-        <div className="datetime">
-          <Link to={url}>{blog.ctime.toLocaleDateString()}</Link>
-        </div>
-      </article>
-    );
-  }
-}
+import { Link } from 'react-router-dom'
+import { fetchJSON } from './utils'
+import {
+  NORMAL_ICON_SIZE, LARGE_ICON_SIZE, SMALL_ICON_SIZE
+} from './constants'
 
 export class Blog extends Component {
   render() {
-    const blog = this.props.blog;
-    return (
-      <div>
-        <BlogContent content={blog.content} />
-      </div>
-    );
+    return <h1>todo</h1>;
   }
 }
 
@@ -35,126 +19,128 @@ export class Blogs extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      blogs: [],
+      blogNodes: [],
     };
   }
-  
+
   componentDidMount() {
-    this.getBlogs();
+    this.fetchBlogs();
   }
-  
-  getBlogs = async () => {
-    const title = this.props.title;
-    let url = '/api/blog';
-    if (title) {
-      url += '/' + encodeURIComponent(title);
-    }
-    const res = await fetchJSON('GET', url, {
-      username: this.props.username,
-      id: this.props.id,
-    });
-    const blogs = res.blogs.map((blog) => {
-      blog.ctime = new Date(blog.ctime);
-      blog.mtime = new Date(blog.mtime);
-      return blog;
-    });
-    if (res.ok) {
-      this.setState({blogs: blogs});
-    }
+
+  fetchBlogs = async () => {
+    const resp = await fetchJSON('GET', '/api/node?type=blog');
+    this.setState({blogNodes: resp.nodes});
   }
-  
+
   render() {
-    const blogs = this.state.blogs.map((blog) => {
-      const url = '/blog/?id=' + blog.id;
-      return (
-        <article key={blog.id}>
-          <div className="title">
-            {blog.title ? <h1>{blog.title}</h1> : null}
-          </div>
-          <div className="paragraphs">
-            {paragraphs.map(paragraph => <p>{paragraph}</p>)}
-          </div>
-          <div className="datetime">
-            <Link to={url}>{blog.ctime.toLocaleDateString()}</Link>
-          </div>
-        </article>
-      );
-    });
-    let sticky;
-    if (this.props.user) {
-      sticky = (
-        <div className="sticky">
-          <div className="tooltip-container">
-            <Link to="/new-blog"><Icon type={IconPlus}/></Link>
-            <div className="tooltip reverse-color">New blog</div>
-          </div>
+    const owner = this.props.owner;
+    const user = this.props.user;
+    const isOwner = user && owner === user.username;
+    const blogs = this.state.blogNodes.map((node, i) => {
+      const paragraphs = node.data.split('\n').map((line, i) => (
+        <p key={i}>{line || <br/>}</p>
+      ));
+      const ctime = new Date(node.ctime).toLocaleString()
+      const url = `/blog/${node.id}` + (isOwner ? '/edit' : '');
+      return <div className="blog" key={node.id}>
+        <div className="paragraphs">
+          {paragraphs}
         </div>
-      );
-    }
-    return (
-      <div className="center narrow">
-        <div className="blogs">
-          {blogs}
+        <div className="ctime datetime">
+          <Link to={url}>{ctime}</Link>
         </div>
-        {sticky}
       </div>
-    );
+    });
+    return <div>
+      <div className="blogs">
+        {blogs}
+      </div>
+      {isOwner && <Panel/>}
+    </div>
   }
 }
 
-export class EditBlog extends Component {
+export class ViewBlog extends Component {
+  render() {
+    return <div className="wide center edit-blog">
+      <textarea></textarea>
+      <button className="submit">Post</button>
+    </div>
+  }
+}
+
+class EditBlog extends Component {
   constructor(props) {
     super(props);
-    const state = Plain.deserialize('Enter your blog here...');
     this.state = {
-      state: state,
+      blogNode: {},
+      text: '',
+    };
+  }
+
+  componentDidMount() {
+    if (this.props.id) {
+      this.fetchBlog(this.props.id);
     }
   }
-  
-  onChange = (state) => {
-    this.setState({state})
-  }
-  
-  doPost = async () => {
-    const state = this.state.state;
-    const content = Plain.serialize(state);
-    const res = await fetchJSON('POST', '/api/blog', {
-      title: this.title.value,
-      content: content,
-    });
-    if (res.ok) {
+
+  fetchBlog = async (id) => {
+    const res = await fetchJSON('GET', `/api/node/${id}`);
+    if (res.errno) {
       console.log(res);
-      this.props.history.push('/');
     } else {
+      this.setState({blogNode: res.node, text: res.node.data});
+      console.log('fetchBlog');
       console.log(res);
     }
   }
 
+  onEditorTextChange = ({target}) => {
+    this.setState({text: target.value});
+  }
+
+  post = async () => {
+    const node = this.state.blogNode;
+    node.data = this.state.text;
+    let res;
+    if (node.id) {
+      console.log('node');
+      console.log(node);
+      res = await fetchJSON('PUT', `/api/node/${node.id}`, node);
+    } else {
+      node.links = [
+        {'rel': 'type', 'dst': 'blog'},
+      ];
+      res = await fetchJSON('POST', '/api/node', node);
+    }
+    console.log('res');
+    console.log(res);
+    if (res.errno) {
+      alert(res.detail);
+    } else {
+      this.props.history.push('/blog');
+    }
+  }
+
   render() {
-    return (
-      <div className="center wide">
-        <input ref={(input) => this.title = input}
-          placeholder="Enter your title here..."
-          style={{
-            minWidth: '800px',
-            marginBottom: '1em',
-            lineHeight: '1.2',
-            padding: '.6em',
-          }}
-        />
-        <Editor className="editor"
-          style={{
-            minWidth: '800px',
-            minHeight: '100px',
-            padding: '.5em',
-          }}
-          state={this.state.state}
-          onChange={this.onChange}
-        />
-        <button onClick={this.doPost}
-          style={{float: 'right', marginTop: '1em'}}
-        >Post</button>
-      </div>
-    );
+    return <div className="wide center edit-blog">
+      <textarea
+        id="editor"
+        value={this.state.text}
+        onChange={this.onEditorTextChange}
+        ref={(editor) => this.editor = editor}
+      ></textarea>
+      <button className="submit" onClick={this.post}>Post</button>
+    </div>
+  }
+}
+EditBlog = withRouter(EditBlog);
+export { EditBlog };
+
+class Panel extends Component {
+  render() {
+    return <div className="panel">
+      <Link to="/new-blog"><IconPlus size={NORMAL_ICON_SIZE}/></Link>
+    </div>;
   }
 }

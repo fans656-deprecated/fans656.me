@@ -44,7 +44,7 @@ def queryone(*sql):
     r = query(*sql)
     return r[0] if r else None
 
-def init_db(purge=False):
+def init_db(purge=False, quite=False):
 
     outter_purge = purge
 
@@ -72,20 +72,20 @@ def init_db(purge=False):
     ))
     create_table('nodes', (
         'id serial,'
-        'type text,'
-        'content blob,'
-        'hash char(40),'
-        'ctime datetime'
+        'data blob,'
+        'ctime datetime default current_timestamp,'
+        'mtime datetime default current_timestamp on update current_timestamp'
     ), purge=True)
     create_table('links', (
         'id serial,'
         'rel text,'
-        'src char(40),'
-        'dst char(40),'
-        'hash char(40),'
-        'ctime datetime'
+        'src bigint unsigned,'
+        'dst bigint unsigned,'
+        'ctime datetime default current_timestamp,'
+        'mtime datetime default current_timestamp on update current_timestamp'
     ), purge=True)
-    print 'database inited'
+    if not quite:
+        print 'database inited'
 
 def managedb():
     import os

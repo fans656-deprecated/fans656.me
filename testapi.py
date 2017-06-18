@@ -1,18 +1,10 @@
 # coding: utf-8
-import subprocess
-import json
+from mockclient import get, post
 
-def post(url, data=None):
-    data = data or {}
-    url = 'http://localhost:6561' + url
-    cmd = '''curl -s -X POST -H 'Content-Type: application/json' -d '{data}' {url}'''.format(
-        url=url, data=json.dumps(data))
-    r = subprocess.check_output(cmd, shell=True)
-    return r
+r = get('/api/node/1')
+assert r['errno'] == 0
 
-print post('/api/node', {
-    'type': 'blog',
-    'content': u'马上睡觉',
-    'title': u'是的',
-    'tags': [u'困了', u'sleep'],
-})
+r = get('/api/node/99999')
+assert r['errno'] == 404
+
+print 'finished successfully'

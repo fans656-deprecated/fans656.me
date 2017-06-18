@@ -41,3 +41,17 @@ https://fans656.me/                 => blogs
 https://fans656.me/blog             => blogs
 https://fans656.me/blog/123         => blog by id
 https://fans656.me/blog/123/edit    => blog by id edit
+
+2017-06-18 15:37:41
+. post node
+    . {"data": "..."}
+. get node
+    . /api/node/5
+    . get node list
+    . by ref
+. delete node by id
+. put node
+
+=== non api
+. blog list
+) put node (no delete, backup)

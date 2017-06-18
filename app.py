@@ -1,5 +1,6 @@
 import os
 import json
+import itertools
 from datetime import datetime
 
 import flask
@@ -12,10 +13,10 @@ import user
 import utils
 import config
 from utils import (
-    ok, error, require_login, allow_public_access,
+    ok, error, notfound,
+    require_login, allow_public_access,
     strftime, strptime,
 )
-from node import Blog
 
 build_dir = './frontend/build'
 
@@ -63,39 +64,147 @@ def get_me():
 
 @app.route('/api/node', methods=['POST'])
 def post_node():
-    args = request.json
-    if not args:
-        return error('args required')
-    node_type = args.get('type')
-    if not node_type:
-        return error('arg `type` required')
-    if node_type == 'blog':
-        content = args.get('content')
-        if not content:
-            return error('content required')
-        blog = Blog(content, title=args.get('title'), tags=args.get('tags'))
-        with db.getdb() as c:
-            blog.persist(c)
-        return ok({
-            'blog': dict(blog)
-        })
-    elif node_type == 'image':
-        return error('todo image node')
-    else:
-        return error('unrecognized node type: {}'.format(node_type))
+    node = request.json
+    if not node:
+        return error('invalid node')
 
-@app.route('/api/node', methods=['PUT'])
-def put_node():
-    pass
+    node_data = node.get('data')
+    if node_data is None:
+        return error('node must have data')
 
-@app.route('/api/blog')
-def get_blog():
-    with getdb() as c:
-        c.execute('select s')
+    links = []
+    for link in node.get('links', []):
+        if not isinstance(link, dict):
+            return error('link must have dict rel: {}'.format(link))
 
-@app.route('/api/node/<id>')
-def get_node():
-    pass
+        rel = link.get('rel', None)
+        if rel is None:
+            return error('link must have rel: {}'.format(link))
+
+        id_or_ref = link.get('dst', None)
+        if id_or_ref is None:
+            return error('link must have dst: {}'.format(link))
+        if isinstance(id_or_ref, (str, unicode)):
+            ref = id_or_ref
+            dst_node_id = node_ref_to_node_id(ref)
+            if dst_node_id is None:
+                return error('no node ref {}'.format(link))
+        elif isinstance(id_or_ref, int):
+            dst_node_id = id_or_ref
+        else:
+            return error('link dst must be ref or id: {}'.format(link))
+        if dst_node_id > 0:
+            try:
+                found = db.queryone('select 1 from nodes where id = %s',
+                                    dst_node_id)
+                if not found:
+                    return error('link dst node does not exist: {}'.format(
+                        dst_node_id))
+            except Exception:
+                return error('invalid link dst: {}'.format(dst_node_id))
+
+        links.append((rel, dst_node_id))
+
+    return ok(do_post_node(node_data, links))
+
+@app.route('/api/node/<int:node_id>', methods=['PUT'])
+def put_node(node_id):
+    new_node = request.json
+    if not new_node:
+        return error('invalid node: {}'.format(new_node))
+    node = do_get_node_by_id(node_id)
+    if not node:
+        return error('not found', 404)
+    #old_node = do_post_node(node['data'], ctime=node['ctime'])
+    #if 'links' not in new_node:
+    #    new_node['links'] = []
+    do_update_node(node, new_node)
+    #db.execute('insert into links (rel, src, dst) values (%s,%s,%s)',
+    #           ('old', node['id'], old_node['id']))
+    return ok({'id': node_id})
+
+@app.route('/api/node')
+def get_nodes():
+    args = request.args
+    rels, vals = zip(*args.items())
+    preds = ['l.rel = %s and n.data = %s'] * len(rels)
+    sql_args = list(itertools.chain(rels, vals))
+
+    sql = '''
+            select id from nodes
+            where id in (
+                select l.src from links as l inner join nodes as n
+                where {preds}
+            ) order by ctime desc
+          '''.format(preds=' and '.join(preds))
+    node_ids = db.query(sql, sql_args)
+    return ok({'nodes': map(do_get_node_by_id, node_ids)})
+
+@app.route('/api/node/<int:node_id>')
+def get_node_by_id(node_id):
+    node = do_get_node_by_id(node_id)
+    if not node:
+        return error('not found', 404)
+    return ok({'node': node})
+
+@app.route('/api/node/<ref>')
+def get_node_by_ref(ref):
+    node_id = node_ref_to_node_id(ref)
+    if not node_id:
+        return error('not found', 404)
+    return ok({'node': do_get_node_by_id(node_id)})
+
+def do_post_node(data, links=None, ctime=None):
+    ctime = ctime or datetime.now()
+    links = links or []
+    db.execute('insert into nodes (data, ctime) values (%s,%s)',
+               (data.encode('utf8'), ctime))
+    node_id = db.queryone('select last_insert_id() from nodes')
+
+    src_node_id = node_id
+    link_ids = []
+    for rel, dst_node_id in links:
+        dst_node_id = dst_node_id or src_node_id
+        db.execute('insert into links (rel, src, dst) values (%s,%s,%s)',
+                   (rel.encode('utf8'), src_node_id, dst_node_id))
+        link_ids.append(db.queryone('select last_insert_id() from links'))
+    return {
+        'id': node_id,
+        'links': link_ids,
+    }
+
+def do_get_node_by_id(node_id):
+    r = db.queryone(
+        'select data, ctime from nodes where id = %s',
+        (node_id,)
+    )
+    if not r:
+        return None
+    data, ctime = r
+    return {
+        'id': node_id,
+        'data': data,
+        'ctime': strftime(ctime),
+    }
+
+def do_update_node(old_node, new_node):
+    db.execute('update nodes set data = %s where id = %s', (
+        new_node['data'].encode('utf8'), old_node['id'],
+    ))
+
+def node_ref_to_node_id(ref):
+    node_id = db.queryone('select n.id from nodes as n, links as l where '
+                          'l.rel = "ref" and l.dst = n.id and n.data = %s',
+                          (ref,))
+    return node_id
+
+#@app.route('/api/node/<int:node_id>', methods=['DELETE'])
+#def delete_node(node_id):
+#    found = db.queryone('select 1 from nodes where id = %s', (node_id,))
+#    if not found:
+#        return error({'detail': 'not found', 'id': node_id}, 404)
+#    db.execute('delete from nodes where id = %s', (node_id,))
+#    return ok({'id': node_id})
 
 #@app.route('/', subdomain='<subdomain>')
 #def subdomain_dispatch(subdomain):

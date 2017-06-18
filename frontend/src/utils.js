@@ -56,11 +56,11 @@ export async function fetchJSON(method, url, data) {
     credentials: 'include',
   }
 
-  if (method === 'POST') {
+  if (method === 'POST' || method === 'PUT') {
     Object.assign(options, {
       body: JSON.stringify(data)
     });
-  } else if (method === 'GET' && data) {
+  } else if (method === 'GET' && data || method == 'DELETE') {
     let args = [];
     Object.keys(data).forEach((key) => {
       const value = data[key];
@@ -79,8 +79,10 @@ export async function fetchJSON(method, url, data) {
   console.log(options);
   const resp = await fetch(url, options);
   const json = resp.json();
-  console.log('fetchJSON ' + url + ' got json:');
-  console.log(json);
+  json.then((json) => {
+    console.log('fetchJSON ' + url + ' got json:');
+    console.log(json);
+  });
   return json;
 }
 

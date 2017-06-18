@@ -1,22 +1,23 @@
-import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
+import React, { Component } from 'react'
+import ReactDOM from 'react-dom'
 
-import { createBrowserHistory } from 'history';
-import { BrowserRouter as Router, Link, Route } from 'react-router-dom';
+import {
+  BrowserRouter as Router, Link, Route, withRouter
+} from 'react-router-dom'
 
-import { Editor, Plain } from 'slate';
+import { Editor, Plain } from 'slate'
 
-import IconGithub from 'react-icons/lib/go/mark-github';
-import IconTop from 'react-icons/lib/fa/chevron-up';
-import IconPlus from 'react-icons/lib/fa/plus';
+import IconGithub from 'react-icons/lib/go/mark-github'
 
-import { Blog, Blogs, EditBlog } from './blog';
+import { Blog, Blogs, ViewBlog, EditBlog } from './blog'
 
-import { getDateDiff, fetchJSON, getCurrentUser } from './utils';
-import { NORMAL_ICON_SIZE, LARGE_ICON_SIZE, SMALL_ICON_SIZE } from './constants';
+import { getDateDiff, fetchJSON, getCurrentUser } from './utils'
+import {
+  NORMAL_ICON_SIZE, LARGE_ICON_SIZE, SMALL_ICON_SIZE
+} from './constants'
 
-import './style.css';
-import * as avatarJPG from './avatar.jpg';
+import './style.css'
+import * as avatarJPG from './avatar.jpg'
 
 const Header = (props) => (
   <header className="reverse-color">
@@ -31,6 +32,7 @@ const Nav = () => (
   <nav>
     <ul>
       <li key="home"><Link to="/">Home</Link></li>
+      <li key="blog"><Link to="/blog">Blog</Link></li>
       <li key="about"><Link to="/about">About</Link></li>
     </ul>
   </nav>
@@ -120,7 +122,7 @@ class Login extends Component {
       username: this.username.value,
       password: this.password.value,
     });
-    if (!res.ok) {
+    if (res.errno) {
       alert(res.detail);
     } else {
       window.location.href = '/';
@@ -152,15 +154,14 @@ class Login extends Component {
 class Profile extends Component {
   
   doLogout = async () => {
-    const resp = await fetchJSON('GET', '/api/logout', {
+    const res = await fetchJSON('GET', '/api/logout', {
       username: this.props.user.username
     });
-    if (resp.ok) {
-      window.location.href = '/';
-      //this.props.history.push('/');
+    if (!res.errno) {
+      this.props.onLogout();
     } else {
-      console.log(resp);
       alert('logout failed, see console for details');
+      console.log(res);
     }
   }
 
@@ -175,6 +176,7 @@ class Profile extends Component {
     );
   }
 }
+Profile = withRouter(Profile);
 
 class App extends React.Component {
   constructor(props) {
@@ -187,11 +189,16 @@ class App extends React.Component {
   componentDidMount() {
     getCurrentUser((resp) => {
       this.setState({
-        user: resp.ok ? resp.user : null
+        user: !resp.errno ? resp.user : null
       });
       console.log('getCurrentUser:');
       console.log(resp);
     });
+  }
+
+  onLogout = () => {
+    this.setState({user: null});
+    this.props.history.push('/');
   }
 
   render() {
@@ -203,36 +210,49 @@ class App extends React.Component {
       }}>
         <Header user={this.state.user}/>
         <main>
-          <Route exact path="/" render={
-            () => <Blogs username="fans656" user={this.state.user}/>
+          <Route exact path="/" render={() =>
+            <h1>Home todo</h1>
           }/>
           <Route path="/about" component={About}/>
           <Route path="/login" component={Login}/>
 
-          {/* blogs || blog by id */}
-          <Route exact path="/blog" render={() => {
-            <Blog/>
-          }}/>
-          {/* blogs with title */}
-          <Route exact path="/blog/:title" render={
-            (props) => <Blogs title={props.match.params.title}/>
+          {/* blogs */}
+          <Route exact path="/blog" render={() => 
+            <Blogs owner="fans656" user={this.state.user}/>
           }/>
-          <Route path="/new-blog" render={() => <EditBlog/>}/>
 
-          <Route path="/profile/:username" render={
-            (props) => <Profile user={this.state.user} {...props}/>
+          {/* post blog */}
+          <Route exact path="/new-blog" render={() => <EditBlog/>}/>
+
+          {/* view blog */}
+          <Route exact path="/blog/:id_or_ref" render={({match}) => 
+            <ViewBlog id={match.params.id_or_ref}/>
+          }/>
+
+          {/* edit blog */}
+          <Route exact path="/blog/:id_or_ref/edit" render={({match}) => 
+            <EditBlog id={match.params.id_or_ref}/>
+          }/>
+
+          {/* profile */}
+          <Route path="/profile/:username" render={(props) =>
+            <Profile
+              user={this.state.user}
+              onLogout={this.onLogout}
+            />
           }/>
         </main>
-        <footer className="reverse-color"><Link to="/">fans656's site</Link></footer>
+        <footer className="reverse-color">
+          <Link to="/">fans656's site</Link>
+        </footer>
       </div>
     );
   }
 }
-
-const history = createBrowserHistory();
+App = withRouter(App);
 
 ReactDOM.render((
-  <Router history={history}>
+  <Router>
     <Route path="/" component={App}/>
   </Router>
 ), document.getElementById('root'));

@@ -28,16 +28,25 @@ def ok(data=None):
         data = {}
     elif isinstance(data, (str, unicode)):
         data = {'detail': data}
-    data.update({'errno': 0, 'ok': True})
+    data.update({'errno': 0})
     return jsonify(**data)
 
-def error(detail):
-    resp = jsonify(**{
-        'errno': 400,
-        'ok': False,
+def error(detail, status_code=400):
+    if isinstance(detail, dict):
+        data = detail
+        detail = detail.get('detail', '')
+    else:
+        data = {}
+    data.update({
+        'errno': status_code,
         'detail': detail,
     })
+    resp = jsonify(**data)
+    resp.status_code = status_code
     return resp
+
+def notfound():
+    return error('not found', 404)
 
 _datetime_format = '%Y-%m-%d %H:%M:%S.%f'
 

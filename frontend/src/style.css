@@ -1,5 +1,5 @@
 :root {
-  --bg-color: #DCE0E4;
+  --bg-color: aliceblue;
   --bg-lighter-color: #DDE2E8;
   --fg-color: #333333;
   --fg-lighter-color: #444444;
@@ -26,6 +26,8 @@ body {
   background: var(--bg-color);
   color: var(--fg-color);
 }
+
+/* ------------------------------------------ header & footer */
 
 header {
   display: flex;
@@ -62,6 +64,36 @@ nav ul li {
   margin: 0 1em;
 }
 
+/* ------------------------------------------ blogs */
+
+.blogs {
+  width: 40%;
+  margin: 2em auto;
+}
+
+.blog {
+  line-height: 2;
+}
+
+.datetime {
+  text-align: right;
+  font-size: .4em;
+}
+
+.panel {
+  position: fixed;
+  right: 5%;
+  bottom: 10%;
+}
+
+.edit-blog textarea {
+  width: 100%;
+  min-height: 40em;
+  line-height: 1.5;
+}
+
+/* ------------------------------------------ */
+
 .login {
   margin-right: 2em;
 }
@@ -71,7 +103,7 @@ main {
 }
 
 .center {
-  margin: 0 auto;
+  margin: 2em auto;
 }
 
 .center-children {
@@ -217,26 +249,4 @@ form label {
   visibility: visible;
   opacity: 1;
   transition: opacity 0.8s;
-}
-
-.blogs {
-  margin-top: 2em;
-  margin-bottom: 2em;
-}
-
-article {
-  box-shadow: 0 1px 5px #ccc;
-  padding: 30px;
-  margin: 20px auto 0px auto;
-  //background: var(--bg-lighter-color);
-}
-
-article h1 {
-  margin: 0;
-}
-
-.datetime {
-  text-align: right;
-  font-size: .4em;
-  color: var(--hidden-color);
 }
