@@ -1,4 +1,5 @@
 import functools
+from datetime import datetime
 
 from flask import redirect, jsonify
 
@@ -20,7 +21,7 @@ def require_login(*args, **login_info):
         if username and s.username != username:
             return error('you are not {}'.format(username))
         if not s.username:
-            return redirect('/login', 302)
+            return error('you are not logged in')
         return f(s, *args, **kwds)
     if len(args) == 1 and callable(args[0]):
         f = args[0]
@@ -28,16 +29,35 @@ def require_login(*args, **login_info):
     else:
         return lambda f: functools.wraps(f)(wrapper)
 
-def ok(data={}):
-    res = {'status': 'ok'}
-    res.update(data)
-    return jsonify(**res)
+def ok(data=None):
+    if data is None:
+        data = {}
+    elif isinstance(data, (str, unicode)):
+        data = {'detail': data}
+    data.update({'errno': 0})
+    return jsonify(**data)
 
-def error(detail, errno=400):
-    resp = jsonify(**{
-        'errno': errno,
-        'status': 'error',
+def error(detail, status_code=400):
+    if isinstance(detail, dict):
+        data = detail
+        detail = detail.get('detail', '')
+    else:
+        data = {}
+    data.update({
+        'errno': status_code,
         'detail': detail,
     })
-    resp.status_code = errno
+    resp = jsonify(**data)
+    resp.status_code = status_code
     return resp
+
+def notfound():
+    return error('not found', 404)
+
+_datetime_format = '%Y-%m-%d %H:%M:%S.%f'
+
+def strftime(dt):
+    return dt.strftime(_datetime_format)
+
+def strptime(s):
+    return datetime.strptime(s, _datetime_format)

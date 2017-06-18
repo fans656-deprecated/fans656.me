@@ -1,4 +1,6 @@
 *.pyc
-secret_config.py
+node_modules
+secret*.py
 nginx.conf
 uwsgi.ini
+local.local

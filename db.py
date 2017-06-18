@@ -44,60 +44,55 @@ def queryone(*sql):
     r = query(*sql)
     return r[0] if r else None
 
-def init_db(purge=False):
+def init_db(purge=False, quite=False):
+
+    outter_purge = purge
+
+    def create_table(name, columns, purge=None):
+        if purge is None:
+            purge = outter_purge
+        if purge:
+            c.execute('drop table if exists {}'.format(name))
+        c.execute('create table if not exists {} ({})'.format(name, columns))
+
     db = getdb()
     c = db.cursor()
-    if purge:
-        c.execute('drop table if exists users')
-    c.execute('''
-create table if not exists users (
-    username varchar(255) unique,
-    salt char(64),
-    hashed_pwd char(64),
-    iterations int
-)
-              ''')
-    if purge:
-        c.execute('drop table if exists sessions')
-    c.execute('''
-create table if not exists sessions (
-    id char(64) unique,
-    username varchar(255),
-    ctime datetime,
-    expires datetime
-)
-              ''')
-    if purge:
-        c.execute('drop table if exists clips')
-    c.execute('''
-create table if not exists clips (
-    username varchar(255) primary key,
-    data text
-)
-              ''')
-    if purge:
-        c.execute('drop table if exists blogs')
-    c.execute('''
-create table if not exists blogs (
-    id serial,
-    title text,
-    content text,
-    ctime datetime,
-    mtime datetime,
-    username varchar(255)
-)
-              ''')
-    if purge:
-        c.execute('drop table if exists blog_tags')
-    c.execute('''
-    create table if not exists blog_tags (
-        blog_id bigint,
-        tag varchar(255),
-        primary key (blog_id, tag)
-    )
-              ''')
+
+    create_table('users', (
+        'username varchar(255) unique,'
+        'salt char(64),'
+        'hashed_pwd char(64),'
+        'iterations int'
+    ))
+    create_table('sessions', (
+        'id char(64) unique,'
+        'username varchar(255),'
+        'ctime datetime,'
+        'expires datetime'
+    ))
+    create_table('nodes', (
+        'id serial,'
+        'data blob,'
+        'ctime datetime default current_timestamp,'
+        'mtime datetime default current_timestamp on update current_timestamp'
+    ), purge=True)
+    create_table('links', (
+        'id serial,'
+        'rel text,'
+        'src bigint unsigned,'
+        'dst bigint unsigned,'
+        'ctime datetime default current_timestamp,'
+        'mtime datetime default current_timestamp on update current_timestamp'
+    ), purge=True)
+    if not quite:
+        print 'database inited'
+
+def managedb():
+    import os
+    os.system('mysql -u{} -p{} -Dfans656_me'.format(
+              config.db_username,
+              config.db_password))
 
 if __name__ == '__main__':
     init_db()
-    print
-    print 'database init successfully finished'
+    managedb()

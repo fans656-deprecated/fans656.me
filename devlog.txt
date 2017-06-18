@@ -17,3 +17,41 @@ handle subdomains in flask
     . curl -H 'application/json' -X POST -d '{"username": "foo", "password: "bar"}' https://fans656.me/api/get-cookie
 
     ) (depracated)understand API key mechanism
+
+2017-06-11 09:11:07
+rewrite using react
+
+. about page
+. login
+. user panel (post blog, etc..)
+. post blog editor
+. post blog api
+
+2017-06-12 08:45:10
+) show post date right bottom
+    ) click date for detail view (with comment)
+    ) click "edit for edit (auto save)
+
+) comments
+
+2017-06-12 22:26:12
+理一下思路：
+
+https://fans656.me/                 => blogs
+https://fans656.me/blog             => blogs
+https://fans656.me/blog/123         => blog by id
+https://fans656.me/blog/123/edit    => blog by id edit
+
+2017-06-18 15:37:41
+. post node
+    . {"data": "..."}
+. get node
+    . /api/node/5
+    . get node list
+    . by ref
+. delete node by id
+. put node
+
+=== non api
+. blog list
+) put node (no delete, backup)

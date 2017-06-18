@@ -20,12 +20,21 @@ def hash_pass(password, salt=None, iterations=100000):
     hashed_pwd = binascii.hexlify(hashed_pwd)
     return salt, hashed_pwd, iterations
 
-def register(username, password):
+def register(username, password=None):
+    if password is None:
+        import getpass
+        print 'Registering for user "{}"'.format(username)
+        password1 = getpass.getpass('Enter password: ')
+        password2 = getpass.getpass('Enter again: ')
+        if password1 != password2:
+            print 'Password mismatch'
+            return False
+        password = password1
     if exists(username):
         raise UserExisted('username is taken by someone else')
     db.execute('insert into users (username, salt, hashed_pwd, iterations) values'
               '(%s, %s, %s, %s)', (username,) + hash_pass(password))
-    print 'user "{}" registered'.format(username)
+    print 'register user "{}" successfully'.format(username)
 
 def login(username, password):
     if not exists(username):
@@ -43,3 +52,8 @@ def valid_auth(username, password):
         return True
     except InvalidAuth:
         return False
+
+if __name__ == '__main__':
+    pass
+    #register('a', 'b')
+    #register('fans656')

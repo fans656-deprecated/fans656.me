@@ -1,54 +1,233 @@
 import os
+import json
+import itertools
+from datetime import datetime
 
-from flask import Flask, url_for, g, render_template
-from flaskext.markdown import Markdown
+import flask
+from flask import request
+from flask_cors import CORS
 
-import config
-import views
-import apps
-import user
 import session
-import api
-from utils import require_login
+import db
+import user
+import utils
+import config
+from utils import (
+    ok, error, notfound,
+    require_login, allow_public_access,
+    strftime, strptime,
+)
 
-app = Flask(__name__)
-Markdown(app)
+build_dir = './frontend/build'
 
-app.route('/register', methods=['GET', 'POST'])(views.login.register)
-app.route('/login', methods=['GET', 'POST'])(views.login.login)
-app.route('/logout')(views.login.logout)
-app.route('/profile/<username>')(views.login.profile)
+app = flask.Flask(__name__, static_folder=build_dir)
+CORS(app)
 
-app.route('/clip')(apps.clip.clip)
-app.route('/clip/get')(apps.clip.clip_get)
-app.route('/clip/save', methods=['POST'])(apps.clip.clip_save)
-
-app.route('/leetcode')(views.leetcode.leetcode)
-
-app.route('/api/get-cookie', methods=['POST'])(api.get_cookie)
-
-app.route('/blog/post')(views.blog.post_blog)
-app.route('/api/blog/', methods=['POST'])(api.blog.api_post_blog)
-
-#@app.before_request
-#def before_request():
-#    from flask import request
-#    print repr(request.host)
+@app.route('/static/<path:path>')
+def send_static(path):
+    fpath = os.path.join(build_dir, 'static', path)
+    dirname = os.path.dirname(fpath)
+    fname = os.path.basename(fpath)
+    print fpath
+    return flask.send_from_directory(dirname, fname)
 
 @app.route('/')
-def index():
-    return render_template('index.html', session=session.session_object())
+#@app.route('/<path:path>')
+def index(path=''):
+    return flask.send_from_directory(build_dir, 'index.html')
 
-@app.route('/', subdomain='<subdomain>')
-def subdomain_dispatch(subdomain):
-    if user.exists(subdomain):
-        return '{}\'s space'.format(subdomain)
-    return 'subdomain: "{}"'.format(subdomain)
+@app.route('/api/login', methods=['POST'])
+def post_login():
+    try:
+        username = flask.request.json.get('username', '').encode('utf8')
+        password = flask.request.json.get('password', '').encode('utf8')
+    except Exception:
+        return error('invalid data')
+    try:
+        user.login(username, password)
+        resp = ok()
+        resp.set_cookie('session', session.new_session(username))
+        return resp
+    except user.InvalidAuth as e:
+        return error(e.message)
+
+@app.route('/api/logout')
+def get_logout():
+    if session.del_session():
+        return ok()
+    else:
+        return error('delete session failed')
+
+@app.route('/api/me')
+def get_me():
+    return ok({'user': session.current_user()})
+
+@app.route('/api/node', methods=['POST'])
+def post_node():
+    node = request.json
+    if not node:
+        return error('invalid node')
+
+    node_data = node.get('data')
+    if node_data is None:
+        return error('node must have data')
+
+    links = []
+    for link in node.get('links', []):
+        if not isinstance(link, dict):
+            return error('link must have dict rel: {}'.format(link))
+
+        rel = link.get('rel', None)
+        if rel is None:
+            return error('link must have rel: {}'.format(link))
+
+        id_or_ref = link.get('dst', None)
+        if id_or_ref is None:
+            return error('link must have dst: {}'.format(link))
+        if isinstance(id_or_ref, (str, unicode)):
+            ref = id_or_ref
+            dst_node_id = node_ref_to_node_id(ref)
+            if dst_node_id is None:
+                return error('no node ref {}'.format(link))
+        elif isinstance(id_or_ref, int):
+            dst_node_id = id_or_ref
+        else:
+            return error('link dst must be ref or id: {}'.format(link))
+        if dst_node_id > 0:
+            try:
+                found = db.queryone('select 1 from nodes where id = %s',
+                                    dst_node_id)
+                if not found:
+                    return error('link dst node does not exist: {}'.format(
+                        dst_node_id))
+            except Exception:
+                return error('invalid link dst: {}'.format(dst_node_id))
+
+        links.append((rel, dst_node_id))
+
+    return ok(do_post_node(node_data, links))
+
+@app.route('/api/node/<int:node_id>', methods=['PUT'])
+def put_node(node_id):
+    new_node = request.json
+    if not new_node:
+        return error('invalid node: {}'.format(new_node))
+    node = do_get_node_by_id(node_id)
+    if not node:
+        return error('not found', 404)
+    #old_node = do_post_node(node['data'], ctime=node['ctime'])
+    #if 'links' not in new_node:
+    #    new_node['links'] = []
+    do_update_node(node, new_node)
+    #db.execute('insert into links (rel, src, dst) values (%s,%s,%s)',
+    #           ('old', node['id'], old_node['id']))
+    return ok({'id': node_id})
+
+@app.route('/api/node')
+def get_nodes():
+    args = request.args
+    rels, vals = zip(*args.items())
+    preds = ['l.rel = %s and n.data = %s'] * len(rels)
+    sql_args = list(itertools.chain(rels, vals))
+
+    sql = '''
+            select id from nodes
+            where id in (
+                select l.src from links as l inner join nodes as n
+                where {preds}
+            ) order by ctime desc
+          '''.format(preds=' and '.join(preds))
+    node_ids = db.query(sql, sql_args)
+    return ok({'nodes': map(do_get_node_by_id, node_ids)})
+
+@app.route('/api/node/<int:node_id>')
+def get_node_by_id(node_id):
+    node = do_get_node_by_id(node_id)
+    if not node:
+        return error('not found', 404)
+    return ok({'node': node})
+
+@app.route('/api/node/<ref>')
+def get_node_by_ref(ref):
+    node_id = node_ref_to_node_id(ref)
+    if not node_id:
+        return error('not found', 404)
+    return ok({'node': do_get_node_by_id(node_id)})
+
+def do_post_node(data, links=None, ctime=None):
+    ctime = ctime or datetime.now()
+    links = links or []
+    db.execute('insert into nodes (data, ctime) values (%s,%s)',
+               (data.encode('utf8'), ctime))
+    node_id = db.queryone('select last_insert_id() from nodes')
+
+    src_node_id = node_id
+    link_ids = []
+    for rel, dst_node_id in links:
+        dst_node_id = dst_node_id or src_node_id
+        db.execute('insert into links (rel, src, dst) values (%s,%s,%s)',
+                   (rel.encode('utf8'), src_node_id, dst_node_id))
+        link_ids.append(db.queryone('select last_insert_id() from links'))
+    return {
+        'id': node_id,
+        'links': link_ids,
+    }
+
+def do_get_node_by_id(node_id):
+    r = db.queryone(
+        'select data, ctime from nodes where id = %s',
+        (node_id,)
+    )
+    if not r:
+        return None
+    data, ctime = r
+    return {
+        'id': node_id,
+        'data': data,
+        'ctime': strftime(ctime),
+    }
+
+def do_update_node(old_node, new_node):
+    db.execute('update nodes set data = %s where id = %s', (
+        new_node['data'].encode('utf8'), old_node['id'],
+    ))
+
+def node_ref_to_node_id(ref):
+    node_id = db.queryone('select n.id from nodes as n, links as l where '
+                          'l.rel = "ref" and l.dst = n.id and n.data = %s',
+                          (ref,))
+    return node_id
+
+#@app.route('/api/node/<int:node_id>', methods=['DELETE'])
+#def delete_node(node_id):
+#    found = db.queryone('select 1 from nodes where id = %s', (node_id,))
+#    if not found:
+#        return error({'detail': 'not found', 'id': node_id}, 404)
+#    db.execute('delete from nodes where id = %s', (node_id,))
+#    return ok({'id': node_id})
+
+#@app.route('/', subdomain='<subdomain>')
+#def subdomain_dispatch(subdomain):
+#    if user.exists(subdomain):
+#        return '{}\'s space'.format(subdomain)
+#    return 'subdomain: "{}"'.format(subdomain)
+
+@app.after_request
+def after_request(response):
+    if 'Access-Control-Allow-Origin' not in response.headers:
+        response.headers.add('Access-Control-Allow-Origin',
+                             flask.request.headers.get('Origin', '*'))
+    response.headers.add('Access-Control-Allow-Headers',
+                         'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods',
+                         'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 @app.teardown_appcontext
 def close_db(err):
-    if hasattr(g, 'db'):
-        g.db.close()
+    if hasattr(flask.g, 'db'):
+        flask.g.db.close()
 
 @app.context_processor
 def override_url_for():
@@ -59,8 +238,8 @@ def override_url_for():
                 file_path = os.path.join(app.root_path,
                                          endpoint, filename)
                 values['q'] = int(os.stat(file_path).st_mtime)
-        return url_for(endpoint, **values)
+        return flask.url_for(endpoint, **values)
     return dict(url_for=f_)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, threaded=True)
+    app.run(host='0.0.0.0', port=6561, threaded=True, debug=True)

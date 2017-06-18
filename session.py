@@ -19,6 +19,15 @@ def session_object():
         r.username = db.queryone('select username from sessions where id = %s', (id,))
     return r
 
+def current_user():
+    s = session_object()
+    if s.username:
+        return {
+            'username': s.username,
+        }
+    else:
+        return None
+
 def get_session():
     return request.cookies.get('session', None)
 
@@ -37,7 +46,7 @@ def new_session(username):
               '(%s, %s, %s, %s)', (id, username, now, now + duration))
     return id
 
-def logged_in():
+def is_logged_in():
     if random.random() < config.sweep_expires_probability:
         db.execute('delete from sessions where expires < %s', (datetime.now()))
     id = get_session()

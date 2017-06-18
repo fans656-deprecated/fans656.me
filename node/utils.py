@@ -1,0 +1,1 @@
+abstract = lambda x: x
