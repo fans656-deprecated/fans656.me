@@ -2,170 +2,123 @@ import functools
 
 from utils import NotFound
 
-def validate_int(val):
-    try:
-        int(val)
-    except Exception:
-        return 'not int'
+def make_type(recipe, *args, **kwargs):
+    if is_builtin_type(recipe):
+        return from_builtin_type(recipe, *args, **kwargs)
+    elif is_schema(recipe):
+        return ParamsType(recipe)
+    elif is_list_type(recipe):
+        return ListType(recipe)
+    elif isinstance(recipe, Type):
+        return recipe
+    else:
+        raise ValueError('make_type: unknown recipe {}'.format(recipe))
 
-def validate_str(val):
-    assert isinstance(val, str), 'not str'
+def is_builtin_type(tp):
+    return isinstance(tp, type)
 
-def validate_unicode(val):
-    assert isinstance(val, unicode), 'not unicode'
+def is_schema(sch):
+    return isinstance(sch, dict)
+
+def is_list_type(l):
+    return isinstance(l, list) and len(l) == 1
+
+def from_builtin_type(tp):
+    if tp is int:
+        return IntType(tp)
+    elif tp is str:
+        return StrType(tp)
+    elif tp is unicode:
+        return UnicodeType(tp)
+    else:
+        raise ValueError('TODO from_builtin_type {}'.format(tp))
 
 class Type(object):
 
-    def __init__(self, recipe=None, *args, **kwargs):
-        if recipe:
-            self.init(recipe, *args, **kwargs)
-
-    def init(self, recipe=None, validate=None):
+    def __init__(self, recipe):
         self.recipe = recipe
-        if isinstance(recipe, type):
-            if recipe is int:
-                self.validate = make_validator(validate_int)
-            elif recipe is str:
-                self.validate = make_validator(validate_str)
-            elif recipe is unicode:
-                self.validate = make_validator(validate_unicode)
-            else:
-                raise ValueError('todo {}'.format(recipe))
-            self.required = True
-        elif isinstance(recipe, Type):
-            self.__dict__.update(recipe.__dict__)
-        elif isinstance(recipe, list) and len(recipe) == 1:
-            assert isinstance(recipe, Type)
-            self.__dict__.update(ListType(recipe))
-            return
-        else:
-            raise ValueError('todo {}'.format(recipe))
-        if validate:
-            self.validate = make_validator(validate)
 
     def __repr__(self):
-        return 'Type({})'.format(self.recipe)
+        return self.__class__.__name__
 
-    def __or__(self, o):
-        return OrType(self, o)
+class ParamsType(object):
 
-class OrType(Type):
-
-    def __init__(self, type1, type2):
-        self.recipe = [type1.recipe, type2.recipe]
-        self.type1 = type1
-        self.type2 = type2
-        self.required = type1.required or type2.required
-
-    def validate(self, val):
-        err1 = self.type1.validate(val)
-        err2 = self.type2.validate(val)
-        if not err1 or not err2:
-            return None
-        return err1 or err2
-
-class ListType(Type):
-
-    def __init__(self, type_):
-        self.recipe = type_.recipe
-        self.type = type_
-
-    def validate(self, a):
-        if not isinstance(a, list):
-            return 'not list'
-        errors = [self.type.validate(t) for t in a]
-        return errors
-
-def make_validator(validate):
-    @functools.wraps(validate)
-    def validate_(val):
-        try:
-            r = validate(val)
-        except Exception as e:
-            return e.message or 'invalid'
-        if isinstance(r, bool):
-            return None if r else 'invalid'
-        else:
-            return r
-    return validate_
-
-def params(schema):
-    def deco(f):
-        @functools.wraps(f)
-        def f_(*args, **kwargs):
-            try:
-                return f(*args, **kwargs)
-            except NotFound as e:
-                return error(e.message, 404)
-            except AssertionError as e:
-                return error(e.message, 400)
-        return f_
-    return deco
-
-def make_schema(recipe):
-    for name, type_or_schema in recipe.items():
-        if isinstance(type_or_schema, dict):
-            recipe[name] = make_schema(type_or_schema)
-        elif isinstance(type_or_schema, Type):
-            pass
-        else:
-            recipe[name] = Type(type_or_schema)
-    return recipe
-
-class Validator(object):
-
-    def __init__(self, schema_recipe):
-        self.schema = make_schema(schema_recipe)
+    def __init__(self, recipe):
+        self.params = {
+            name: make_type(type_recipe)
+            for name, type_recipe in recipe.items()
+        }
 
     def validate(self, params):
-        errors = get_validation_errors(self.schema, params)
-        return errors
+        if not isinstance(params, dict):
+            raise ValueError(
+                'ParamsType.validate expect `dict`, got {}'.format(params))
+        errors = []
+        for name, type_ in self.params.items():
+            if name not in params:
+                errors.append({'name': name,
+                               'error': 'missing',
+                               'type': type_.__class__.__name__,
+                               'value': None,
+                               })
+                continue
+            val = params[name]
+            error = type_.validate(val)
+            if error:
+                error.update({'name': name})
+                errors.append(error)
+        return errors or None
 
-    __call__ = validate
+class IntType(Type):
 
-def get_validation_errors(schema, params, errors=None):
-    errors = errors or {}
-    for name, param_type in schema.items():
-        if param_type.required and name not in params:
-            errors[name] = {'error': 'missing', 'type': param_type}
-            continue
-        val = params[name]
-        error = param_type.validate(val)
-        if error:
-            errors[name] = {'error': error, 'type': param_type}
-    return errors
+    def validate(self, val):
+        try:
+            int(val)
+        except Exception:
+            return {'error': 'bad value',
+                    'value': val,
+                    'type': self.__class__.__name__
+                    }
 
-def range_validator(lo=None, hi=None):
-    def validate_range(val):
-        if lo is not None and val < lo:
-            return 'too small'
-        if hi is not None and hi < val:
-            return 'too large'
-    return validate_range
+### exceptions
 
-Int = Type(int)
-Str = Type(str)
-Unicode = Type(unicode)
-String = Str | Unicode
+class Missing(Exception):
 
-Link = Type()
+    def __init__(self, name, type_):
+        super(Missing, self).__init__('missing {}'.format(name))
+        self.type = type_
 
-Node = Type({
-    'data': String,
-    'links': [Link],
-})
+class BadValue(Exception):
 
-Link.init({
-    'rel': String,
-    'dst': Int | String | Node,
-})
+    def __init__(self, value):
+        self.value = value
+
+#########################################################
 
 if __name__ == '__main__':
-    pass
-    #v = Validator({
-    #    'foo': String,
-    #})
+    # IntType
+    tp = make_type(int)
+    assert isinstance(tp, IntType)
+    assert tp.validate(3) is None
+    err = tp.validate('foo')
+    assert err is not None
 
-    #print v({
-    #    'foo': '3'
-    #})
+    # ParamsType
+    tp = make_type({})
+    assert isinstance(tp, ParamsType)
+    for val in (3, 'foo'):
+        try:
+            assert tp.validate(val) is None
+        except ValueError:
+            pass
+
+    tp = make_type({'foo': int})
+    assert isinstance(tp, ParamsType)
+    err = tp.validate({})
+    assert len(err) == 1
+    assert err[0]['error'] == 'missing'
+    print err
+    #assert 'missing' in err['foo']
+    err = tp.validate({'foo': 'hi', 'bar': None})
+    assert err
+    print err
