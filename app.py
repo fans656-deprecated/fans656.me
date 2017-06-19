@@ -15,12 +15,12 @@ import node
 from node import Node
 import config
 from utils import (
-    api,
     ok, error, notfound,
     check,
     require_login, allow_public_access,
     strftime, strptime,
 )
+from api import params, Int, String, Link
 
 build_dir = './frontend/build'
 
@@ -67,7 +67,10 @@ def get_me():
     return ok({'user': session.current_user()})
 
 @app.route('/api/node', methods=['POST'])
-@api({})
+@params({
+    'data': String,
+    'links': [Int | String | Link],
+})
 def post_node():
     node = request.json
     assert node, 'invalid node'
@@ -135,7 +138,7 @@ def get_nodes():
     return ok({'nodes': map(dict, nodes)})
 
 @app.route('/api/node/<int:node_id>')
-@api({})
+@params({})
 def get_node_by_id(node_id):
     return ok({'node': dict(Node(node_id))})
 

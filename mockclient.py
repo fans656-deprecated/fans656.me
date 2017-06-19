@@ -64,4 +64,19 @@ if __name__ == '__main__':
     #    ]
     #}))
 
-    pprint(post_node({}))
+    node = {
+        'data': 'test',
+        'links': [
+            {'rel': 'type', 'dst': 'blog'}
+        ]
+    }
+
+    #old_node = post_node(node)
+    #pprint(old_node)
+
+    #raw_input()
+    node['data'] = 'bar'
+    #old_id = old_node['id']
+    old_id = 2
+    pprint(put('/api/node/{}'.format(old_id), node))
+    #pprint(delete('/api/node/5'))
