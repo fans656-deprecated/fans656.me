@@ -65,18 +65,11 @@ if __name__ == '__main__':
     #}))
 
     node = {
-        'data': 'test',
+        'data': 'foo',
         'links': [
-            {'rel': 'type', 'dst': 'blog'}
+            {'rel': 'foo', 'dst': 'foo'},
+            {'rel': 'type', 'dst': 1}
         ]
     }
 
-    #old_node = post_node(node)
-    #pprint(old_node)
-
-    #raw_input()
-    node['data'] = 'bar'
-    #old_id = old_node['id']
-    old_id = 2
-    pprint(put('/api/node/{}'.format(old_id), node))
-    #pprint(delete('/api/node/5'))
+    pprint(post_node(node))

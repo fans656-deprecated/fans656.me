@@ -52,6 +52,7 @@ def error(detail, status_code=400):
     resp = jsonify(**data)
     resp.status_code = status_code
     return resp
+error_response = error
 
 def notfound():
     return error('not found', 404)

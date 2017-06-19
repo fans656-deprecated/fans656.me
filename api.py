@@ -1,124 +1,105 @@
 import functools
+from copy import copy
 
-from utils import NotFound
+from flask import request
 
-def make_type(recipe, *args, **kwargs):
-    if is_builtin_type(recipe):
-        return from_builtin_type(recipe, *args, **kwargs)
-    elif is_schema(recipe):
-        return ParamsType(recipe)
-    elif is_list_type(recipe):
-        return ListType(recipe)
-    elif isinstance(recipe, Type):
-        return recipe
+from utils import error_response
+
+def api(method, url, schema):
+    def deco(f):
+        @functools.wraps(f)
+        def f_(*args, **kwargs):
+            params = get_params(method)
+            return f(*args, **kwargs)
+        return flask_app.route(url, methods=[method])(f_)
+    return deco
+
+def get_params(method):
+    if method in ('GET', 'DELETE'):
+        return request.args
+    elif method in ('POST', 'PUT'):
+        return request.json
     else:
-        raise ValueError('make_type: unknown recipe {}'.format(recipe))
+        raise ValueError('unsupported method {}'.format(method))
 
-def is_builtin_type(tp):
-    return isinstance(tp, type)
+flask_app = None
 
-def is_schema(sch):
-    return isinstance(sch, dict)
-
-def is_list_type(l):
-    return isinstance(l, list) and len(l) == 1
-
-def from_builtin_type(tp):
-    if tp is int:
-        return IntType(tp)
-    elif tp is str:
-        return StrType(tp)
-    elif tp is unicode:
-        return UnicodeType(tp)
-    else:
-        raise ValueError('TODO from_builtin_type {}'.format(tp))
+def API(app):
+    global flask_app
+    flask_app = app
 
 class Type(object):
 
+    def __init__(self):
+        pass
+
+def normalize(recipe):
+    if isinstance(recipe, str):
+        if recipe == 'string':
+            return {'type': 'string'}
+        elif recipe == 'integer':
+            return {'type': 'integer'}
+        else:
+            raise Exception(recipe)
+    elif isinstance(recipe, list):
+        return {'type': 'list', 'contained_type': recipe[0]}
+    elif isinstance(recipe, tuple):
+        return {'type': 'or', 'types': recipe}
+    elif isinstance(recipe, dict):
+        return {'type': 'struct', 'types': recipe}
+    else:
+        raise Exception('unknown recipe')
+
+def to_type(recipe):
+    recipe = normalize(recipe)
+    type_cls = {
+        'string': StringType,
+        'integer': IntegerType,
+        'struct': StructType,
+        'list': ListType,
+        'or': OrType,
+    }[recipe['type']]
+    return type_cls(recipe)
+
+class StructType(Type):
+
     def __init__(self, recipe):
-        self.recipe = recipe
+        print recipe.items()
+        self.name_to_type = {name: to_type(type_recipe)
+                             for name, type_recipe in recipe.items()}
 
-    def __repr__(self):
-        return self.__class__.__name__
-
-class ParamsType(object):
+class ListType(Type):
 
     def __init__(self, recipe):
-        self.params = {
-            name: make_type(type_recipe)
-            for name, type_recipe in recipe.items()
-        }
+        self.contained_type = to_type(recipe['contained_type'])
 
-    def validate(self, params):
-        if not isinstance(params, dict):
-            raise ValueError(
-                'ParamsType.validate expect `dict`, got {}'.format(params))
-        errors = []
-        for name, type_ in self.params.items():
-            if name not in params:
-                errors.append({'name': name,
-                               'error': 'missing',
-                               'type': type_.__class__.__name__,
-                               'value': None,
-                               })
-                continue
-            val = params[name]
-            error = type_.validate(val)
-            if error:
-                error.update({'name': name})
-                errors.append(error)
-        return errors or None
+class IntegerType(object):
 
-class IntType(Type):
+    def __init__(self, recipe):
+        pass
 
-    def validate(self, val):
-        try:
-            int(val)
-        except Exception:
-            return {'error': 'bad value',
-                    'value': val,
-                    'type': self.__class__.__name__
-                    }
+class StringType(object):
 
-### exceptions
+    def __init__(self, recipe):
+        pass
 
-class Missing(Exception):
+class OrType(object):
 
-    def __init__(self, name, type_):
-        super(Missing, self).__init__('missing {}'.format(name))
-        self.type = type_
+    def __init__(self, recipe):
+        self.types = map(to_type, recipe['types'])
 
-class BadValue(Exception):
-
-    def __init__(self, value):
-        self.value = value
-
-#########################################################
+Schema = StructType
 
 if __name__ == '__main__':
-    # IntType
-    tp = make_type(int)
-    assert isinstance(tp, IntType)
-    assert tp.validate(3) is None
-    err = tp.validate('foo')
-    assert err is not None
-
-    # ParamsType
-    tp = make_type({})
-    assert isinstance(tp, ParamsType)
-    for val in (3, 'foo'):
-        try:
-            assert tp.validate(val) is None
-        except ValueError:
-            pass
-
-    tp = make_type({'foo': int})
-    assert isinstance(tp, ParamsType)
-    err = tp.validate({})
-    assert len(err) == 1
-    assert err[0]['error'] == 'missing'
-    print err
-    #assert 'missing' in err['foo']
-    err = tp.validate({'foo': 'hi', 'bar': None})
-    assert err
-    print err
+    schema = {
+        'data': 'string',
+        'links': [{
+            'rel': 'string',
+            #'dst': (
+            #    {'type': 'integer', 'coerce': 'node_from_id'},
+            #    {'type': 'string',  'coerce': 'node_from_ref'},
+            #)
+        }],
+    }
+    schema = Schema(schema)
+    print schema

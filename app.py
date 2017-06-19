@@ -12,7 +12,7 @@ import db
 import user
 import utils
 import node
-from node import Node
+from node import Node, node_from_id, node_from_ref
 import config
 from utils import (
     ok, error, notfound,
@@ -20,12 +20,13 @@ from utils import (
     require_login, allow_public_access,
     strftime, strptime,
 )
-from api import params, Int, String, Link
+from api import api, API
 
 build_dir = './frontend/build'
 
 app = flask.Flask(__name__, static_folder=build_dir)
 CORS(app)
+API(app)
 
 @app.route('/static/<path:path>')
 def send_static(path):
@@ -66,21 +67,32 @@ def get_logout():
 def get_me():
     return ok({'user': session.current_user()})
 
-@app.route('/api/node', methods=['POST'])
-@params({
-    'data': String,
-    'links': [Int | String | Link],
+@api('POST', '/api/node', {
+    'data': {'type': 'string'},
+    'links': {
+        'type': [
+            {
+                'rel': {'type': 'string'},
+                'dst': {
+                    'type': 'or',
+                    'types': [
+                        {'type': 'integer', 'coerce': node_from_id},
+                        {'type': 'string', 'coerce': node_from_ref},
+                    ]
+                }
+            },
+        ],
+        'optional': True,
+    }
 })
-def post_node():
-    node = request.json
-    assert node, 'invalid node'
-
-    node_data = node.get('data')
-    if node_data is None:
-        return error('node must have data')
-
+def post_node(data, links):
+    print data, links
+    return ok({
+        'data': data,
+        'links': links,
+    })
     links = []
-    for link in node.get('links', []):
+    for link in links:
         check(isinstance(link, dict),
               'link must have dict rel: {}'.format(link))
 
@@ -138,7 +150,6 @@ def get_nodes():
     return ok({'nodes': map(dict, nodes)})
 
 @app.route('/api/node/<int:node_id>')
-@params({})
 def get_node_by_id(node_id):
     return ok({'node': dict(Node(node_id))})
 

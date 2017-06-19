@@ -116,11 +116,14 @@ class Link(object):
     def __str__(self):
         return '{}: {}'.format(self.rel, self.dst.data[:10])
 
+node_from_id = Node
+node_from_ref = lambda ref: query(ref=ref)[0]
+
 if __name__ == '__main__':
     from f6 import each
     nodes = query(options={
-        'type': 'blog',
+        'ref': 'blog',
     })
     indent = ' ' * 4
     each(nodes).show()
-    nodes[0].links[0].dst.show()
+    #nodes[0].links[0].dst.show()
