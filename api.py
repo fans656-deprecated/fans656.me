@@ -28,67 +28,45 @@ def API(app):
     global flask_app
     flask_app = app
 
-class Type(object):
-
-    def __init__(self):
-        pass
-
-def normalize(recipe):
-    if isinstance(recipe, str):
-        if recipe == 'string':
-            return {'type': 'string'}
-        elif recipe == 'integer':
-            return {'type': 'integer'}
-        else:
-            raise Exception(recipe)
-    elif isinstance(recipe, list):
-        return {'type': 'list', 'contained_type': recipe[0]}
-    elif isinstance(recipe, tuple):
-        return {'type': 'or', 'types': recipe}
-    elif isinstance(recipe, dict):
-        return {'type': 'struct', 'types': recipe}
-    else:
-        raise Exception('unknown recipe')
-
-def to_type(recipe):
-    recipe = normalize(recipe)
-    type_cls = {
-        'string': StringType,
-        'integer': IntegerType,
-        'struct': StructType,
-        'list': ListType,
-        'or': OrType,
-    }[recipe['type']]
-    return type_cls(recipe)
-
-class StructType(Type):
-
-    def __init__(self, recipe):
-        print recipe.items()
-        self.name_to_type = {name: to_type(type_recipe)
-                             for name, type_recipe in recipe.items()}
-
-class ListType(Type):
-
-    def __init__(self, recipe):
-        self.contained_type = to_type(recipe['contained_type'])
-
-class IntegerType(object):
-
-    def __init__(self, recipe):
-        pass
-
-class StringType(object):
-
-    def __init__(self, recipe):
-        pass
-
-class OrType(object):
-
-    def __init__(self, recipe):
-        self.types = map(to_type, recipe['types'])
-
-Schema = StructType
+#def to_type(recipe):
+#    """
+#    recipe maybe:
+#        1. a dict:
+#            {'name': 'string', 'age': 'integer'}
+#        2. a string:
+#            'string' | 'integer'
+#        3. a Type
+#            String
+#            Integer(min=3, max=10)
+#    """
+#    print 'to_type', recipe
+#    raw_input()
+#    recipe = normalize(recipe)
+#    type_cls = {
+#        'string': StringType,
+#        'integer': IntegerType,
+#        'struct': StructType,
+#        'list': ListType,
+#        'or': OrType,
+#    }[recipe['type']]
+#    return type_cls(recipe)
+#
+#def normalize(recipe):
+#    if isinstance(recipe, str):
+#        if recipe == 'string':
+#            return {'type': 'string'}
+#        elif recipe == 'integer':
+#            return {'type': 'integer'}
+#        else:
+#            raise Exception(recipe)
+#    elif isinstance(recipe, list):
+#        return {'type': 'list', 'contained_type': recipe[0]}
+#    elif isinstance(recipe, tuple):
+#        return {'type': 'or', 'types': recipe}
+#    elif isinstance(recipe, dict):
+#        return {'type': 'struct', 'types': recipe}
+#    else:
+#        raise Exception('unknown recipe')
 
 if __name__ == '__main__':
     schema = {
@@ -103,3 +81,12 @@ if __name__ == '__main__':
     }
     schema = Schema(schema)
     print schema
+    schema = {
+        'data': Integer(min=1),
+    }
+    schema = {
+        'links': {
+            'rel': String,
+            'dst': String | Integer,
+        }
+    }
