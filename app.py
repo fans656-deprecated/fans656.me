@@ -12,15 +12,17 @@ import db
 import user
 import utils
 import node
-from node import Node, node_from_id, node_from_ref
+from node import Node
 import config
 from utils import (
-    ok, error, notfound,
+    success_response, error_response,
     check,
     require_login, allow_public_access,
     strftime, strptime,
+    Response,
 )
 from api import api, API
+from paramtypes import String, Integer, Dict, List
 
 build_dir = './frontend/build'
 
@@ -47,135 +49,123 @@ def post_login():
         username = flask.request.json.get('username', '').encode('utf8')
         password = flask.request.json.get('password', '').encode('utf8')
     except Exception:
-        return error('invalid data')
+        return error_response('invalid data')
     try:
         user.login(username, password)
-        resp = ok()
+        resp = success_response()
         resp.set_cookie('session', session.new_session(username))
         return resp
     except user.InvalidAuth as e:
-        return error(e.message)
+        return error_response(e.message)
 
 @app.route('/api/logout')
 def get_logout():
     if session.del_session():
-        return ok()
+        return success_response()
     else:
-        return error('delete session failed')
+        return error_response('delete session failed')
 
 @app.route('/api/me')
 def get_me():
-    return ok({'user': session.current_user()})
+    return success_response({'user': session.current_user()})
 
-@api('POST', '/api/node', {
-    'data': {'type': 'string'},
-    'links': {
-        'type': [
-            {
-                'rel': {'type': 'string'},
-                'dst': {
-                    'type': 'or',
-                    'types': [
-                        {'type': 'integer', 'coerce': node_from_id},
-                        {'type': 'string', 'coerce': node_from_ref},
-                    ]
-                }
-            },
-        ],
-        'optional': True,
-    }
-})
-def post_node(data, links):
-    print data, links
-    return ok({
-        'data': data,
-        'links': links,
-    })
-    links = []
+class ThisNode(object):
+
+    pass
+
+def node_from_id(node_id):
+    if node_id == 0:
+        return ThisNode()
+    else:
+        return Node(node_id)
+
+def node_from_ref(ref):
+    nodes = query(ref=ref)
+    if not nodes:
+        raise NotFound('no node with ref={}'.format(ref))
+    elif len(nodes) == 1:
+        return nodes[0]
+    else:
+        raise Response({
+            'detail': 'multiple nodes with ref={} are found'.format(ref),
+            'ids': [node.id for node in nodes]
+        })
+
+def node_from_literal(literal):
+    node = Node(literal['data'])
+    links = literal['links']
     for link in links:
-        check(isinstance(link, dict),
-              'link must have dict rel: {}'.format(link))
+        rel = link['rel']
+        dst = link['dst']
+        if isinstance(dst, ThisNode):
+            dst = node
+        node.link(rel, dst)
+    return node
 
-        rel = link.get('rel', None)
-        assert rel, 'link must have rel: {}'.format(link)
+Link = Dict({})
 
-        dst_recipe = link.get('dst', None)  # id / ref / node_literal
-        #dst_node = Node(dst_recipe)
-        if dst_recipe is None:
-            return error('link must have dst: {}'.format(link))
-        if isinstance(dst_recipe, (str, unicode)):
-            ref = dst_recipe
-            dst_node_id = node_ref_to_node_id(ref)
-            if dst_node_id is None:
-                return error('no node ref {}'.format(link))
-        elif isinstance(dst_recipe, int):
-            dst_node_id = dst_recipe
-        elif isinstance(dst_recipe, dict):
-            assert False, 'todo'
-        else:
-            return error('link dst must be ref or id: {}'.format(link))
-        if dst_node_id > 0:
-            try:
-                found = db.queryone('select 1 from nodes where id = %s',
-                                    dst_node_id)
-                if not found:
-                    return error('link dst node does not exist: {}'.format(
-                        dst_node_id))
-            except Exception:
-                return error('invalid link dst: {}'.format(dst_node_id))
+NodeLiteral = Dict({
+    'data': String,
+    'links': List(Link, default=lambda: []),
+}, coerce=node_from_literal)
 
-        links.append((rel, dst_node_id))
+Link.update({
+    'rel': String,
+    'dst': (
+        String(coerce=node_from_ref)
+        | Integer(coerce=node_from_id)
+        | NodeLiteral
+    ),
+})
 
-    return ok(do_post_node(node_data, links))
+@api('POST', '/api/node', NodeLiteral,
+
+    NodeLiteral={
+        'data': String,
+        'links': List(Link, default=lambda: []),
+    },
+    Link={
+        'rel': String,
+        'dst': (
+            String(coerce=node_from_ref)
+            | Integer(coerce=node_from_id)
+            | NodeLiteral
+        ),
+    }
+)
+def post_node(node):
+    node.graph.dump()
+    return success_response({'node': dict(node)})
 
 @app.route('/api/node/<int:node_id>', methods=['PUT'])
 def put_node(node_id):
     new_node = request.json
     if not new_node:
-        return error('invalid node: {}'.format(new_node))
+        return error_response('invalid node: {}'.format(new_node))
     node = do_get_node_by_id(node_id)
     if not node:
-        return error('not found', 404)
+        return error_response('not found', 404)
     #old_node = do_post_node(node['data'], ctime=node['ctime'])
     #if 'links' not in new_node:
     #    new_node['links'] = []
     do_update_node(node, new_node)
     #db.execute('insert into links (rel, src, dst) values (%s,%s,%s)',
     #           ('old', node['id'], old_node['id']))
-    return ok({'id': node_id})
+    return success_response({'id': node_id})
 
 @app.route('/api/node')
 def get_nodes():
     nodes = node.query(options=request.args)
-    return ok({'nodes': map(dict, nodes)})
+    return success_response({'nodes': map(dict, nodes)})
 
 @app.route('/api/node/<int:node_id>')
 def get_node_by_id(node_id):
-    return ok({'node': dict(Node(node_id))})
+    return success_response({'node': dict(Node(node_id))})
 
 @app.route('/api/node/<ref>')
 def get_node_by_ref(ref):
     node = node.query({'ref': ref})[0]
-    return ok({'node': node})
-
-def do_post_node(data, links=None, ctime=None):
-    ctime = ctime or datetime.now()
-    links = links or []
-    db.execute('insert into nodes (data, ctime) values (%s,%s)',
-               (data.encode('utf8'), ctime))
-    node_id = db.queryone('select last_insert_id() from nodes')
-
-    src_node_id = node_id
-    link_ids = []
-    for rel, dst_node_id in links:
-        dst_node_id = dst_node_id or src_node_id
-        db.execute('insert into links (rel, src, dst) values (%s,%s,%s)',
-                   (rel.encode('utf8'), src_node_id, dst_node_id))
-        link_ids.append(db.queryone('select last_insert_id() from links'))
-    return {
-        'id': node_id,
-        'links': link_ids,
-    }
+    return success_response({'node': node})
 
 def do_get_node_by_id(node_id):
     r = db.queryone(
@@ -196,19 +186,13 @@ def do_update_node(old_node, new_node):
         new_node['data'].encode('utf8'), old_node['id'],
     ))
 
-def node_ref_to_node_id(ref):
-    node_id = db.queryone('select n.id from nodes as n, links as l where '
-                          'l.rel = "ref" and l.dst = n.id and n.data = %s',
-                          (ref,))
-    return node_id
-
 #@app.route('/api/node/<int:node_id>', methods=['DELETE'])
 #def delete_node(node_id):
 #    found = db.queryone('select 1 from nodes where id = %s', (node_id,))
 #    if not found:
-#        return error({'detail': 'not found', 'id': node_id}, 404)
+#        return error_response({'detail': 'not found', 'id': node_id}, 404)
 #    db.execute('delete from nodes where id = %s', (node_id,))
-#    return ok({'id': node_id})
+#    return success_response({'id': node_id})
 
 #@app.route('/', subdomain='<subdomain>')
 #def subdomain_dispatch(subdomain):

@@ -5,7 +5,15 @@ from flask import redirect, jsonify
 
 import session
 
-class NotFound(Exception): pass
+class NotFound(Exception):
+
+    pass
+
+class Response(Exception):
+
+    def __init__(self, data):
+        super(Response, self).__init__('Response with data: {}'.format(data))
+        self.data = data
 
 def allow_public_access(f):
     @functools.wraps(f)
@@ -31,7 +39,7 @@ def require_login(*args, **login_info):
     else:
         return lambda f: functools.wraps(f)(wrapper)
 
-def ok(data=None):
+def success_response(data=None):
     if data is None:
         data = {}
     elif isinstance(data, (str, unicode)):
@@ -39,7 +47,7 @@ def ok(data=None):
     data.update({'errno': 0})
     return jsonify(**data)
 
-def error(detail, status_code=400):
+def error_response(detail, status_code=400):
     if isinstance(detail, dict):
         data = detail
         detail = detail.get('detail', '')
@@ -52,10 +60,6 @@ def error(detail, status_code=400):
     resp = jsonify(**data)
     resp.status_code = status_code
     return resp
-error_response = error
-
-def notfound():
-    return error('not found', 404)
 
 _datetime_format = '%Y-%m-%d %H:%M:%S.%f'
 

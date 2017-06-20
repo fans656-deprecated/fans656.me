@@ -67,9 +67,10 @@ if __name__ == '__main__':
     node = {
         'data': 'foo',
         'links': [
-            {'rel': 'foo', 'dst': 'foo'},
-            {'rel': 'type', 'dst': 1}
-        ]
+            {'rel': 'foo', 'dst': {'data': 'hi'}},
+            {'rel': 'ref', 'dst': 0},
+        ],
     }
 
-    pprint(post_node(node))
+    r = post_node(node)
+    pprint(r)

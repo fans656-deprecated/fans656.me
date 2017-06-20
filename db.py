@@ -28,20 +28,31 @@ def getdb():
 def connect_db():
     return DB.connect(**conn_params)
 
-def execute(*sql):
-    with getdb() as c:
+def execute(*sql, **kwargs):
+    cursor = kwargs.get('cursor')
+    if cursor:
+        c = cursor
         c.execute(*sql)
+    else:
+        with getdb() as c:
+            c.execute(*sql)
 
-def query(*sql):
-    with getdb() as c:
+def query(*sql, **kwargs):
+    cursor = kwargs.get('cursor')
+    if cursor:
+        c = cursor
         c.execute(*sql)
         r = c.fetchall()
-        if r and len(r[0]) == 1:
-            r = [t[0] for t in r]
-        return r
+    else:
+        with getdb() as c:
+            c.execute(*sql)
+            r = c.fetchall()
+    if r and len(r[0]) == 1:
+        r = [t[0] for t in r]
+    return r
 
-def queryone(*sql):
-    r = query(*sql)
+def queryone(*sql, **kwargs):
+    r = query(*sql, **kwargs)
     return r[0] if r else None
 
 def init_db(purge=False, quite=False):
