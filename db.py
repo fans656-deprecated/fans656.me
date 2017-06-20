@@ -104,6 +104,13 @@ def managedb():
               config.db_username,
               config.db_password))
 
+def insert_meta_nodes():
+    from node import Node
+    blog = Node('blog')
+    blog.link('ref', blog)
+    blog.graph.dump()
+
 if __name__ == '__main__':
     #init_db()
+    #insert_meta_nodes()
     managedb()

@@ -48,6 +48,9 @@ def curl(args, url):
 def post_node(json_node):
     return post('/api/node', json_node)
 
+def put_node(node_id, node_literal):
+    return put('/api/node/{}'.format(node_id), node_literal)
+
 def delete_node(node_id):
     return delete('/api/node/{}'.format(node_id))
 
@@ -65,10 +68,9 @@ if __name__ == '__main__':
     #}))
 
     node = {
-        'data': 'foo',
+        'data': 'a',
         'links': [
-            {'rel': 'foo', 'dst': {'data': 'hi'}},
-            {'rel': 'ref', 'dst': 0},
+            {'rel': 'type', 'dst': 'blog'},
         ],
     }
 

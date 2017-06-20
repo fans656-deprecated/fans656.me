@@ -49,6 +49,7 @@ export class Blogs extends Component {
         <div className="ctime datetime">
           <Link to={url}>{ctime}</Link>
         </div>
+        <div className="hr"/>
       </div>
     });
     return <div>

@@ -12,6 +12,9 @@ def api(method, url, schema, **comments):
         @functools.wraps(f)
         def f_(*args, **kwargs):
             params = get_params(method)
+            print 'got params'
+            print params
+            print
             try:
                 params = schema.validate_and_convert(params)
             except ConversionError as e:

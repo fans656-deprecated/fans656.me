@@ -1,3 +1,4 @@
+# coding: utf-8
 import itertools
 from datetime import datetime
 
@@ -7,7 +8,6 @@ import db
 from utils import NotFound
 
 def query(*node_ids, **rels):
-
     def get_node(id_to_node, node_id):
         if node_id not in id_to_node:
             node = id_to_node[node_id] = Node(node_id)
@@ -27,10 +27,12 @@ def query(*node_ids, **rels):
         where id in (
             select l.src from links as l inner join nodes as n
             on l.dst = n.id and {preds}
-            order by n.ctime desc
-        )
+        ) order by ctime desc
         '''.format(preds=preds)
-    node_ids = set(node_ids) & set(db.query(sql))
+    if node_ids:
+        node_ids = set(node_ids) & set(db.query(sql))
+    else:
+        node_ids = db.query(sql)
     nodes = map(Node, node_ids)
     id_to_node = {n.id: n for n in nodes}
     for node in nodes:
@@ -43,7 +45,7 @@ def get_node_by_id(node_id):
     try:
         return query(node_id)[0]
     except IndexError:
-        return None
+        raise
 
 class Node(object):
 
@@ -87,16 +89,21 @@ class Node(object):
             ('id', self.id),
             ('data', self.data),
             ('ctime', self.ctime),
-            ('links', map(str, self.links)),
+            ('links', [{
+                'id': link.id,
+                'rel': link.rel,
+                'dst': link.dst.id,
+                'detail': unicode(link),
+            } for link in self.links]),
         ))
 
-    def __repr__(self):
+    def __unicode__(self):
         data = self.data
         if len(data) > 10:
             text = data[:7] + '...'
         else:
             text = data
-        return 'Node(id={}, data={})'.format(self.id, text)
+        return u'Node(id={}, data={})'.format(self.id, text)
 
     def show(self):
         print '=' * 40, 'Node({})'.format(self.id)
@@ -109,6 +116,8 @@ class Node(object):
         print
 
     def dump(self):
+        print 'dumping node'
+        print dict(self)
         if not self.id:
             with db.getdb() as c:
                 db.execute('insert into nodes (data, ctime) values (%s,%s)',
@@ -116,27 +125,20 @@ class Node(object):
                 self.id = db.queryone('select last_insert_id() from nodes',
                                       cursor=c)
         else:
+            # update data
             db.execute('update nodes set data = %s where id = %s',
                        (self.data.encode('utf8'), self.id))
+
+            # delete links
             old_ids = db.query(
                 'select id from links where src = %s', (self.id,))
             new_ids = each(self.links).id
-            old_ids, new_ids = set(old_ids), set(new_ids)
-            to_delete_ids = old_ids - new_ids
-            to_add_ids = new_ids - old_ids
-            to_update_ids = old_ids & new_ids
-            for link_id in to_delete_ids:
+            for link_id in set(old_ids) - set(new_ids):
                 db.execute('delete from links where id = %s', link_id)
 
-            to_update_links = [link for link in self.links
-                               if link.id in to_update_links]
-            for link in to_update_links:
-                db.execute('update links set rel=%s, src=%s, dst=%s',
-                           (link.rel, link.src.id, link.dst.id))
-
-            to_add_links = [link for link in self.links
-                            if link.id in to_add_links]
-            each(to_add_links).dump()
+            # new links and updading links are handled by self.graph.dump
+            # so this dump should not be used directly
+            # I might write a independent Node lib in the future
 
     @property
     def graph(self):
@@ -151,7 +153,6 @@ class Node(object):
         while q:
             node = q.pop()
             nodes.append(node)
-            q.extend(n for n in each(node.links).dst if n not in nodes)
         return nodes
 
 class Link(object):
@@ -181,12 +182,19 @@ class Link(object):
         self.dst = dst_node
 
     def __repr__(self):
-        return 'Link({}, {}, {}, rel={})'.format(
-            self.id, self.src_id, self.dst_id, repr(self.rel))
+        return unicode(self).encode('utf8')
 
-    def __str__(self):
-        return 'Link(id={}): {} ---> {}'.format(
-            self.id, self.src, self.dst)
+    def __unicode__(self):
+        if hasattr(self, 'src'):
+            src = self.src
+        else:
+            src = 'Node(id={})'.format(self.src_id)
+        if hasattr(self, 'dst'):
+            dst = self.dst
+        else:
+            dst = 'Node(id={})'.format(self.dst_id)
+        return u'Link(id={}, rel={}): {} ---> {}'.format(
+            self.id, self.rel, src, dst)
 
     def dump(self):
         if not self.id:
@@ -198,12 +206,20 @@ class Link(object):
                             self.dst.id), cursor=c)
                 self.id = db.queryone('select last_insert_id() from links',
                                       cursor=c)
+        else:
+            db.execute('update links set rel=%s, src=%s, dst=%s '
+                       'where id = %s',
+                       (self.rel, self.src.id, self.dst.id, self.id))
 
 class Graph(object):
 
     def __init__(self, nodes, links):
         self.nodes = nodes
         self.links = links
+        print
+        print 'graph'
+        self.show()
+        print
 
     def dump(self):
         each(self.nodes).dump()
@@ -218,30 +234,29 @@ class Graph(object):
             print link
         print
 
+def make_node_with_links_from_node_id(node_id):
+    nodes = []
+    node_ids = set([node_id])
+    q = [Node(node_id)]
+    while q:
+        node = q.pop()
+        nodes.append(node)
+        for link in node.links:
+            if link.dst_id not in node_ids:
+                neighbor = Node(link.dst_id)
+                node_ids.add(neighbor.id)
+                q.append(neighbor)
+    id_to_node = {node.id: node for node in nodes}
+    for node in nodes:
+        for link in node.links:
+            link.src = id_to_node[link.src]
+            link.dst = id_to_node[link.dst]
+    return id_to_node[node_id]
+
 if __name__ == '__main__':
     from f6 import each
 
-    #a = Node('foo')
-    #b = Node('bar')
-    #a.link('a', b)
-    #a.graph.show()
-
-    #raw_input('to db')
-    #a.graph.dump()
-    #a.graph.show()
-
-    raw_input('from db')
-    a = get_node_by_id(1)
-    a.graph.show()
-
-    raw_input('modify content')
-    a.data = 'foo modified'
-    a.graph.dump()
-
-    raw_input('modify links')
-    a.links = []
-    a.graph.dump()
-
-    # from db
-    # modify
-    # to db
+    #query(type='blog')
+    node = Node(u'好像可以了')
+    s = unicode(node)
+    print s

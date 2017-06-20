@@ -1,6 +1,9 @@
 import functools
 import traceback
 
+from node import Node, query
+from utils import Response, NotFound
+
 class Type(object):
 
     def __init__(self, coerce=None, optional=None, default=None):
@@ -227,6 +230,57 @@ String = StringType()
 Integer = IntegerType()
 Float = FloatType()
 List = ListType()
+
+##################################################### node related
+
+class ThisNode(object):
+
+    pass
+
+def node_from_id(node_id):
+    if node_id == 0:
+        return ThisNode()
+    else:
+        return Node(node_id)
+
+def node_from_ref(ref):
+    nodes = query(ref=ref)
+    if not nodes:
+        raise NotFound('no node with ref={}'.format(ref))
+    elif len(nodes) == 1:
+        return nodes[0]
+    else:
+        raise Response({
+            'detail': 'multiple nodes with ref={} are found'.format(ref),
+            'ids': [node.id for node in nodes]
+        })
+
+def node_from_literal(literal):
+    node = Node(literal['data'])
+    links = literal['links']
+    for link in links:
+        rel = link['rel']
+        dst = link['dst']
+        if isinstance(dst, ThisNode):
+            dst = node
+        node.link(rel, dst)
+    return node
+
+Link = Dict({})
+
+NodeLiteral = Dict({
+    'data': String,
+    'links': List(Link, default=lambda: []),
+}, coerce=node_from_literal)
+
+Link.update({
+    'rel': String,
+    'dst': (
+        String(coerce=node_from_ref)
+        | Integer(coerce=node_from_id)
+        | NodeLiteral
+    ),
+})
 
 if __name__ == '__main__':
 
