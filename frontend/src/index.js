@@ -5,6 +5,8 @@ import {
   BrowserRouter as Router, Link, Route, withRouter
 } from 'react-router-dom'
 
+import Gallery from './gallery'
+
 import { Editor, Plain } from 'slate'
 
 import IconGithub from 'react-icons/lib/go/mark-github'
@@ -33,6 +35,7 @@ const Nav = () => (
     <ul>
       <li key="home"><Link to="/">Home</Link></li>
       <li key="blog"><Link to="/blog">Blog</Link></li>
+      <li key="gallery"><Link to="/gallery">Gallery</Link></li>
       <li key="about"><Link to="/about">About</Link></li>
     </ul>
   </nav>
@@ -215,6 +218,7 @@ class App extends React.Component {
           }/>
           <Route path="/about" component={About}/>
           <Route path="/login" component={Login}/>
+          <Route path="/gallery" component={Gallery}/>
 
           {/* blogs */}
           <Route exact path="/blog" render={() => 
