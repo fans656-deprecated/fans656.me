@@ -6,12 +6,21 @@ from f6 import each
 import db
 from utils import NotFound
 
-def query(**options):
-    if not options:
+def query(*node_ids, **rels):
+
+    def get_node(id_to_node, node_id):
+        if node_id not in id_to_node:
+            node = id_to_node[node_id] = Node(node_id)
+            for link in node.links:
+                link.src = get_node(id_to_node, link.src_id)
+                link.dst = get_node(id_to_node, link.dst_id)
+        return id_to_node[node_id]
+
+    if not rels:
         preds = ['1']
     else:
         preds = ["l.rel = '{}' and n.data = '{}'".format(rel, data)
-                 for rel, data in options.items()]
+                 for rel, data in rels.items()]
     preds = ' and '.join(preds)
     sql = '''
         select id from nodes
@@ -21,7 +30,8 @@ def query(**options):
             order by n.ctime desc
         )
         '''.format(preds=preds)
-    nodes = map(Node, db.query(sql))
+    node_ids = set(node_ids) & set(db.query(sql))
+    nodes = map(Node, node_ids)
     id_to_node = {n.id: n for n in nodes}
     for node in nodes:
         for link in node.links:
@@ -29,13 +39,11 @@ def query(**options):
             link.dst = get_node(id_to_node, link.dst_id)
     return nodes
 
-def get_node(id_to_node, node_id):
-    if node_id not in id_to_node:
-        node = id_to_node[node_id] = Node(node_id)
-        for link in node.links:
-            link.src = get_node(id_to_node, link.src_id)
-            link.dst = get_node(id_to_node, link.dst_id)
-    return id_to_node[node_id]
+def get_node_by_id(node_id):
+    try:
+        return query(node_id)[0]
+    except IndexError:
+        return None
 
 class Node(object):
 
@@ -60,11 +68,10 @@ class Node(object):
         self.data = data.decode('utf8')
         self.ctime = ctime
 
-        self.links = [
-            Link(link_id, self.id, dst_id, rel=rel) for link_id, dst_id, rel in
-            db.query('select id, dst, rel from links where src = %s',
-                     (self.id,))
-        ]
+        link_datas = db.query(
+            'select id, dst, rel from links where src = %s', (self.id,))
+        self.links = [Link(link_id, self.id, dst_id, rel=rel)
+                      for link_id, dst_id, rel in link_datas]
 
     def from_data(self, data):
         self.id = None
@@ -84,7 +91,12 @@ class Node(object):
         ))
 
     def __repr__(self):
-        return 'Node(id={})'.format(self.id)
+        data = self.data
+        if len(data) > 10:
+            text = data[:7] + '...'
+        else:
+            text = data
+        return 'Node(id={}, data={})'.format(self.id, text)
 
     def show(self):
         print '=' * 40, 'Node({})'.format(self.id)
@@ -104,7 +116,27 @@ class Node(object):
                 self.id = db.queryone('select last_insert_id() from nodes',
                                       cursor=c)
         else:
-            pass  # TODO: update
+            db.execute('update nodes set data = %s where id = %s',
+                       (self.data.encode('utf8'), self.id))
+            old_ids = db.query(
+                'select id from links where src = %s', (self.id,))
+            new_ids = each(self.links).id
+            old_ids, new_ids = set(old_ids), set(new_ids)
+            to_delete_ids = old_ids - new_ids
+            to_add_ids = new_ids - old_ids
+            to_update_ids = old_ids & new_ids
+            for link_id in to_delete_ids:
+                db.execute('delete from links where id = %s', link_id)
+
+            to_update_links = [link for link in self.links
+                               if link.id in to_update_links]
+            for link in to_update_links:
+                db.execute('update links set rel=%s, src=%s, dst=%s',
+                           (link.rel, link.src.id, link.dst.id))
+
+            to_add_links = [link for link in self.links
+                            if link.id in to_add_links]
+            each(to_add_links).dump()
 
     @property
     def graph(self):
@@ -153,11 +185,8 @@ class Link(object):
             self.id, self.src_id, self.dst_id, repr(self.rel))
 
     def __str__(self):
-        if self.id:
-            return '{}: {} (id={})'.format(
-                self.rel, self.dst.data[:10], self.id)
-        else:
-            return '{}: {}'.format(self.rel, self.dst.data[:10])
+        return 'Link(id={}): {} ---> {}'.format(
+            self.id, self.src, self.dst)
 
     def dump(self):
         if not self.id:
@@ -192,8 +221,27 @@ class Graph(object):
 if __name__ == '__main__':
     from f6 import each
 
-    a = Node('foo')
-    b = Node('bar')
-    a.link('a', b)
-    a.graph.dump()
+    #a = Node('foo')
+    #b = Node('bar')
+    #a.link('a', b)
+    #a.graph.show()
+
+    #raw_input('to db')
+    #a.graph.dump()
+    #a.graph.show()
+
+    raw_input('from db')
+    a = get_node_by_id(1)
     a.graph.show()
+
+    raw_input('modify content')
+    a.data = 'foo modified'
+    a.graph.dump()
+
+    raw_input('modify links')
+    a.links = []
+    a.graph.dump()
+
+    # from db
+    # modify
+    # to db
