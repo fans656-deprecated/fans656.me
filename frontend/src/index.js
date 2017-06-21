@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
+import $ from 'jquery'
 import {
   BrowserRouter as Router, Link, Route, withRouter
 } from 'react-router-dom'
@@ -38,7 +39,7 @@ class App extends React.Component {
     return (
       <div id="root-page">
         <Header user={this.state.user}/>
-        <main>
+        <main id="main">
           <Route exact path="/" render={() =>
             <h1>Home todo</h1>
           }/>
@@ -127,16 +128,21 @@ class Login extends Component {
 
   render() {
     return (
-      <div className="center narrow center-children" style={{marginTop: '10%'}}>
-        <form className="login" onSubmit={this.doLogin}>
-          <input name="username"
+      <div id="login-page">
+        <form className="dialog" onSubmit={this.doLogin}>
+          <h1>Login</h1>
+          <input
+            type="text"
+            name="username"
             defaultValue="a"
             placeholder="Username"
             ref={input => this.username = input}
           />
-          <input name="password"
+          <input
+            type="password"
+            name="password"
             defaultValue="b"
-            placeholder="Password" type="password"
+            placeholder="Password" 
             ref={input => this.password = input}
           />
           <button onClick={this.doLogin}>Login</button>

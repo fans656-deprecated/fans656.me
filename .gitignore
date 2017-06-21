@@ -4,3 +4,4 @@ secret*.py
 nginx.conf
 uwsgi.ini
 local.local
+package-lock.json
