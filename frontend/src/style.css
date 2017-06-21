@@ -1,6 +1,6 @@
 :root {
   --bg-color: aliceblue;
-  --bg-lighter-color: #DDE2E8;
+  --bg-lighter-color: azure;
   --fg-color: #333333;
   --fg-lighter-color: #444444;
   --info-color: #aaaaaa;
@@ -26,6 +26,26 @@ body {
   background: var(--bg-color);
   color: var(--fg-color);
   font-family: 'Arial';
+}
+
+#root-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+button {
+  min-width: 80px;
+  height: 32px;
+  line-height: 32px;
+  background: white;
+  color: #333;
+  border: none;
+  box-shadow: 0 1px 3px #aaa;
+}
+
+button:hover {
+  cursor: pointer;
 }
 
 /* ------------------------------------------ header & footer */
@@ -195,11 +215,6 @@ input, .editor {
   background: var(--input-bg-color);
   border: none;
   box-shadow: inset 0 0 3px #999;
-}
-
-button {
-  width: 80px;
-  height: 32px;
 }
 
 form label {

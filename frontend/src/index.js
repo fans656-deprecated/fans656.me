@@ -4,12 +4,27 @@ import {
   BrowserRouter as Router, Link, Route, withRouter
 } from 'react-router-dom'
 
-import Gallery from './gallery'
-import About from './about'
 import { Blogs, ViewBlog, EditBlog } from './blog'
+import Gallery from './Gallery'
+import About from './About'
+import Files from './Files'
+
 import { fetchJSON, getCurrentUser } from './utils'
 
 import './style.css'
+
+const Nav = ({user}) => {
+  return <nav>
+    <ul>
+      <li><Link to="/">Home</Link></li>
+      <li><Link to="/blog">Blog</Link></li>
+      <li><Link to="/gallery">Gallery</Link></li>
+      <li><Link to="/about">About</Link></li>
+      {user && <li>|</li>}
+      {user && <li><Link to="/files">Files</Link></li>}
+    </ul>
+  </nav>
+}
 
 class App extends React.Component {
   constructor(props) {
@@ -19,26 +34,9 @@ class App extends React.Component {
     }
   }
 
-  componentDidMount() {
-    getCurrentUser((resp) => {
-      this.setState({
-        user: !resp.errno ? resp.user : null
-      });
-    });
-  }
-
-  onLogout = () => {
-    this.setState({user: null});
-    this.props.history.push('/');
-  }
-
   render() {
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh'
-      }}>
+      <div id="root-page">
         <Header user={this.state.user}/>
         <main>
           <Route exact path="/" render={() =>
@@ -48,6 +46,7 @@ class App extends React.Component {
           <Route path="/login" component={Login}/>
           <Route path="/gallery" component={Gallery}/>
 
+          {/* ---------------------------------------------- blog */}
           {/* blogs */}
           <Route exact path="/blog" render={() => 
             <Blogs owner="fans656" user={this.state.user}/>
@@ -73,6 +72,9 @@ class App extends React.Component {
               onLogout={this.onLogout}
             />
           }/>
+
+          {/* ---------------------------------------------- personal */}
+          <Route path="/files" component={Files}/>
         </main>
         <footer className="reverse-color">
           <Link to="/">fans656's site</Link>
@@ -80,27 +82,29 @@ class App extends React.Component {
       </div>
     );
   }
+
+  componentDidMount() {
+    getCurrentUser((resp) => {
+      this.setState({
+        user: !resp.errno ? resp.user : null
+      });
+    });
+  }
+
+  onLogout = () => {
+    this.setState({user: null});
+    this.props.history.push('/');
+  }
 }
 App = withRouter(App);
 
 const Header = (props) => (
   <header className="reverse-color">
-    <Nav/>
+    <Nav user={props.user}/>
     {props.user
       ? <UserName {...props.user}/>
       : <Link to="/login">Login</Link>}
   </header>
-);
-
-const Nav = () => (
-  <nav>
-    <ul>
-      <li key="home"><Link to="/">Home</Link></li>
-      <li key="blog"><Link to="/blog">Blog</Link></li>
-      <li key="gallery"><Link to="/gallery">Gallery</Link></li>
-      <li key="about"><Link to="/about">About</Link></li>
-    </ul>
-  </nav>
 );
 
 const UserName = ({username}) => (
