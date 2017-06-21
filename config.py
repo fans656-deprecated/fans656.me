@@ -1,5 +1,9 @@
-leetcode_url = 'https://raw.githubusercontent.com/fans656/leetcode/master/leetcode.txt'
-leetcode_css_url = 'https://raw.githubusercontent.com/fans656/leetcode/master/style.css'
+import os
+
+FILES_ROOT = os.path.join(os.path.dirname(__file__), 'files/')
+FILES_ROOT = os.path.abspath(FILES_ROOT)
+
+CHUNK_SIZE = 4096
 
 session_duration_days = 7
 sweep_expires_probability = 1.0 / 1000

@@ -5,3 +5,4 @@ nginx.conf
 uwsgi.ini
 local.local
 package-lock.json
+/files

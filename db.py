@@ -83,7 +83,7 @@ def init_db(purge=False, quite=False):
     ))
     create_table('nodes', (
         'id serial,'
-        'data blob,'
+        'data text,'
         'ctime datetime default current_timestamp,'
         'mtime datetime default current_timestamp on update current_timestamp'
     ), purge=True)
@@ -111,6 +111,6 @@ def insert_meta_nodes():
     blog.graph.dump()
 
 if __name__ == '__main__':
-    #init_db()
-    #insert_meta_nodes()
+    init_db()
+    insert_meta_nodes()
     managedb()

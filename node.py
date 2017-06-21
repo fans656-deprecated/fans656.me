@@ -5,7 +5,7 @@ from datetime import datetime
 from f6 import each
 
 import db
-from utils import NotFound
+from errors import NotFound
 
 def query(*node_ids, **rels):
     def get_node(id_to_node, node_id):
@@ -116,8 +116,6 @@ class Node(object):
         print
 
     def dump(self):
-        print 'dumping node'
-        print dict(self)
         if not self.id:
             with db.getdb() as c:
                 db.execute('insert into nodes (data, ctime) values (%s,%s)',
@@ -216,10 +214,6 @@ class Graph(object):
     def __init__(self, nodes, links):
         self.nodes = nodes
         self.links = links
-        print
-        print 'graph'
-        self.show()
-        print
 
     def dump(self):
         each(self.nodes).dump()

@@ -8,12 +8,18 @@ import node
 from node import Node, get_node_by_id
 import user
 import session
+import file_util
+import utils
+import config
 from api import api, API
 from utils import (
     success_response, error_response,
     check,
     strftime, strptime,
-    NotFound,
+)
+from errors import (
+    NotFound, Existed, ServerError, NotAllowed, BadRequest,
+    Conflict_409, InternalServerError_500, Forbidden_403, BadRequest_400,
 )
 from paramtypes import (
     String, Integer, Dict, List,
@@ -26,20 +32,6 @@ build_dir = './frontend/build'
 app = flask.Flask(__name__, static_folder=build_dir)
 CORS(app)
 API(app)
-
-############################################################# main
-
-@app.route('/static/<path:path>')
-def send_static(path):
-    fpath = os.path.join(build_dir, 'static', path)
-    dirname = os.path.dirname(fpath)
-    fname = os.path.basename(fpath)
-    print fpath
-    return flask.send_from_directory(dirname, fname)
-
-@app.route('/')
-def index(path=''):
-    return flask.send_from_directory(build_dir, 'index.html')
 
 ############################################################# user
 
@@ -168,6 +160,76 @@ def get_node_by_ref(ref):
 def delete_node(node_id):
     return error_response('currently node delete is not supported')
 
+############################################################# files
+
+@app.route('/api/file/<path:fpath>', methods=['POST'])
+def post_file(fpath):
+    isdir = request.args.get('isdir')
+    if isdir:
+        return success_response()
+    else:
+        filesize = int(request.headers.get('Content-Length'))
+        try:
+            file_util.save(fpath, filesize)
+            return success_response({
+                'fpath': fpath,
+                'size': filesize,
+            })
+        except Existed as e:
+            return error_response(e.message, Conflict_409)
+        except NotAllowed as e:
+            return error_response(e.message, Forbidden_403)
+        except ServerError as e:
+            return error_response(e.message, InternalServerError_500)
+        except BadRequest as e:
+            return error_response(e.message, BadRequest_400)
+        except Exception as e:
+            return error_response(e.message)
+
+@app.route('/file/<path:fpath>')
+def get_file(fpath):
+    user_fpath = fpath
+    fpath = file_util.rooted_path(config.FILES_ROOT, fpath)
+    if not fpath:
+        return error_response({
+            'detail': 'invalid path',
+            'path': user_fpath,
+        })
+    if not os.path.exists(fpath):
+        return error_response({
+            'detail': 'not found',
+            'path': user_fpath,
+        }, 404)
+    dirname = os.path.dirname(fpath)
+    fname = os.path.basename(fpath)
+    return flask.send_from_directory(dirname, fname)
+
+@app.route('/api/file')
+def list_root_file_directory():
+    return success_response({
+        'files': file_util.list_file_directory('')
+    })
+
+@app.route('/api/file/<path:dirpath>')
+def list_file_directory(dirpath):
+    return success_response({
+        'files': file_util.list_file_directory(dirpath)
+    })
+
+############################################################# main
+
+@app.route('/static/<path:path>')
+def send_static(path):
+    fpath = os.path.join(build_dir, 'static', path)
+    dirname = os.path.dirname(fpath)
+    fname = os.path.basename(fpath)
+    return flask.send_from_directory(dirname, fname)
+
+@app.route('/')
+@app.route('/<path:path>')
+def index(path=''):
+    return flask.send_from_directory(build_dir, 'index.html')
+
 ############################################################# misc
 
 #@app.route('/', subdomain='<subdomain>')
@@ -206,4 +268,7 @@ def override_url_for():
     return dict(url_for=f_)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=6561, threaded=True, debug=True)
+    #from gevent.wsgi import WSGIServer
+    #server = WSGIServer(('', 6561), app)
+    #server.serve_forever()
+    app.run(host='0.0.0.0', port=6561, debug=True)

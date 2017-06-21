@@ -1,3 +1,5 @@
+import { BACKEND_HOST } from './conf'
+
 const addYears = (dt, years) => {dt.setFullYear(dt.getFullYear() + years); return dt;}
 const yearsAdded = (dt, years) => addYears(new Date(dt), years);
 
@@ -43,10 +45,8 @@ export function getDateDiff(pre, now) {
   return [years, months, days, hours, minutes, seconds];
 }
 
-const PREFIX = 'http://ub:6561';
-
 export async function fetchJSON(method, url, data) {
-  url = PREFIX + url;
+  url = BACKEND_HOST + url;
 
   const headers = new Headers();
   headers.append('Content-Type', 'application/json');

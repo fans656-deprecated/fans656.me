@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
-import $ from 'jquery'
 import {
   BrowserRouter as Router, Link, Route, withRouter
 } from 'react-router-dom'

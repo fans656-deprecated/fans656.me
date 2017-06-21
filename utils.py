@@ -1,13 +1,10 @@
+import os
 import functools
 from datetime import datetime
 
 from flask import redirect, jsonify
 
 import session
-
-class NotFound(Exception):
-
-    pass
 
 class Response(Exception):
 

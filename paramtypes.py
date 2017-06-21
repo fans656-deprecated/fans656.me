@@ -2,7 +2,8 @@ import functools
 import traceback
 
 from node import Node, query
-from utils import Response, NotFound
+from utils import Response
+from errors import NotFound
 
 class Type(object):
 
