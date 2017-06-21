@@ -1,6 +1,7 @@
 :root {
   --bg-color: aliceblue;
   --bg-lighter-color: azure;
+  --bg-darker-color: lightsteelblue;
   --fg-color: #333333;
   --fg-lighter-color: #444444;
   --info-color: #aaaaaa;
@@ -154,6 +155,37 @@ form > * {
   line-height: 2;
 }
 
+.blog pre, .blog code {
+  font-family: "Consolas", "Courier New", "monospace";
+  font-size: .9em;
+}
+
+.blog pre {
+  background: #e5f3ff;
+  padding: 1em;
+}
+
+.blog pre code {
+  background: #e5f3ff;
+}
+
+.blog code {
+  background: #cce7ff;
+  padding: 0 .3em;
+  border-radius: 1px;
+}
+
+.blog-content img {
+  max-width: 100%;
+  max-height: 80vh;
+  width: auto;
+  height: auto;
+}
+
+.blog-content a {
+  border-bottom: 1px dashed var(--fg-color);
+}
+
 .blog > .hr {
   width: 90%;
   border-bottom: 1px solid rgba(0,0,0,.05);
@@ -183,6 +215,16 @@ form > * {
   width: 100%;
   min-height: 40em;
   line-height: 1.5;
+}
+
+.panel {
+  filter: opacity(.1);
+  transition: .3s;
+}
+
+.panel:hover {
+  filter: opacity(1.0);
+  transition: .3s;
 }
 
 /* ------------------------------------------ */

@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 import { Link, withRouter } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
 import IconPlus from 'react-icons/lib/fa/plus'
+import $ from 'jquery'
 
 import { Icon } from './common'
 import { fetchJSON } from './utils'
@@ -21,6 +23,12 @@ export class Blogs extends Component {
 
   componentDidMount() {
     this.fetchBlogs();
+    $('.blog-content img').each((img) => {
+      console.log(img.attr('src'));
+      img.click(() => {
+        window.open(img.attr('src'), '_blank');
+      });
+    });
   }
 
   fetchBlogs = async () => {
@@ -33,15 +41,17 @@ export class Blogs extends Component {
     const user = this.props.user;
     const isOwner = user && owner === user.username;
     const blogs = this.state.blogNodes.map((node, i) => {
-      const paragraphs = node.data.split('\n').map((line, i) => (
-        <p key={i}>{line || <br/>}</p>
-      ));
       const ctime = new Date(node.ctime).toLocaleString()
       const url = `/blog/${node.id}` + (isOwner ? '/edit' : '');
       return <div className="blog" key={node.id}>
-        <div className="paragraphs">
-          {paragraphs}
-        </div>
+        <a
+          className="anchor"
+          href={url}
+          style={{position: 'absolute', left: '25%'}}
+        >
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        </a>
+        <ReactMarkdown className="blog-content" source={node.data}/>
         <div className="ctime datetime">
           <Link to={url}>{ctime}</Link>
         </div>
@@ -80,6 +90,16 @@ class EditBlog extends Component {
     if (this.props.id) {
       this.fetchBlog(this.props.id);
     }
+    $('#editor').keydown((e) => {
+      console.log(e);
+      // ctrl-enter
+      if (e.ctrlKey && e.keyCode == 13) {
+        $('#submit').click();
+      } else if (e.keyCode == 9 && !e.ctrlKey) {
+        e.preventDefault();
+        $('#editor')[0].value += '    ';
+      }
+    });
   }
 
   fetchBlog = async (id) => {
@@ -128,7 +148,7 @@ class EditBlog extends Component {
         onChange={this.onEditorTextChange}
         ref={(editor) => this.editor = editor}
       ></textarea>
-      <button className="submit" onClick={this.post}>Post</button>
+      <button id="submit" className="submit" onClick={this.post}>Post</button>
     </div>
   }
 }
@@ -138,7 +158,7 @@ export { EditBlog };
 class Panel extends Component {
   render() {
     return <div className="panel">
-      <Link to="/new-blog"><Icon type={IconPlus}/></Link>
+      <Link to="/new-blog"><Icon type={IconPlus} /></Link>
     </div>;
   }
 }
