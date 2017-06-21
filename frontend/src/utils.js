@@ -60,7 +60,7 @@ export async function fetchJSON(method, url, data) {
     Object.assign(options, {
       body: JSON.stringify(data)
     });
-  } else if (method === 'GET' && data || method == 'DELETE') {
+  } else if ((method === 'GET' && data) || method === 'DELETE') {
     let args = [];
     Object.keys(data).forEach((key) => {
       const value = data[key];
@@ -75,12 +75,12 @@ export async function fetchJSON(method, url, data) {
     }
   }
 
-  console.log('fetchJSON ' + url + ' :');
+  console.log('Client -----> Server | fetchJSON ' + url);
   console.log(options);
   const resp = await fetch(url, options);
   const json = resp.json();
   json.then((json) => {
-    console.log('fetchJSON ' + url + ' got json:');
+    console.log('Client <----- Server | fetchJSON ' + url);
     console.log(json);
   });
   return json;

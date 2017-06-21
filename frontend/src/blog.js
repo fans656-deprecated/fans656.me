@@ -1,13 +1,9 @@
 import React, { Component } from 'react'
-import { withRouter } from 'react-router-dom'
-import IconTop from 'react-icons/lib/fa/chevron-up'
+import { Link, withRouter } from 'react-router-dom'
 import IconPlus from 'react-icons/lib/fa/plus'
 
-import { Link } from 'react-router-dom'
+import { Icon } from './common'
 import { fetchJSON } from './utils'
-import {
-  NORMAL_ICON_SIZE, LARGE_ICON_SIZE, SMALL_ICON_SIZE
-} from './constants'
 
 export class Blog extends Component {
   render() {
@@ -142,7 +138,7 @@ export { EditBlog };
 class Panel extends Component {
   render() {
     return <div className="panel">
-      <Link to="/new-blog"><IconPlus size={NORMAL_ICON_SIZE}/></Link>
+      <Link to="/new-blog"><Icon type={IconPlus}/></Link>
     </div>;
   }
 }

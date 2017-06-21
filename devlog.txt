@@ -67,3 +67,9 @@ https://fans656.me/blog/123/edit    => blog by id edit
             }}
         ]
     }
+
+2017-06-21 03:22:23
+) upload files
+. react context (for `user`)
+    dont use context
+) refactor into different js
