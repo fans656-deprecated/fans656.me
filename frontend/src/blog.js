@@ -83,6 +83,7 @@ class EditBlog extends Component {
       blogNode: {},
       title: '',
       text: '',
+      tagsText: '',
     };
   }
 
@@ -93,9 +94,9 @@ class EditBlog extends Component {
     $('#editor').keydown((e) => {
       console.log(e);
       // ctrl-enter
-      if (e.ctrlKey && e.keyCode == 13) {
+      if (e.ctrlKey && e.keyCode === 13) {
         $('#submit').click();
-      } else if (e.keyCode == 9 && !e.ctrlKey) {
+      } else if (e.keyCode === 9 && !e.ctrlKey) {
         e.preventDefault();
         $('#editor')[0].value += '    ';
       }
@@ -120,14 +121,16 @@ class EditBlog extends Component {
   post = async () => {
     const node = this.state.blogNode;
     node.data = this.state.text;
+    node.links = [{rel: 'type', dst: 'blog'}];
+    const tags = this.state.tagsText.split(',').map((tag) => tag.trim());
+    for (const tag of tags) {
+      node.links.push({rel: 'tag', dst: {data: tag}});
+    }
+    console.log(node);
     let res;
     if (node.id) {
       res = await fetchJSON('PUT', `/api/node/${node.id}`, node);
     } else {
-      node.links = [
-        {'rel': 'type', 'dst': 'blog'},
-        //{'rel': 'title', 'dst': 
-      ];
       res = await fetchJSON('POST', '/api/node', node);
     }
     console.log('res');
@@ -148,6 +151,11 @@ class EditBlog extends Component {
         onChange={this.onEditorTextChange}
         ref={(editor) => this.editor = editor}
       ></textarea>
+      <input type="text"
+        style={{width: '100%'}}
+        value={this.state.tagsText}
+        onChange={({target}) => this.setState({tagsText: target.value})}
+      />
       <button id="submit" className="submit" onClick={this.post}>Post</button>
     </div>
   }

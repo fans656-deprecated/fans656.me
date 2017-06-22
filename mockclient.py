@@ -71,8 +71,11 @@ if __name__ == '__main__':
         'data': 'a',
         'links': [
             {'rel': 'type', 'dst': 'blog'},
+            {'rel': 'tag', 'dst': {'data': 'foo'}},
+            {'rel': 'tag', 'dst': {'data': 'bar'}},
         ],
     }
 
-    r = post_node(node)
+    #r = post_node(node)
+    r = get('/api/node?type=blog')
     pprint(r)

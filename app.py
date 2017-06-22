@@ -90,10 +90,15 @@ def get_me():
     })
 )
 def post_node(node):
+    print '\n' * 10
     print 'posting node'
     from pprint import pprint
     pprint(dict(node))
+    print 'posting node graph'
+    node.graph.show()
     node.graph.dump()
+    print 'posting node graph, after dump'
+    node.graph.show()
     return success_response({'node': dict(node)})
 
 @api('PUT', '/api/node/<int:node_id>', NodeLiteral,
@@ -144,7 +149,7 @@ def get_nodes():
 def api_get_node_by_id(node_id):
     try:
         node = get_node_by_id(node_id)
-        return success_response({'node': dict(node)})
+        return success_response({'node': node.to_dict(depth=2)})
     except NotFound:
         return error_response({'detail': 'not found', 'ref': ref})
 

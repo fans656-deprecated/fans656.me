@@ -8,6 +8,12 @@ import db
 from errors import NotFound
 
 def query(*node_ids, **rels):
+#    return query_with_depth(node_ids=node_ids, rels=rels, depth=1)
+#
+#def query_with_depth(node_ids=None, rels=None, depth=1):
+#    node_ids = node_ids || []
+#    resl = resl || {}
+
     def get_node(id_to_node, node_id):
         if node_id not in id_to_node:
             node = id_to_node[node_id] = Node(node_id)
@@ -57,6 +63,7 @@ class Node(object):
             data = id_or_data
             self.from_data(data)
         else:
+            print id_or_data
             raise ValueError('non supported init method')
 
     def from_id(self, node_id):
@@ -96,6 +103,12 @@ class Node(object):
                 'detail': unicode(link),
             } for link in self.links]),
         ))
+
+    def to_dict(self, depth=1):
+        return node_to_dict(self, depth)
+
+    def __repr__(self):
+        return unicode(self).encode('utf8')
 
     def __unicode__(self):
         data = self.data
@@ -151,6 +164,8 @@ class Node(object):
         while q:
             node = q.pop()
             nodes.append(node)
+            for link in self.links:
+                nodes.append(link.dst)
         return nodes
 
 class Link(object):
@@ -247,10 +262,22 @@ def make_node_with_links_from_node_id(node_id):
             link.dst = id_to_node[link.dst]
     return id_to_node[node_id]
 
+def node_to_dict(node, depth=1):
+    if depth == 0:
+        return node.id
+    return {
+        'data': node.data,
+        'links': [{
+            'id': link.id,
+            'rel': link.rel,
+            'dst': node_to_dict(link.dst, depth - 1)
+        } for link in node.links]
+    }
+
 if __name__ == '__main__':
     from f6 import each
+    from pprint import pprint
 
-    #query(type='blog')
-    node = Node(u'好像可以了')
-    s = unicode(node)
-    print s
+    node = query(type='blog')[0]
+    pprint(dict(node))
+    pprint(node.to_dict(depth=2))
