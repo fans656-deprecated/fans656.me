@@ -26,12 +26,9 @@ export default class About extends Component {
     const [years, months, days, hours, minutes, seconds] = getDateDiff(
         this.birth, this.state.now);
     return (
-      <div className="center narrow" style={{
-        textAlign: 'center',
-        marginTop: '50px',
-      }}>
+      <div>
         <div className="about">
-          <img src="/file/fans656.jpg" width="200px" alt="fans656"/>
+          <img src="/file/fans656.jpg" alt="fans656"/>
           <p className="nickname">fans656</p>
           <p style={{fontSize: '0.4em'}}> is up running for </p>
           <div className="age">
