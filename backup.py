@@ -1,42 +1,49 @@
 import os
+from datetime import datetime
 
 import config
 
-root = config.BACKUP_REPO_DIR
+pause = True
 
-if not os.path.exists(root):
-    os.makedirs(root)
+def execute(cmd, replacecmd=None):
+    print
+    print replacecmd or cmd
+    if pause:
+        raw_input('=' * 8 + ' about to execute, press enter to execute...')
+    os.system(cmd)
 
-repo_file_dir = os.path.abspath(root) + '/'
-local_file_dir = os.path.abspath('./files')
-dump_fpath = os.path.join(root, '{}.sql'.format(config.db_name))
+if __name__ == '__main__':
+    root = config.BACKUP_REPO_DIR
 
-print 'rsync {} to {}'.format(local_file_dir, repo_file_dir)
-raw_input()
-os.system('rsync -a {} {}'.format(local_file_dir, repo_file_dir))
+    if not os.path.exists(root):
+        os.makedirs(root)
 
-print 'mysqldump {}'.format(config.db_name)
-raw_input()
-os.system('mysqldump -u{user} -p{pwd} {db} > {fpath}'.format(
-    user=config.db_username,
-    db=config.db_name,
-    pwd=config.db_password,
-    fpath=dump_fpath,
-))
+    repo_file_dir = os.path.abspath(root) + '/'
+    local_file_dir = os.path.abspath('./files')
+    dump_fpath = os.path.join(root, '{}.sql'.format(config.db_name))
 
-os.chdir(root)
-if not os.path.exists('.git'):
-    print 'git init at {}'.format(os.path.abspath('.'))
-    raw_input()
-    os.system('git init')
-    os.system('git remote origin add {}'.format(config.DATA_REMOTE_REPO))
+    # rsync files
+    execute('rsync -av {} {}'.format(local_file_dir, repo_file_dir))
 
-print 'git add & commit & push to {}'.format(config.DATA_REMOTE_REPO)
-raw_input()
-os.system('git add --all')
-os.system('git commit -m "{}"'.format(
-    datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-))
-os.system('git push origin master')
+    execute('mysqldump -u{user} -p{pwd} {db} > {fpath}'.format(
+        user=config.db_username,
+        db=config.db_name,
+        pwd=config.db_password,
+        fpath=dump_fpath,
+    ), replacecmd='Going to mysqldump {} to {}'.format(
+        config.db_name, dump_fpath,
+    ))
 
-print 'backed up at {}'.format(datetime.now())
+    execute('cd {}'.format(root))
+    execute('pwd')
+    if not os.path.exists('.git'):
+        execute('git init')
+        execute('git remote add origin {}'.format(config.DATA_REMOTE_REPO))
+
+    execute('git add --all')
+    execute('git commit -m "{}"'.format(
+        datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    ))
+    execute('git push origin master')
+
+    print 'backed up at {}'.format(datetime.now())
