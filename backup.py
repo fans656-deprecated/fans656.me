@@ -4,7 +4,7 @@ from datetime import datetime
 
 import config
 
-pause = True
+pause = False
 
 def execute(cmd, replacecmd=None):
     print
