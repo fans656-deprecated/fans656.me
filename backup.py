@@ -1,4 +1,5 @@
 import os
+import subprocess
 from datetime import datetime
 
 import config
@@ -34,10 +35,11 @@ if __name__ == '__main__':
         config.db_name, dump_fpath,
     ))
 
-    execute('cd {}'.format(root))
+    os.chdir(root)
     execute('pwd')
     if not os.path.exists('.git'):
         execute('git init')
+    if not subprocess.check_output('git remote -v', shell=True):
         execute('git remote add origin {}'.format(config.DATA_REMOTE_REPO))
 
     execute('git add --all')
