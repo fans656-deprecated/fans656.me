@@ -1,3 +1,18 @@
+#!/usr/bin/env python
+'''
+) BUG: home navigation reload
+    when in /blog?page=2 etc, then navigate to "Home"(/home) doesn't reload
+) BUG: pagination input
+    can't backspace on page "1"
+
+) blog/file ref
+) file explorer
+) node (a more robust lib with file support)
+    ) when delete, just mark (can set expire time)
+) TODO page
+    add todos, categoried by tags (long term, short term...)
+    version control
+'''
 import os
 import re
 import traceback
@@ -32,9 +47,7 @@ from paramtypes import (
     node_from_ref, node_from_id, node_from_literal,
 )
 
-build_dir = './frontend/build'
-
-app = flask.Flask(__name__, static_folder=build_dir)
+app = flask.Flask(__name__, static_folder=config.FRONTEND_BUILD_DIR)
 CORS(app)
 API(app)
 
@@ -229,7 +242,7 @@ def list_file_directory(dirpath):
 
 @app.route('/static/<path:path>')
 def send_static(path):
-    fpath = os.path.join(build_dir, 'static', path)
+    fpath = os.path.join(config.FRONTEND_BUILD_DIR, 'static', path)
     dirname = os.path.dirname(fpath)
     fname = os.path.basename(fpath)
     return flask.send_from_directory(dirname, fname)
@@ -237,7 +250,7 @@ def send_static(path):
 @app.route('/')
 @app.route('/<path:path>')
 def index(path=''):
-    return flask.send_from_directory(build_dir, 'index.html')
+    return flask.send_from_directory(config.FRONTEND_BUILD_DIR, 'index.html')
 
 ############################################################# misc
 

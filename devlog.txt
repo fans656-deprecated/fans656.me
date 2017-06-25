@@ -102,3 +102,14 @@ http://blog.sina.com.cn/fans656
 7.html的#45 blog太长，超出了mysql TEXT的长度...
 决定暂时用LONGTEXT解决(其实有个MEDIUMTEXT，但先这么用)
 以后有空好好思考下存储的问题，LONGTEXT会不会有性能问题
+
+2017-06-26 03:26:31
+) pagination input
+    can't backspace on page "1"
+) node (a more robust lib with file support)
+    ) when delete, just mark (can set expire time)
+) blog/file ref
+) TODO page
+    add todos
+    categoried by tags (long term, short term...)
+    version control

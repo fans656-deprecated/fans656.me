@@ -3,7 +3,7 @@ import os
 from flask import request
 
 import config
-from config import CHUNK_SIZE
+from config import FILE_RECEIVE_CHUNK_SIZE
 from errors import Existed, ServerError, BadRequest
 
 INVALID_CHARS = set(r'\*?"[]{}<>:;|=,~`!@#$%^&' + "'")
@@ -37,7 +37,7 @@ def save(fpath, total_size):
         with open(fpath, 'wb') as f:
             received_size = 0
             while received_size < total_size:
-                chunk = request.stream.read(CHUNK_SIZE)
+                chunk = request.stream.read(FILE_RECEIVE_CHUNK_SIZE)
                 if not chunk:
                     break
                 received_size += len(chunk)
