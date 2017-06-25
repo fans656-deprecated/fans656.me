@@ -5,8 +5,6 @@ import { Icon } from './common'
 
 import { getDateDiff } from './utils'
 
-import * as avatarJPG from './avatar.jpg'
-
 export default class About extends Component {
   constructor(props) {
     super(props);
@@ -32,8 +30,8 @@ export default class About extends Component {
         textAlign: 'center',
         marginTop: '50px',
       }}>
-        <img src={avatarJPG} width="200px" alt="fans656"/>
         <div className="about">
+          <img src="/file/fans656.jpg" width="200px" alt="fans656"/>
           <p className="nickname">fans656</p>
           <p style={{fontSize: '0.4em'}}> is up running for </p>
           <div className="age">
@@ -54,7 +52,7 @@ export default class About extends Component {
               <span className="unit">secs</span>
             </div>
           </div>
-          <hr/>
+          <div className="hr"/>
           <div className="links" style={{
             display: 'flex',
             justifyContent: 'center',

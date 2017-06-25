@@ -94,8 +94,10 @@ def query_by_ids(node_ids, depth=1):
 
 def query_by_id(node_id, depth=1):
     try:
-        return query_by_ids([node_id], depth)[0]
-    except IndexError:
+        nodes = query_by_ids([node_id], depth)
+        return next(n for n in nodes if n.id == node_id)
+    except Exception as e:
+        print utils.indented_exception(e)
         return None
 
 class Node(object):
@@ -120,7 +122,7 @@ class Node(object):
                     links=links_from_src_id(node_id))
 
     @staticmethod
-    def from_ref(self, ref):
+    def from_ref(ref):
         nodes = query_by_rels({'ref': ref}).nodes
         if not nodes:
             raise NotFound('no node with ref={}'.format(ref))
@@ -132,14 +134,42 @@ class Node(object):
                 'ids': [node.id for node in nodes]
             })
 
+    @staticmethod
+    def from_literal(literal):
+        try:
+            node = Node(literal['data'],
+                        ctime=literal.get('ctime'),
+                        )
+            for link in literal['links']:
+                rel = link['rel']
+                dst = link['dst']
+                if isinstance(dst, int):
+                    if dst == 0:
+                        dst = node
+                    else:
+                        dst = Node.from_id(dst)
+                elif isinstance(dst, (str, unicode)):
+                    dst = Node.from_ref(dst)
+                elif isinstance(dst, dict):
+                    dst = Node.from_literal(dst)
+                else:
+                    raise Exception('unknown node literal type')
+                node.link(rel, dst)
+            return node
+        except Exception as e:
+            exc = utils.indented_exception(e)
+            print exc
+            raise ValueError('bad literal {}'.format(literal)
+                             + '\n' + exc)
+
     def __eq__(self, o):
         return self.id == o.id
 
     def __hash__(self):
         return hash(self.id)
 
-    #def link(self, rel, dst_node):
-    #    self.links.append(Link(rel, self, dst_node))
+    def link(self, rel, dst_node):
+        self.links.append(Link(rel, self, dst_node))
 
     def __iter__(self):
         return iter((
@@ -245,7 +275,10 @@ class Link(object):
         self.dst = dst_node
 
     def __repr__(self):
-        return unicode(self).encode('utf8')
+        return 'Node(id={}, data="{}"...)'.format(
+            node.id, repr(node.data)[:20]
+        )
+        #return unicode(self).encode('utf8')
 
     def __unicode__(self):
         if hasattr(self, 'src'):
@@ -316,6 +349,7 @@ def node_to_dict(node, depth=1):
     if depth < 0:
         return node.id
     return {
+        'id': node.id,
         'data': node.data,
         'ctime': node.ctime,
         'links': [{
@@ -373,5 +407,6 @@ if __name__ == '__main__':
     #nodes = query_by_rels({'type': 'blog'}).nodes
     #nodes[4].graph.show()
     #print '-' * 70
-    node = query_by_id(1)
-    node.graph.show()
+    #node = query_by_id(1818)
+    #node.graph.show()
+    print Node.from_ref('blog')

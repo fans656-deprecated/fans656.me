@@ -17,10 +17,12 @@ const Nav = ({user}) => {
   return <nav>
     <ul>
       <li><Link to="/">Home</Link></li>
+      {/*
       <li><Link to="/blog">Blog</Link></li>
       <li><Link to="/gallery">Gallery</Link></li>
       <li><Link to="/book">Book</Link></li>
       <li><Link to="/movie">Movie</Link></li>
+      */}
       <li><Link to="/about">About</Link></li>
       {user && <li>|</li>}
       {user && <li><Link to="/files">Files</Link></li>}
@@ -42,7 +44,9 @@ class App extends React.Component {
         <Header user={this.state.user}/>
         <main id="main">
           <Switch>
-            <Route exact path="/" component={TodoPage}/>
+            <Route exact path="/" render={() => 
+              <Blogs owner="fans656" user={this.state.user}/>
+            }/>
             <Route exact path="/about" component={About}/>
             <Route exact path="/login" component={Login}/>
             <Route exact path="/gallery" component={Gallery}/>
@@ -138,14 +142,12 @@ class Login extends Component {
           <input
             type="text"
             name="username"
-            defaultValue="a"
             placeholder="Username"
             ref={input => this.username = input}
           />
           <input
             type="password"
             name="password"
-            defaultValue="b"
             placeholder="Password" 
             ref={input => this.password = input}
           />
@@ -187,13 +189,16 @@ Profile = withRouter(Profile);
 const TodoPage = (props) => {
   const url = props.match.url;
   return <div style={{
-    fontSize: '5em',
+    fontSize: '1em',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: '70vh',
   }}>
-    {'working on ' + url + '...'}
+    <div style={{textAlign: 'center'}}>
+      <h1>404</h1>
+      <p>oops, page not found</p>
+    </div>
   </div>
 }
 

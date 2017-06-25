@@ -40,7 +40,16 @@ def require_login(*args, **login_info):
     else:
         return lambda f: functools.wraps(f)(wrapper)
 
-require_me_login = require_login(username='fans656')
+def require_me_login(f):
+    @functools.wraps(f)
+    def f_(*args, **kwargs):
+        username = session.session_object().username
+        if username != 'fans656':
+            return error_response('you are not {}'.format(username))
+        if not username:
+            return error_response('you are not logged in')
+        return f(*args, **kwargs)
+    return f_
 
 def success_response(data=None):
     if data is None:

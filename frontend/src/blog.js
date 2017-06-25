@@ -187,11 +187,20 @@ export class Blog extends Component {
         <div className="right">
           <div className="tags">{tags}</div>
           <div className="ctime datetime">
-            <Link
-              className="info"
-              to={url}
-              title={new Date(node.ctime).toLocaleString()}
-            >{ctime}</Link>
+            {isOwner
+                ? (
+                  <Link
+                    className="info"
+                    to={url}
+                    title={new Date(node.ctime).toLocaleString()}
+                  >{ctime}</Link>
+                ) : (
+                  <span
+                    className="info"
+                    title={new Date(node.ctime).toLocaleString()}
+                  >{ctime}</span>
+                )
+            }
           </div>
         </div>
       </div>

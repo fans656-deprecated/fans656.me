@@ -9,7 +9,7 @@ from flask import request
 from flask_cors import CORS
 
 import node
-from node import Node, make_node_with_links_from_node_id
+from node import Node, query_by_id as query_node_by_id
 import user
 import session
 import file_util
@@ -20,6 +20,7 @@ from utils import (
     success_response, error_response,
     check,
     strftime, strptime,
+    require_me_login,
 )
 from errors import (
     NotFound, Existed, ServerError, NotAllowed, BadRequest,
@@ -67,55 +68,28 @@ def get_me():
 
 ############################################################# echo
 
-@app.route('/api/echo', methods=['GET', 'POST', 'PUT'])
-def echo():
-    args = request.args
-    content_type = request.headers.get('Content-Type')
-    try:
-        if content_type == 'application/json':
-            data = request.json
-        elif content_type == 'text/plain':
-            data = request.data
-        else:
-            return error_response(
-                'unsupported Content-Type {}'.format(content_type))
-    except Exception:
-        return error_response('malformed data?')
-    return success_response({
-        'args': args,
-        'data': data,
-    })
+#@app.route('/api/echo', methods=['GET', 'POST', 'PUT'])
+#def echo():
+#    args = request.args
+#    content_type = request.headers.get('Content-Type')
+#    try:
+#        if content_type == 'application/json':
+#            data = request.json
+#        elif content_type == 'text/plain':
+#            data = request.data
+#        else:
+#            return error_response(
+#                'unsupported Content-Type {}'.format(content_type))
+#    except Exception:
+#        return error_response('malformed data?')
+#    return success_response({
+#        'args': args,
+#        'data': data,
+#    })
 
 ############################################################# node
-
-#@api('POST', '/api/node', NodeLiteral,
-#
-#    example = {
-#        'data': 'this is the content',
-#        'links': [
-#            {'rel': 'type', 'dst': 'blog'},
-#            {'rel': 'title', 'dst': {'data': 'this is the title'}},
-#            {'rel': 'tag', 'dst': {'data': 'tag1'}},
-#            {'rel': 'tag', 'dst': {'data': 'tag2'}},
-#        ]
-#    },
-#
-#    where_NodeLiteral = Dict({
-#        'data': String,
-#        'links': List(Link, default=lambda: []),
-#    }, coerce=node_from_literal),
-#
-#    where_Link = Dict({
-#        'rel': String,
-#        'dst': (
-#            String(coerce=node_from_ref)
-#            | Integer(coerce=node_from_id)
-#            | NodeLiteral
-#        ),
-#    })
-#)
-#def post_node(node):
 @app.route('/api/node', methods=['POST'])
+@require_me_login
 def post_node():
     try:
         literal = request.json
@@ -126,38 +100,21 @@ def post_node():
         print detail
         return error_response(detail)
     print 'posted', node.data[:20], datetime.now()
-    return success_response({'node': dict(node)})
+    return success_response({'node': node.to_dict()})
 
-@api('PUT', '/api/node/<int:node_id>', NodeLiteral,
-
-    example = {
-        'data': 'this is the content',
-        'links': [
-            {'rel': 'type', 'dst': 'blog'},
-            {'rel': 'title', 'dst': {'data': 'this is the title'}},
-            {'rel': 'tag', 'dst': {'data': 'tag1'}},
-            {'rel': 'tag', 'dst': {'data': 'tag2'}},
-        ]
-    },
-
-    where_NodeLiteral = Dict({
-        'data': String,
-        'links': List(Link, default=lambda: []),
-    }, coerce=node_from_literal),
-
-    where_Link = Dict({
-        'rel': String,
-        'dst': (
-            String(coerce=node_from_ref)
-            | Integer(coerce=node_from_id)
-            | NodeLiteral
-        ),
-    })
-)
-def put_node(node, node_id):
-    node.id = node_id
-    node.graph.dump()
-    return success_response({'node': dict(node)})
+@app.route('/api/node/<int:node_id>', methods=['PUT'])
+@require_me_login
+def put_node(node_id):
+    old_node = query_node_by_id(node_id)
+    if not old_node:
+        return error_response('no node with id = {}'.format(node_id))
+    try:
+        new_node = Node.from_literal(request.json)
+        new_node.id = old_node.id
+        new_node.graph.dump()
+        return success_response({'node': new_node.to_dict()})
+    except Exception as e:
+        return error_response(utils.indented_exception(e))
 
 @app.route('/api/node')
 def get_nodes():
@@ -181,7 +138,6 @@ def get_nodes():
         detail = traceback.format_exc(e)
         print detail
         return error_response(detail)
-    print 'queried', data
     return success_response({
         'nodes': [n.to_dict(depth=1) for n in data.nodes],
         'page': data.page,
@@ -193,7 +149,7 @@ def get_nodes():
 @app.route('/api/node/<int:node_id>')
 def api_get_node_by_id(node_id):
     try:
-        node = make_node_with_links_from_node_id(node_id)
+        node = query_node_by_id(node_id)
         return success_response({'node': node.to_dict(depth=1)})
     except Exception as e:
         detail = traceback.format_exc(e)
@@ -215,6 +171,7 @@ def delete_node(node_id):
 ############################################################# files
 
 @app.route('/api/file/<path:fpath>', methods=['POST'])
+@require_me_login
 def post_file(fpath):
     isdir = request.args.get('isdir')
     if isdir:
@@ -283,6 +240,15 @@ def index(path=''):
     return flask.send_from_directory(build_dir, 'index.html')
 
 ############################################################# misc
+
+@app.route('/api/backup')
+@require_me_login
+def backup():
+    os.system('./backup.sh')
+    return '''
+<h1>Backup Finished</h1>
+<p>See the <a href="https://gitlab.com/fans656/data-fans656.me">data repo</a></p>
+'''
 
 #@app.route('/', subdomain='<subdomain>')
 #def subdomain_dispatch(subdomain):
