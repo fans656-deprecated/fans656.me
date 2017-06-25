@@ -1,7 +1,7 @@
 import functools
 import traceback
 
-from node import Node, query
+from node import Node
 from utils import Response
 from errors import NotFound
 

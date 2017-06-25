@@ -2,14 +2,201 @@ import React, { Component } from 'react'
 import { Link, withRouter } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import IconPlus from 'react-icons/lib/fa/plus'
+import IconCaretLeft from 'react-icons/lib/fa/caret-left'
+import IconCaretRight from 'react-icons/lib/fa/caret-right'
+import qs from 'qs';
 import $ from 'jquery'
 
 import { Icon } from './common'
 import { fetchJSON } from './utils'
 
-export class Blog extends Component {
+class Pagination extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      page: null,
+    };
+  }
+
+  componentWillReceiveProps(props) {
+    this.setState({page: props.page});
+  }
+
+  onCurrentPageInputChange = ({target}) => {
+    let page = target.value;
+    if (page) {
+      this.setState({page: page});
+    }
+  }
+
+  navigateToNthPage = (page) => {
+    console.log('navigateToNthPage', page);
+    try {
+      page = parseInt(page, 10);
+      const options = qs.parse(window.location.search.slice(1));
+      const size = options.size;
+      let url = '/blog';
+      if (page === 1) {
+        if (size) {
+          url += `?size=${size}`;
+        }
+      } else if (1 < page && page <= this.props.nPages) {
+        url += `?page=${page}`;
+        if (size) {
+          url += `&size=${size}`;
+        }
+      } else {
+        console.log('wrong page', page);
+        return;
+      }
+      console.log('do navigateToNthPage', url);
+      window.location.href = url;
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  onKeyUp = (ev) => {
+    if (ev.key === 'Enter') {
+      this.navigateToNthPage(this.state.page);
+    }
+  }
+  
   render() {
-    return <h1>todo</h1>;
+    if (!this.props.nPages) {
+      return null;
+    }
+    return <div id="pagination">
+      <a href={`/blog?page=${Math.max(this.state.page - 1, 1)}`}>
+        <Icon type={IconCaretLeft} size="large"/>
+      </a>
+      <input
+        id="current-page"
+        type="text"
+        value={this.state.page}
+        onChange={this.onCurrentPageInputChange}
+        onKeyUp={this.onKeyUp}
+      />
+      <span>&nbsp;/&nbsp;</span>
+      <span className="n-pages">{this.props.nPages}</span>
+      <a href={`/blog?page=${Math.min(this.state.page + 1, this.props.nPages)}`}>
+        <Icon type={IconCaretRight} size="large"/>
+      </a>
+    </div>
+  }
+}
+Pagination = withRouter(Pagination);
+
+const Comment = (props) => {
+  return <div className="comment">
+    <div className="user" style={{
+      display: 'flex',
+      alignItems: 'center',
+      marginBottom: '.2em',
+    }}>
+      <img src="http://ub:6561/file/fans656.jpg" style={{
+        width: 32, height: 32,
+        borderRadius: '16px',
+        boxShadow: '0 0 5px #555',
+        marginRight: '.5em',
+      }}/>
+      <span style={{
+        position: 'relative',
+        top: '.2em',
+      }}>fans656</span>
+    </div>
+    <div>
+      {props.text}
+    </div>
+    <div style={{textAlign: 'right'}}
+    >
+      <span
+        className="info"
+      >{new Date().toLocaleDateString()}</span>
+    </div>
+  </div>
+}
+
+class Comments extends Component {
+  render() {
+    if (!this.props.visible) {
+      return null;
+    }
+    return <div className="comments-content"
+    >
+        <Comment text="this is a test comment hello world"/>
+        <Comment text="this is a another"/>
+    </div>
+  }
+}
+
+export class Blog extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      commentsVisible: false,
+    };
+  }
+
+  render() {
+    const isOwner = this.props.isOwner;
+    const node = this.props.node;
+    let title = node.links.filter(l => l.rel === 'title')[0];
+    if (title) {
+      title = title.dst.data;
+    }
+    const url = `/blog/${node.id}` + (isOwner ? '/edit' : '');
+    const ctime = new Date(node.ctime).toLocaleDateString()
+    const tags = node.links.filter(l => l.rel === 'tag').map((link, i) => {
+      const tag = link.dst;
+      return <a className="tag info"
+        key={i}
+        href={`/blog?tag=${tag.data}`}
+      >
+        {tag.data}
+      </a>
+    });
+    return <div className="blog">
+      <a
+        className="anchor"
+        href={url}
+        style={{position: 'absolute', left: '25%'}}
+      >
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </a>
+      {title && <h2>{title}</h2>}
+      <ReactMarkdown className="blog-content" source={node.data}/>
+      <div className="footer">
+        <div>
+          {/*
+          <div className="comments info">
+            <div
+              className="clickable"
+              onClick={() => this.setState((prevState) => {
+                return {
+                  commentsVisible: !prevState.commentsVisible
+                };
+              })}
+            >
+              <span className="number">0</span>
+              <span>Comments</span>
+            </div>
+          </div>
+          */}
+        </div>
+        <div className="right">
+          <div className="tags">{tags}</div>
+          <div className="ctime datetime">
+            <Link
+              className="info"
+              to={url}
+              title={new Date(node.ctime).toLocaleString()}
+            >{ctime}</Link>
+          </div>
+        </div>
+      </div>
+      {/*<Comments visible={this.state.commentsVisible}/>*/}
+    </div>
   }
 }
 
@@ -18,6 +205,7 @@ export class Blogs extends Component {
     super(props);
     this.state = {
       blogNodes: [],
+      pagination: {},
     };
   }
 
@@ -32,8 +220,29 @@ export class Blogs extends Component {
   }
 
   fetchBlogs = async () => {
-    const resp = await fetchJSON('GET', '/api/node?type=blog');
-    this.setState({blogNodes: resp.nodes});
+    const options = qs.parse(window.location.search.slice(1));
+    const page = options.page || 1;
+    const size = options.size || 20;
+
+    let url = `/api/node?rels[type]=blog&page=${page}&size=${size}`;
+    const data = await fetchJSON('GET', url);
+    let nodes = data.nodes;
+    this.setState({
+      blogNodes: nodes,
+      pagination: {
+        page: data.page,
+        size: data.size,
+        total: data.total,
+        nPages: data.nPages,
+      },
+    });
+  }
+
+  navigateToNthPage = (page) => {
+    console.log('navigate to page', page);
+    this.setState({
+      navigation: {page: page}
+    });
   }
 
   render() {
@@ -41,27 +250,16 @@ export class Blogs extends Component {
     const user = this.props.user;
     const isOwner = user && owner === user.username;
     const blogs = this.state.blogNodes.map((node, i) => {
-      const ctime = new Date(node.ctime).toLocaleString()
-      const url = `/blog/${node.id}` + (isOwner ? '/edit' : '');
-      return <div className="blog" key={node.id}>
-        <a
-          className="anchor"
-          href={url}
-          style={{position: 'absolute', left: '25%'}}
-        >
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        </a>
-        <ReactMarkdown className="blog-content" source={node.data}/>
-        <div className="ctime datetime">
-          <Link to={url}>{ctime}</Link>
-        </div>
-        <div className="hr"/>
-      </div>
+      return <Blog key={node.id} node={node} isOwner={isOwner}/>
     });
+    const pagination = this.state.pagination;
     return <div>
       <div className="blogs">
         {blogs}
       </div>
+      <Pagination {...this.state.pagination}
+        onNavigate={this.navigateToNthPage}
+      />
       {isOwner && <Panel/>}
     </div>
   }
@@ -91,7 +289,7 @@ class EditBlog extends Component {
     if (this.props.id) {
       this.fetchBlog(this.props.id);
     }
-    $('#editor').keydown((e) => {
+    $('#editor,input').keydown((e) => {
       console.log(e);
       // ctrl-enter
       if (e.ctrlKey && e.keyCode === 13) {
@@ -106,11 +304,10 @@ class EditBlog extends Component {
   fetchBlog = async (id) => {
     const res = await fetchJSON('GET', `/api/node/${id}`);
     if (res.errno) {
-      console.log(res);
+      console.log('error', res);
+      alert(res.detail);
     } else {
       this.setState({blogNode: res.node, text: res.node.data});
-      console.log('fetchBlog');
-      console.log(res);
     }
   }
 
@@ -122,19 +319,18 @@ class EditBlog extends Component {
     const node = this.state.blogNode;
     node.data = this.state.text;
     node.links = [{rel: 'type', dst: 'blog'}];
-    const tags = this.state.tagsText.split(',').map((tag) => tag.trim());
+    const tags = this.state.tagsText.split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag);
     for (const tag of tags) {
       node.links.push({rel: 'tag', dst: {data: tag}});
     }
-    console.log(node);
     let res;
     if (node.id) {
       res = await fetchJSON('PUT', `/api/node/${node.id}`, node);
     } else {
       res = await fetchJSON('POST', '/api/node', node);
     }
-    console.log('res');
-    console.log(res);
     if (res.errno) {
       alert(res.detail);
     } else {
@@ -144,14 +340,14 @@ class EditBlog extends Component {
 
   render() {
     return <div className="wide center edit-blog">
-      {/*<input defaultValue={this.state.}/>*/}
       <textarea
         id="editor"
         value={this.state.text}
         onChange={this.onEditorTextChange}
         ref={(editor) => this.editor = editor}
       ></textarea>
-      <input type="text"
+      <input className="tags"
+        type="text"
         style={{width: '100%'}}
         value={this.state.tagsText}
         onChange={({target}) => this.setState({tagsText: target.value})}

@@ -3,6 +3,5 @@ node_modules
 secret*.py
 nginx.conf
 uwsgi.ini
-local.local
-package-lock.json
+*.local
 /files

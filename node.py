@@ -1,95 +1,145 @@
 # coding: utf-8
 import itertools
+from collections import defaultdict
 from datetime import datetime
 
-from f6 import each
+from f6 import each, bunch
 
 import db
+import utils
 from errors import NotFound
 
-def query(*node_ids, **rels):
-#    return query_with_depth(node_ids=node_ids, rels=rels, depth=1)
-#
-#def query_with_depth(node_ids=None, rels=None, depth=1):
-#    node_ids = node_ids || []
-#    resl = resl || {}
-
-    def get_node(id_to_node, node_id):
-        if node_id not in id_to_node:
-            node = id_to_node[node_id] = Node(node_id)
-            for link in node.links:
-                link.src = get_node(id_to_node, link.src_id)
-                link.dst = get_node(id_to_node, link.dst_id)
-        return id_to_node[node_id]
-
+def query_by_rels(rels, page=1, size=None):
     if not rels:
         preds = ['1']
     else:
         preds = ["l.rel = '{}' and n.data = '{}'".format(rel, data)
                  for rel, data in rels.items()]
     preds = ' and '.join(preds)
-    sql = '''
-        select id from nodes
+
+    # build link filter rules
+    sql_where = '''
         where id in (
             select l.src from links as l inner join nodes as n
             on l.dst = n.id and {preds}
         ) order by ctime desc
-        '''.format(preds=preds)
-    if node_ids:
-        node_ids = set(node_ids) & set(db.query(sql))
-    else:
-        node_ids = db.query(sql)
-    nodes = map(Node, node_ids)
+    '''.format(preds=preds)
+
+    # find total count
+    sql = 'select count(id) from nodes ' + sql_where
+    total = db.queryone('select count(id) from nodes ' + sql_where)
+    size = size or total
+    offset = (page - 1) * size
+    if offset >= total:
+        return bunch(nodes=[], page=page, size=size, total=total)
+
+    # retrieve paged data
+    r = db.query('select id, data, ctime from nodes '
+                 + sql_where
+                 + 'limit %s offset %s',
+                 (size, offset))
+    nodes = [Node(data, ctime=ctime, id=node_id)
+             for node_id, data, ctime in r]
+    assert nodes
+
+    # retrieve links of nodes
+    src_ids = ','.join('{}'.format(n.id) for n in nodes)
+    r = db.query('select id, src, dst, rel from links '
+                 + 'where src in ({})'.format(src_ids))
+    links = [Link(link_id, src_id, dst_id, rel)
+             for link_id, src_id, dst_id, rel in r]
+
     id_to_node = {n.id: n for n in nodes}
+
+    dst_ids = ','.join('{}'.format(l.dst_id) for l in links)
+    r = db.query('select id, data, ctime from nodes '
+                 'where id in ({})'.format(dst_ids))
+    new_nodes = [Node(data, ctime=ctime, id=node_id)
+                 for node_id, data, ctime in r]
+    id_to_node.update({n.id: n for n in new_nodes})
+
+    node_id_to_links = defaultdict(lambda: [])
+    for link in links:
+        node_id_to_links[link.src_id].append(link)
+        link.src = id_to_node[link.src_id]
+        link.dst = id_to_node[link.dst_id]
+
     for node in nodes:
-        for link in node.links:
-            link.src = get_node(id_to_node, link.src_id)
-            link.dst = get_node(id_to_node, link.dst_id)
+        node.links = node_id_to_links[node.id]
+
+    return bunch(nodes=nodes, page=page, size=size, total=total)
+
+def query_by_ids(node_ids, depth=1):
+    node_ids = set(node_ids)
+    visiting = set(node_ids)
+    link_ids = set()
+    for _ in xrange(depth):
+        ids_str = ','.join(map(str, visiting))
+        r = db.query('select id, src, dst from links '
+                     'where src in ({ids})'.format(ids=ids_str))
+        queried_ids = set()
+        for link_id, src_id, dst_id in r:
+            queried_ids.add(src_id)
+            queried_ids.add(dst_id)
+            link_ids.add(link_id)
+        new_ids = queried_ids - visiting
+        if len(new_ids) == 0:
+            break
+        node_ids |= new_ids;
+        visiting = new_ids
+    nodes = nodes_from_ids(node_ids)
+    links = links_from_ids(link_ids)
+    update_links_endpoints(nodes, links)
     return nodes
 
-def get_node_by_id(node_id):
+def query_by_id(node_id, depth=1):
     try:
-        return query(node_id)[0]
+        return query_by_ids([node_id], depth)[0]
     except IndexError:
-        raise
+        return None
 
 class Node(object):
 
-    def __init__(self, id_or_data):
-        if isinstance(id_or_data, int):
-            node_id = id_or_data
-            self.from_id(node_id)
-        elif isinstance(id_or_data, (str, unicode)):
-            data = id_or_data
-            self.from_data(data)
-        else:
-            print id_or_data
-            raise ValueError('non supported init method')
-
-    def from_id(self, node_id):
-        self.id = node_id
-
-        r = db.queryone(
-            'select data, ctime from nodes where id = %s', (self.id,))
-        if not r:
-            raise NotFound('node not found: id={}'.format(node_id))
-        data, ctime = r
-        self.data = data.decode('utf8')
-        self.ctime = ctime
-
-        link_datas = db.query(
-            'select id, dst, rel from links where src = %s', (self.id,))
-        self.links = [Link(link_id, self.id, dst_id, rel=rel)
-                      for link_id, dst_id, rel in link_datas]
-
-    def from_data(self, data):
-        self.id = None
-        self.data = data
+    def __init__(self, data, ctime=None, id=None, links=None):
+        self.data = utils.to_unicode(data, 'Node().data')
+        self.ctime = ctime or datetime.utcnow()
+        self.id = id
         self.links = []
-        self.ctime = datetime.utcnow()
 
-    def link(self, rel, dst_node):
-        self.links.append(Link(rel, self, dst_node))
+    @staticmethod
+    def from_id(node_id):
+        r = db.queryone('select data, ctime from nodes '
+                        'where id = %s',
+                        (node_id,))
+        if not r:
+            raise ValueError('no node with id={}'.format(node_id))
+        data, ctime = r
+        return Node(data.decode('utf8'),
+                    ctime=ctime,
+                    id=node_id,
+                    links=links_from_src_id(node_id))
+
+    @staticmethod
+    def from_ref(self, ref):
+        nodes = query_by_rels({'ref': ref}).nodes
+        if not nodes:
+            raise NotFound('no node with ref={}'.format(ref))
+        elif len(nodes) == 1:
+            return nodes[0]
+        else:
+            raise Response({
+                'detail': 'multiple nodes with ref={} are found'.format(ref),
+                'ids': [node.id for node in nodes]
+            })
+
+    def __eq__(self, o):
+        return self.id == o.id
+
+    def __hash__(self):
+        return hash(self.id)
+
+    #def link(self, rel, dst_node):
+    #    self.links.append(Link(rel, self, dst_node))
 
     def __iter__(self):
         return iter((
@@ -159,14 +209,14 @@ class Node(object):
 
     @property
     def reachable_nodes(self):
-        nodes = []
+        nodes = set()
         q = [self]
         while q:
             node = q.pop()
-            nodes.append(node)
+            nodes.add(node)
             for link in self.links:
-                nodes.append(link.dst)
-        return nodes
+                nodes.add(link.dst)
+        return list(nodes)
 
 class Link(object):
 
@@ -226,7 +276,7 @@ class Link(object):
 
 class Graph(object):
 
-    def __init__(self, nodes, links):
+    def __init__(self, nodes, links, update_endpoints=True):
         self.nodes = nodes
         self.links = links
 
@@ -263,10 +313,11 @@ def make_node_with_links_from_node_id(node_id):
     return id_to_node[node_id]
 
 def node_to_dict(node, depth=1):
-    if depth == 0:
+    if depth < 0:
         return node.id
     return {
         'data': node.data,
+        'ctime': node.ctime,
         'links': [{
             'id': link.id,
             'rel': link.rel,
@@ -274,10 +325,53 @@ def node_to_dict(node, depth=1):
         } for link in node.links]
     }
 
+def links_from_src_id(node_id):
+    return [
+        Link(link_id, node_id, dst_id, rel=rel)
+        for link_id, dst_id, rel
+        in db.query('select id, dst, rel from links '
+                    'where src = %s',
+                    (node_id,))
+    ]
+
+def update_links_endpoints(nodes, links):
+    id_to_node = {n.id: n for n in nodes}
+    for link in links:
+        src = id_to_node[link.src_id]
+        dst = id_to_node[link.dst_id]
+        link.src = src
+        link.dst = dst
+        src.links.append(link)
+
+def incrementally_get_node(id_to_node, node_id):
+    if node_id not in id_to_node:
+        node = id_to_node[node_id] = Node.from_id(node_id)
+        print 'added', node
+        for link in node.links:
+            link.src = incrementally_get_node(id_to_node, link.src_id)
+            link.dst = incrementally_get_node(id_to_node, link.dst_id)
+    return id_to_node[node_id]
+
+def nodes_from_ids(ids):
+    ids_str = ','.join(map(str, ids))
+    r = db.query('select id, data, ctime from nodes '
+                 'where id in ({})'.format(ids_str))
+    return [Node(data, ctime=ctime, id=node_id)
+            for node_id, data, ctime in r]
+
+def links_from_ids(ids):
+    ids_str = ','.join(map(str, ids))
+    r = db.query('select id, src, dst, rel from links '
+                 'where id in ({})'.format(ids_str))
+    return [Link(id, src_id, dst_id, rel=rel)
+            for id, src_id, dst_id, rel in r]
+
 if __name__ == '__main__':
     from f6 import each
     from pprint import pprint
 
-    node = query(type='blog')[0]
-    pprint(dict(node))
-    pprint(node.to_dict(depth=2))
+    #nodes = query_by_rels({'type': 'blog'}).nodes
+    #nodes[4].graph.show()
+    #print '-' * 70
+    node = query_by_id(1)
+    node.graph.show()

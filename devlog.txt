@@ -73,3 +73,32 @@ https://fans656.me/blog/123/edit    => blog by id edit
 . react context (for `user`)
     dont use context
 ) refactor into different js
+
+2017-06-23 02:24:20
+) diandian blogs
+) books
+) music
+) movies
+
+2017-06-24 01:34:09
+http://blog.sina.com.cn/fans656
+迁移新浪博客
+
+2017-06-25 04:16:36
+今天要把新站上线掉：有点赶，所以只做最必要的那些功能
+
+. all data upload
+  . upload diandian-migaration git repo
+  . mark old blog
+  . change db schema
+  . backup db
+  . submit post-45 #7
+. pagination
+) full site regularly backup
+) login required post test
+# development/production database
+
+2017-06-25 08:15:25
+7.html的#45 blog太长，超出了mysql TEXT的长度...
+决定暂时用LONGTEXT解决(其实有个MEDIUMTEXT，但先这么用)
+以后有空好好思考下存储的问题，LONGTEXT会不会有性能问题

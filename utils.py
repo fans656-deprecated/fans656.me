@@ -1,8 +1,11 @@
+# coding: utf-8
 import os
 import functools
+import traceback
 from datetime import datetime
 
 from flask import redirect, jsonify
+from dateutil.parser import parse as parse_datetime
 
 import session
 
@@ -71,3 +74,41 @@ def strptime(s):
 
 def check(pred, errmsg):
     assert pred, errmsg
+
+def to_unicode(s, what='unknown'):
+    try:
+        if isinstance(s, unicode):
+            return s
+        elif isinstance(s, str):
+            return s.decode('utf-8')
+        else:
+            raise Exception('can not convert to unicode')
+    except Exception as e:
+        raise ValueError('{} should be unicode, but got {}: {}\n\n{}'.format(
+            what, type(s), repr(s), indented_exception(e)
+        ))
+
+def to_datetime(o, what='unknown'):
+    try:
+        if isinstance(o, datetime):
+            return o
+        s = to_unicode(o, what)
+        return parse_datetime(s)
+    except Exception as e:
+        raise ValueError('{} should be datetime, but got {}: {}\n{}'.format(
+            what, type(o), o, indented_exception(e)
+        ))
+
+def indented_exception(exc):
+    return '\n'.join(' ' * 4 + '| ' + line
+                     for line in traceback.format_exc(exc).split('\n'))
+
+if __name__ == '__main__':
+    pass
+    #print to_unicode('hi')
+    #print to_unicode(u'hi')
+    #print to_unicode(u'中国'.encode('gbk'))
+    #print to_unicode(3)
+    print to_datetime(datetime.now())
+    #print to_datetime('2017-6-18 22:18:03+08:00')
+    print to_datetime(3)

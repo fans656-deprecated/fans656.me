@@ -1,5 +1,7 @@
 import os
 
+BACKUP_REPO_DIR = '~/data-fans656.me/'
+
 FILES_ROOT = os.path.join(os.path.dirname(__file__), 'files/')
 FILES_ROOT = os.path.abspath(FILES_ROOT)
 

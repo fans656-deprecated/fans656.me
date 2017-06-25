@@ -1,3 +1,6 @@
+import os
+from datetime import datetime
+
 import config
 if config.db_engine == 'mysql':
     import pymysql as DB
@@ -5,7 +8,7 @@ if config.db_engine == 'mysql':
         'host': 'localhost',
         'user': config.db_username,
         'passwd': config.db_password,
-        'db': config.db_db,
+        'db': config.db_name,
     }
 else:
     try:
@@ -56,6 +59,9 @@ def queryone(*sql, **kwargs):
     return r[0] if r else None
 
 def init_db(purge=False, quite=False):
+    backup_db()
+
+    print '*** initing database ***'
 
     outter_purge = purge
 
@@ -83,13 +89,13 @@ def init_db(purge=False, quite=False):
     ))
     create_table('nodes', (
         'id serial,'
-        'data text,'
+        'data longtext,'
         'ctime datetime default current_timestamp,'
         'mtime datetime default current_timestamp on update current_timestamp'
     ), purge=True)
     create_table('links', (
         'id serial,'
-        'rel text,'
+        'rel longtext,'
         'src bigint unsigned,'
         'dst bigint unsigned,'
         'ctime datetime default current_timestamp,'
@@ -100,9 +106,11 @@ def init_db(purge=False, quite=False):
 
 def managedb():
     import os
-    os.system('mysql -u{} -p{} -Dfans656_me'.format(
-              config.db_username,
-              config.db_password))
+    os.system('mysql -u{} -p{} -D{}'.format(
+        config.db_username,
+        config.db_password,
+        config.db_name,
+    ))
 
 def insert_meta_nodes():
     from node import Node
@@ -110,7 +118,23 @@ def insert_meta_nodes():
     blog.link('ref', blog)
     blog.graph.dump()
 
+def backup_db():
+    fname = '{}-mysqldump-{}.sql'.format(
+        datetime.now().strftime('%Y%m%d%H%M%S'),
+        config.db_name,
+    )
+    print '*** Backuping database {} to {} ***'.format(
+        config.db_name,
+        fname,
+    )
+    os.system('mysqldump -u{} -p{} {} > {}'.format(
+        config.db_username,
+        config.db_password,
+        config.db_name,
+        fname,
+    ))
+
 if __name__ == '__main__':
-    init_db()
-    insert_meta_nodes()
+    #init_db()
+    #insert_meta_nodes()
     managedb()

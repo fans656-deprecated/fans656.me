@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
 import {
-  BrowserRouter as Router, Link, Route, withRouter
+  BrowserRouter as Router, Link, Route, withRouter, Switch,
 } from 'react-router-dom'
 
 import { Blogs, ViewBlog, EditBlog } from './blog'
@@ -19,6 +19,8 @@ const Nav = ({user}) => {
       <li><Link to="/">Home</Link></li>
       <li><Link to="/blog">Blog</Link></li>
       <li><Link to="/gallery">Gallery</Link></li>
+      <li><Link to="/book">Book</Link></li>
+      <li><Link to="/movie">Movie</Link></li>
       <li><Link to="/about">About</Link></li>
       {user && <li>|</li>}
       {user && <li><Link to="/files">Files</Link></li>}
@@ -39,42 +41,45 @@ class App extends React.Component {
       <div id="root-page">
         <Header user={this.state.user}/>
         <main id="main">
-          <Route exact path="/" render={() =>
-            <h1>Home todo</h1>
-          }/>
-          <Route path="/about" component={About}/>
-          <Route path="/login" component={Login}/>
-          <Route path="/gallery" component={Gallery}/>
+          <Switch>
+            <Route exact path="/" component={TodoPage}/>
+            <Route exact path="/about" component={About}/>
+            <Route exact path="/login" component={Login}/>
+            <Route exact path="/gallery" component={Gallery}/>
 
-          {/* ---------------------------------------------- blog */}
-          {/* blogs */}
-          <Route exact path="/blog" render={() => 
-            <Blogs owner="fans656" user={this.state.user}/>
-          }/>
+            {/* ---------------------------------------------- blog */}
+            {/* blogs */}
+            <Route exact path="/blog" render={() => 
+              <Blogs owner="fans656" user={this.state.user}/>
+            }/>
 
-          {/* post blog */}
-          <Route exact path="/new-blog" render={() => <EditBlog/>}/>
+            {/* post blog */}
+            <Route exact path="/new-blog" render={() => <EditBlog/>}/>
 
-          {/* view blog */}
-          <Route exact path="/blog/:id_or_ref" render={({match}) => 
-            <ViewBlog id={match.params.id_or_ref}/>
-          }/>
+            {/* view blog */}
+            <Route exact path="/blog/:id_or_ref" render={({match}) => 
+              <ViewBlog id={match.params.id_or_ref}/>
+            }/>
 
-          {/* edit blog */}
-          <Route exact path="/blog/:id_or_ref/edit" render={({match}) => 
-            <EditBlog id={match.params.id_or_ref}/>
-          }/>
+            {/* edit blog */}
+            <Route exact path="/blog/:id_or_ref/edit" render={({match}) => 
+              <EditBlog id={match.params.id_or_ref}/>
+            }/>
 
-          {/* profile */}
-          <Route path="/profile/:username" render={(props) =>
-            <Profile
-              user={this.state.user}
-              onLogout={this.onLogout}
-            />
-          }/>
+            {/* profile */}
+            <Route path="/profile/:username" render={(props) =>
+              <Profile
+                user={this.state.user}
+                onLogout={this.onLogout}
+              />
+            }/>
 
-          {/* ---------------------------------------------- personal */}
-          <Route path="/files" component={Files}/>
+            {/* ---------------------------------------------- personal */}
+            <Route path="/files" component={Files}/>
+
+            {/* ---------------------------------------------- todo page */}
+            <Route exact path="*" component={TodoPage}/>
+          </Switch>
         </main>
         <footer className="reverse-color">
           <Link to="/">fans656's site</Link>
@@ -178,6 +183,19 @@ class Profile extends Component {
   }
 }
 Profile = withRouter(Profile);
+
+const TodoPage = (props) => {
+  const url = props.match.url;
+  return <div style={{
+    fontSize: '5em',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '70vh',
+  }}>
+    {'working on ' + url + '...'}
+  </div>
+}
 
 ReactDOM.render((
   <Router>

@@ -77,5 +77,5 @@ if __name__ == '__main__':
     }
 
     #r = post_node(node)
-    r = get('/api/node?type=blog')
+    r = get('/api/node?rels\[type\]=blog&page=47&size=20')
     pprint(r)
