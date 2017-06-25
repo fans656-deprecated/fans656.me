@@ -16,11 +16,11 @@ def execute(cmd, replacecmd=None):
 if __name__ == '__main__':
     root = config.BACKUP_REPO_DIR
 
-    repo_file_dir = os.path.abspath(root) + '/'
-    local_file_dir = os.path.abspath('./files/')
+    repo_file_dir = os.path.abspath(root)
+    local_file_dir = os.path.abspath('./files')
     dump_fpath = os.path.join(root, '{}.sql'.format(config.db_name))
 
-    execute('rsync -av {} {}'.format(
+    execute('rsync -av {}/ {}'.format(
         os.path.join(repo_file_dir, 'files'),
         local_file_dir,
     ))
