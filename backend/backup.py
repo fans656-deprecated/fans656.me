@@ -1,11 +1,11 @@
-#!/usr/bin/env/ python
+#!/usr/bin/env python
 import os
 import subprocess
 from datetime import datetime
 
 import config
 
-pause = True
+pause = False
 
 def execute(cmd, replacecmd=None):
     print
