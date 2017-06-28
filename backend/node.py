@@ -140,7 +140,7 @@ class Node(object):
             node = Node(literal['data'],
                         ctime=literal.get('ctime'),
                         )
-            for link in literal['links']:
+            for link in literal.get('links', []):
                 rel = link['rel']
                 dst = link['dst']
                 if isinstance(dst, int):

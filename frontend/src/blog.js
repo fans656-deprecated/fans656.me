@@ -316,7 +316,15 @@ class EditBlog extends Component {
       console.log('error', res);
       alert(res.detail);
     } else {
-      this.setState({blogNode: res.node, text: res.node.data});
+      const node = res.node;
+      const tags = node.links
+        .filter(l => l.rel === 'tag')
+        .map(l => l.dst.data);
+      this.setState({
+        blogNode: node,
+        text: node.data,
+        tagsText: tags.join(', '),
+      });
     }
   }
 

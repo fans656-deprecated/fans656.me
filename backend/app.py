@@ -12,6 +12,7 @@
 ) TODO page
     add todos, categoried by tags (long term, short term...)
     version control
+) editor tab in textarea, shift tab to back indent
 '''
 import os
 import re
@@ -123,7 +124,8 @@ def put_node(node_id):
         return error_response('no node with id = {}'.format(node_id))
     try:
         new_node = Node.from_literal(request.json)
-        new_node.id = old_node.id
+        old_node.data = new_node.data
+        return success_response({'node': new_node.to_dict()})
         new_node.graph.dump()
         return success_response({'node': new_node.to_dict()})
     except Exception as e:
