@@ -34,8 +34,8 @@ from flask_cors import CORS
 import file_util
 import conf
 from endpoints import endpoints
-import utils
-from utils import (
+import util
+from util import (
     success_response, error_response
 )
 
@@ -43,7 +43,7 @@ app = flask.Flask(__name__, static_folder='')
 CORS(app)
 
 for method, path, viewfunc in endpoints:
-    viewfunc = utils.handle_exceptions(viewfunc)
+    viewfunc = util.handle_exceptions(viewfunc)
     app.route(path, methods=[method])(viewfunc)
 
 
@@ -91,12 +91,12 @@ def list_file_directory(dirpath):
 
 @app.route('/static/<path:path>')
 def get_static(path):
-    return utils.send_from_directory(conf.FRONTEND_BUILD_DIR, 'static', path)
+    return util.send_from_directory(conf.FRONTEND_BUILD_DIR, 'static', path)
 
 
 @app.route('/file/<path:path>')
 def get_file(path):
-    return utils.send_from_directory(conf.FILES_ROOT, path)
+    return util.send_from_directory(conf.FILES_ROOT, path)
 
 
 @app.route('/')

@@ -58,3 +58,7 @@ def send_from_directory(*paths):
     dirname = os.path.dirname(fpath)
     fname = os.path.basename(fpath)
     return flask.send_from_directory(dirname, fname)
+
+
+def utcnow():
+    return str(datetime.utcnow()) + ' UTC'
