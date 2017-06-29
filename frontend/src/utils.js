@@ -47,6 +47,7 @@ export function getDateDiff(pre, now) {
 
 export async function fetchJSON(method, url, data) {
   url = BACKEND_HOST + url;
+  data = data || {};
 
   const headers = new Headers();
   headers.append('Content-Type', 'application/json');
@@ -72,6 +73,7 @@ export async function fetchJSON(method, url, data) {
     });
     if (args) {
       url += '?' + args.join('&');
+      console.log('fetchJSON, GET', url);
     }
   }
 

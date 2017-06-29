@@ -160,7 +160,7 @@ form > * {
 }
 
 /* phone (portrait and landscape) ----------- */
-@media only screen and (min-device-width: 320px) and (max-device-width: 800px) {
+@media only screen and (min-device-width: 320px) and (max-device-width: 1367px) {
   .blogs {
     width: 100%;
     margin: 0;
@@ -253,7 +253,7 @@ form > * {
 }
 
 /* desktop ----------- */
-@media only screen and (min-width: 800px) {
+@media only screen and (min-width: 1366px) {
   .narrow {
     max-width: 40%;
   }

@@ -109,8 +109,10 @@ export class Blogs extends Component {
     const page = options.page || 1;
     const size = options.size || 20;
 
-    let url = `/api/blog?page=${page}&size=${size}`;
-    const data = await fetchJSON('GET', url);
+    const data = await fetchJSON('GET', '/api/blog', {
+      page: page,
+      size: size,
+    });
     let blogs = data.blogs;
     this.setState({
       blogs: blogs,
@@ -231,7 +233,7 @@ class EditBlog extends Component {
 
   delete = async () => {
     const blog = this.state.blog;
-    const res = await fetchJSON('DELETE', `/api/blog/${blog.id}`, blog);
+    const res = await fetchJSON('DELETE', `/api/blog/${blog.id}`);
     if (res.errno) {
       alert(res.detail);
     } else {

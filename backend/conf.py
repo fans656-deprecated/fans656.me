@@ -37,7 +37,7 @@ except ImportError:
     except ImportError:
         print 'Failed to import secret_config'
 
-BACKUP_DUMP_FNAME = '{}.sql'.format(db_name)
+BACKUP_DUMP_FNAME = '{}.db'.format(db_name)
 
 local = os.path.exists('local.local')
 

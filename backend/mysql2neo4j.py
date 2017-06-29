@@ -5,6 +5,7 @@ from pprint import pprint
 import requests
 from f6 import bunch
 
+import conf
 from db import cypher
 
 if conf.db_engine == 'mysql':
@@ -169,7 +170,7 @@ where l.rel = 'source'
 
 def make_blogs():
     blogs = {}
-    for blog_id, data, ctime in db.query(blogs_query):
+    for blog_id, data, ctime in query(blogs_query):
         blogs[blog_id] = bunch(
             data=data.decode('utf8'),
             ctime=str(ctime) + ' UTC',
@@ -179,15 +180,15 @@ def make_blogs():
         )
 
     # add title
-    for blog_id, title in db.query(titles_query):
+    for blog_id, title in query(titles_query):
         blogs[blog_id].title = title.decode('utf8')
 
     # add source
-    for blog_id, source in db.query(sources_query):
+    for blog_id, source in query(sources_query):
         blogs[blog_id].source = source.decode('utf8')
 
     # add tags
-    for blog_id, tag in db.query(tags_query):
+    for blog_id, tag in query(tags_query):
         blogs[blog_id].tags.append(tag.decode('utf8'))
 
     return sorted(blogs.values(), key=lambda b: b.ctime)
@@ -242,6 +243,7 @@ if __name__ == '__main__':
             'content': blog.data,
             'ctime': blog.ctime,
             'mtime': blog.ctime,
+            'id': i,
         }
         if blog.title:
             params['title'] = blog.title
