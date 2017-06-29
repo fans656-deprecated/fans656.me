@@ -1,7 +1,7 @@
 import os, hashlib, binascii
 
 import db
-from utils.misc import utcnow
+from util import utcnow
 
 
 def try_auth(username, password):

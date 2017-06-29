@@ -2,7 +2,7 @@
 import sys
 from getpass import getpass
 
-from utils.user import create_user
+from user_util import create_user
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:

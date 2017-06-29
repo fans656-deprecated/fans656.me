@@ -6,7 +6,7 @@ from flask import request
 
 import db
 import conf
-from utils.misc import utcnow
+from util import utcnow
 
 class Session(object):
 

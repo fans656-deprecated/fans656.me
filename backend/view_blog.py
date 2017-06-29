@@ -4,7 +4,7 @@ import traceback
 import flask
 
 import db
-from utils import success_response, error_response, utcnow
+from util import success_response, error_response, utcnow
 
 def post_blog():
     blog = flask.request.json

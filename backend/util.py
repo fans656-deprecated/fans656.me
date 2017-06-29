@@ -8,10 +8,6 @@ import flask
 from flask import redirect, jsonify
 from dateutil.parser import parse as parse_datetime
 
-import session
-from utils import user
-from utils.misc import utcnow
-
 
 def handle_exceptions(viewfunc):
     @functools.wraps(viewfunc)
