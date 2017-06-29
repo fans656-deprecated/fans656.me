@@ -3,8 +3,8 @@ import os
 from flask import request
 
 import errors
-import config as conf
-from config import FILE_RECEIVE_CHUNK_SIZE
+import conf as conf
+from conf import FILE_RECEIVE_CHUNK_SIZE
 
 INVALID_CHARS = set(r'\*?"[]{}<>:;|=,~`!@#$%^&' + "'")
 

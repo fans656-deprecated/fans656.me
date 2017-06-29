@@ -1,59 +1,62 @@
 import os, hashlib, binascii
 
 import db
+from utils.misc import utcnow
 
-class UserExisted(Exception): pass
 
-class InvalidAuth(Exception):
+def try_auth(username, password):
+    assert exists(username), 'user does not exist'
+    salt, expected_hashed_password = db.query_one(
+        'match (u:User{username: {username}}) '
+        'return u.salt, u.hashed_password', {
+            'username': username
+        }
+    )
+    _, got_hashed_password = get_hashed_salt_and_password(password, salt)
+    print 'hashes (got/expected)'
+    print got_hashed_password
+    print expected_hashed_password
+    assert got_hashed_password == expected_hashed_password, 'invalid auth'
 
-    def __init__(self, msg='username or password incorrect'):
-        super(InvalidAuth, self).__init__(msg)
+
+def create_user(username, password):
+    salt, hashed_password = get_hashed_salt_and_password(password)
+    return db.execute('''
+        create (n:User{
+            username: {username},
+            salt: {salt},
+            hashed_password: {hashed_password},
+            created_at: {created_at}
+        })
+               '''
+        , {
+            'username': username,
+            'salt': salt,
+            'hashed_password': hashed_password,
+            'created_at': utcnow(),
+        }
+    )
+
+
+def delete_user(username):
+    return db.execute(
+        'match (n:User{username: {username}}) detach delete n'
+        , {
+            'username': username,
+        }
+    )
+
 
 def exists(username):
-    return bool(db.queryone('select count(*) from users where username = %s',
-                         (username,)))
+    return db.query_one(
+        'match (n:User{username: {username}}) return count(n)'
+        , {'username': username}
+    ) != 0
 
-def hash_pass(password, salt=None, iterations=100000):
+
+def get_hashed_salt_and_password(password, salt=None):
     if salt is None:
         salt = binascii.hexlify(os.urandom(32))
-    hashed_pwd = hashlib.pbkdf2_hmac('sha256', password, salt, iterations)
+    hashed_pwd = hashlib.pbkdf2_hmac('sha256', password, salt, 100000)
     hashed_pwd = binascii.hexlify(hashed_pwd)
-    return salt, hashed_pwd, iterations
-
-def register(username, password=None):
-    if password is None:
-        import getpass
-        print 'Registering for user "{}"'.format(username)
-        password1 = getpass.getpass('Enter password: ')
-        password2 = getpass.getpass('Enter again: ')
-        if password1 != password2:
-            print 'Password mismatch'
-            return False
-        password = password1
-    if exists(username):
-        raise UserExisted('username is taken by someone else')
-    db.execute('insert into users (username, salt, hashed_pwd, iterations) values'
-              '(%s, %s, %s, %s)', (username,) + hash_pass(password))
-    print 'register user "{}" successfully'.format(username)
-
-def try_login(username, password):
-    if not exists(username):
-        raise InvalidAuth()
-    salt, expected_hashed_pwd, iterations = db.queryone(
-        'select salt, hashed_pwd, iterations from users where username = %s',
-        (username,))
-    _, hashed_pwd, _ = hash_pass(password, salt=salt, iterations=iterations)
-    if hashed_pwd != expected_hashed_pwd:
-        raise InvalidAuth()
-
-def valid_auth(username, password):
-    try:
-        try_login(username, password)
-        return True
-    except InvalidAuth:
-        return False
-
-if __name__ == '__main__':
-    pass
-    #register('a', 'b')
-    #register('fans656')
+    return salt, hashed_pwd

@@ -54,7 +54,10 @@ export default class About extends Component {
             display: 'flex',
             justifyContent: 'center',
           }}>
-            <a className="icon" href="https://github.com/fans656">
+            <a className="icon"
+              href="https://github.com/fans656"
+              target="_blank"
+            >
               <Icon type={IconGithub}/>
               &nbsp;&nbsp;{'github.com/fans656'}
             </a>

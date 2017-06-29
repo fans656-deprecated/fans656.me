@@ -7,7 +7,7 @@ import IconCaretRight from 'react-icons/lib/fa/caret-right'
 import qs from 'qs';
 import $ from 'jquery'
 
-import { Icon } from './common'
+import { Icon, DangerButton } from './common'
 import { fetchJSON } from './utils'
 
 export class Blog extends Component {
@@ -229,6 +229,16 @@ class EditBlog extends Component {
     }
   }
 
+  delete = async () => {
+    const blog = this.state.blog;
+    const res = await fetchJSON('DELETE', `/api/blog/${blog.id}`, blog);
+    if (res.errno) {
+      alert(res.detail);
+    } else {
+      this.props.history.push('/blog');
+    }
+  }
+
   render() {
     return <div className="wide center edit-blog">
       <textarea
@@ -243,9 +253,9 @@ class EditBlog extends Component {
         onChange={({target}) => this.setState({tagsText: target.value})}
       />
       <div className="buttons">
-        <button id="delete" onClick={this.delete}>
+        <DangerButton id="delete" onClick={this.delete}>
           Delete
-        </button>
+        </DangerButton>
         <button id="submit" className="primary" onClick={this.post}>
           Post
         </button>

@@ -13,4 +13,5 @@ endpoints = [
     ('GET', '/api/blog', views.blog.get_blogs),
     ('GET', '/api/blog/<int:node_id>', views.blog.get_blog),
     ('PUT', '/api/blog/<int:node_id>', views.blog.put_blog),
+    ('DELETE', '/api/blog/<int:node_id>', views.blog.del_blog),
 ]

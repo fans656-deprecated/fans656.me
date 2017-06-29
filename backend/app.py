@@ -27,26 +27,16 @@ Apps:
         version control
     ) txt reader
 '''
-import os
-import re
-import traceback
-from datetime import datetime
 
 import flask
-from flask import request
 from flask_cors import CORS
-from dateutil.parser import parse as parse_datetime
 
-import db
-import user
-import session
 import file_util
-import utils
-import config as conf
+import conf
 from endpoints import endpoints
-import errors
+import utils
 from utils import (
-    success_response, error_response, require_me_login,
+    success_response, error_response
 )
 
 app = flask.Flask(__name__, static_folder='')
@@ -57,41 +47,13 @@ for method, path, viewfunc in endpoints:
     app.route(path, methods=[method])(viewfunc)
 
 
-@app.route('/api/node/<int:node_id>')
-def api_get_node_by_id(node_id):
-    try:
-        node = query_node_by_id(node_id)
-        return success_response({'node': node.to_dict(depth=1)})
-    except Exception as e:
-        detail = traceback.format_exc(e)
-        print detail
-        return error_response(detail)
-
-
-@app.route('/api/node/<ref>')
-def get_node_by_ref(ref):
-    try:
-        node = node_from_ref(ref)
-        return success_response({'node': node.to_dict(depth=1)})
-    except NotFound:
-        return error_response({'detail': 'not found', 'ref': ref})
-
-
-@app.route('/api/node/<int:node_id>', methods=['DELETE'])
-def delete_node(node_id):
-    return error_response('currently node delete is not supported')
-
-
-############################################################# files
-
 @app.route('/api/file/<path:fpath>', methods=['POST'])
-@require_me_login
 def post_file(fpath):
-    isdir = request.args.get('isdir')
+    isdir = flask.request.args.get('isdir')
     if isdir:
         return success_response()
     else:
-        filesize = int(request.headers.get('Content-Length'))
+        filesize = int(flask.request.headers.get('Content-Length'))
         try:
             file_util.save(fpath, filesize)
             return success_response({
@@ -143,21 +105,6 @@ def index(path=''):
     return flask.send_from_directory(conf.FRONTEND_BUILD_DIR, 'index.html')
 
 
-############################################################# misc
-
-
-@app.route('/api/backup')
-@require_me_login
-def backup():
-    os.system('./backup.sh')
-    return '''
-<h1>Backup Finished</h1>
-<p>
-  See the <a href="https://gitlab.com/fans656/data-fans656.me">data repo</a>
-</p>
-'''
-
-
 @app.after_request
 def after_request(response):
     if 'Access-Control-Allow-Origin' not in response.headers:
@@ -169,41 +116,6 @@ def after_request(response):
                          'GET,PUT,POST,DELETE,OPTIONS')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
-
-
-@app.teardown_appcontext
-def close_db(err):
-    if hasattr(flask.g, 'db'):
-        flask.g.db.close()
-
-
-############################################################# echo
-
-#@app.route('/api/echo', methods=['GET', 'POST', 'PUT'])
-#def echo():
-#    args = request.args
-#    content_type = request.headers.get('Content-Type')
-#    try:
-#        if content_type == 'application/json':
-#            data = request.json
-#        elif content_type == 'text/plain':
-#            data = request.data
-#        else:
-#            return error_response(
-#                'unsupported Content-Type {}'.format(content_type))
-#    except Exception:
-#        return error_response('malformed data?')
-#    return success_response({
-#        'args': args,
-#        'data': data,
-#    })
-
-
-#@app.route('/', subdomain='<subdomain>')
-#def subdomain_dispatch(subdomain):
-#    if user.exists(subdomain):
-#        return '{}\'s space'.format(subdomain)
-#    return 'subdomain: "{}"'.format(subdomain)
 
 
 if __name__ == '__main__':

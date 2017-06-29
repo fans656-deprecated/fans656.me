@@ -3,24 +3,33 @@ import traceback
 
 import flask
 
-import db2 as db
+import db
 from utils import success_response, error_response, utcnow
 
 def post_blog():
     blog = flask.request.json
-    return success_response({
-        'blog': blog
-    })
+    now = utcnow()
+    params = {
+        'content': blog['content'],
+        'title': blog.get('title'),
+        'tags': blog.get('tags'),
+        'ctime': now,
+        'mtime': now,
+    }
+    params = {k: v for k, v in params.items() if v is not None}
+    query = (
+        'create (n:Blog{{{}}})'.format(
+            ', '.join(
+                '{key}: {{{key}}}'.format(key=key) for key in params
+            )
+        )
+    )
+    db.execute(query , params)
+    blog.update(params)
+    return success_response()
 
 
 def get_blogs():
-    """Get blog list
-
-    example:
-
-        GET /api/blog?page=2&size=50
-    """
-    print 'get_blogs'
     args = flask.request.args
     page = int(args.get('page', 1))
     size = min(int(args.get('size') or 20), 99999)
@@ -49,7 +58,7 @@ def get_blogs():
 
 
 def get_blog(node_id):
-    blog = db.queryone(
+    blog = db.query_node(
         'match (n:Blog) where id(n) = {} return n'.format(node_id)
     )
     return success_response({
@@ -76,3 +85,10 @@ def put_blog(node_id):
     db.execute(query , params)
     blog.update(params)
     return success_response({'blog': blog})
+
+def del_blog(node_id):
+    r = db.execute('match (n:Blog) where id(n) = {id} detach delete n', {
+        'id': node_id,
+    })
+    assert 'data' in r, 'deletion failed'
+    return success_response()
