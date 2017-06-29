@@ -1,14 +1,18 @@
 import os
+import json
 from datetime import datetime
 
-import config
-if config.db_engine == 'mysql':
+import requests
+
+import config as conf
+
+if conf.db_engine == 'mysql':
     import pymysql as DB
     conn_params = {
         'host': 'localhost',
-        'user': config.db_username,
-        'passwd': config.db_password,
-        'db': config.db_name,
+        'user': conf.db_username,
+        'passwd': conf.db_password,
+        'db': conf.db_name,
     }
 else:
     try:
@@ -107,9 +111,9 @@ def init_db(purge=False, quite=False):
 def managedb():
     import os
     os.system('mysql -u{} -p{} -D{}'.format(
-        config.db_username,
-        config.db_password,
-        config.db_name,
+        conf.db_username,
+        conf.db_password,
+        conf.db_name,
     ))
 
 def insert_meta_nodes():
@@ -121,18 +125,33 @@ def insert_meta_nodes():
 def backup_db():
     fname = '{}-mysqldump-{}.sql'.format(
         datetime.now().strftime('%Y%m%d%H%M%S'),
-        config.db_name,
+        conf.db_name,
     )
     print '*** Backuping database {} to {} ***'.format(
-        config.db_name,
+        conf.db_name,
         fname,
     )
     os.system('mysqldump -u{} -p{} {} > {}'.format(
-        config.db_username,
-        config.db_password,
-        config.db_name,
+        conf.db_username,
+        conf.db_password,
+        conf.db_name,
         fname,
     ))
+
+
+def cypher(query, params=None):
+    data = {
+        'query': query,
+        'params': params or {},
+    }
+    r = requests.post(
+        conf.neo4j_db,
+        auth=(conf.neo4j_user, conf.neo4j_password),
+        headers={'Content-Type': 'application/json'},
+        data=json.dumps(data),
+    )
+    return json.loads(r.text)
+
 
 if __name__ == '__main__':
     #init_db()

@@ -4,16 +4,30 @@ import functools
 import traceback
 from datetime import datetime
 
+import flask
 from flask import redirect, jsonify
 from dateutil.parser import parse as parse_datetime
 
 import session
+from utils import user
+
 
 class Response(Exception):
 
     def __init__(self, data):
         super(Response, self).__init__('Response with data: {}'.format(data))
         self.data = data
+
+
+def handle_exceptions(viewfunc):
+    @functools.wraps(viewfunc)
+    def wrapper(*args, **kwargs):
+        try:
+            return viewfunc(*args, **kwargs)
+        except Exception as e:
+            return error_response(e)
+    return wrapper
+
 
 def allow_public_access(f):
     @functools.wraps(f)
@@ -63,6 +77,10 @@ def error_response(detail, status_code=400):
     if isinstance(detail, dict):
         data = detail
         detail = detail.get('detail', '')
+    elif isinstance(detail, Exception):
+        detail = traceback.format_exc(detail)
+        print detail
+        data = {}
     else:
         data = {}
     data.update({
@@ -108,9 +126,25 @@ def to_datetime(o, what='unknown'):
             what, type(o), o, indented_exception(e)
         ))
 
+
 def indented_exception(exc):
     return '\n'.join(' ' * 4 + '| ' + line
                      for line in traceback.format_exc(exc).split('\n'))
+
+
+def send_from_directory(*paths):
+    fpath = os.path.join(*paths)
+    fpath = os.path.abspath(fpath)
+    if not fpath.startswith(paths[0]):
+        raise errors.NotAllowed('are you up to something?')
+    dirname = os.path.dirname(fpath)
+    fname = os.path.basename(fpath)
+    return flask.send_from_directory(dirname, fname)
+
+
+def utcnow():
+    return str(datetime.utcnow()) + ' UTC'
+
 
 if __name__ == '__main__':
     pass

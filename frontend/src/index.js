@@ -82,7 +82,7 @@ class App extends React.Component {
             <Route path="/files" component={Files}/>
 
             {/* ---------------------------------------------- todo page */}
-            <Route exact path="*" component={TodoPage}/>
+            {/*<Route exact path="*" component={TodoPage}/>*/}
           </Switch>
         </main>
         <footer className="reverse-color">
@@ -186,21 +186,22 @@ class Profile extends Component {
 }
 Profile = withRouter(Profile);
 
-const TodoPage = (props) => {
-  const url = props.match.url;
-  return <div style={{
-    fontSize: '1em',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: '70vh',
-  }}>
-    <div style={{textAlign: 'center'}}>
-      <h1>404</h1>
-      <p>oops, page not found</p>
-    </div>
-  </div>
-}
+//const TodoPage = (props) => {
+//  const url = props.match.url;
+//  console.log(url);
+//  return <div style={{
+//    fontSize: '1em',
+//    display: 'flex',
+//    justifyContent: 'center',
+//    alignItems: 'center',
+//    minHeight: '70vh',
+//  }}>
+//    <div style={{textAlign: 'center'}}>
+//      <h1>404</h1>
+//      <p>oops, page not found</p>
+//    </div>
+//  </div>
+//}
 
 ReactDOM.render((
   <Router>

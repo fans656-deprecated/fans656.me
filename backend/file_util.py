@@ -2,35 +2,35 @@ import os
 
 from flask import request
 
-import config
+import errors
+import config as conf
 from config import FILE_RECEIVE_CHUNK_SIZE
-from errors import Existed, ServerError, BadRequest
 
 INVALID_CHARS = set(r'\*?"[]{}<>:;|=,~`!@#$%^&' + "'")
 
 def save(fpath, total_size):
     user_fpath = fpath
-    fpath = os.path.join(config.FILES_ROOT, fpath)
+    fpath = os.path.join(conf.FILES_ROOT, fpath)
     if os.path.exists(fpath) and os.path.isdir(fpath):
-        raise Existed('path {} will overwrite a directory'.format(user_fpath))
+        raise errors.Existed('path {} will overwrite a directory'.format(user_fpath))
     if any(ch in INVALID_CHARS for ch in fpath):
-        raise BadRequest('invalid path {}'.format(user_fpath))
+        raise errors.BadRequest('invalid path {}'.format(user_fpath))
     # create directory
     user_dirpath = os.path.dirname(fpath)
     dirpath = os.path.abspath(user_dirpath)
-    if not dirpath.startswith(config.FILES_ROOT):
+    if not dirpath.startswith(conf.FILES_ROOT):
         raise NotAllowed(
             'are you trying to do something? {}'.format(user_fpath))
     if not os.path.exists(dirpath):
         try:
             os.makedirs(dirpath)
         except Exception as e:
-            raise ServerError('make directory {} failed: {}'.format(
+            raise errors.ServerError('make directory {} failed: {}'.format(
                 user_dirpath, e.message,
             ))
     assert os.path.exists(dirpath)
     if not os.path.isdir(dirpath):
-        raise Existed(
+        raise errors.Existed(
             'requested directory {} is not available'.format(user_dirpath))
     # do save
     try:
@@ -46,7 +46,7 @@ def save(fpath, total_size):
                     chunk = chunk[:-extra_size]
                 f.write(chunk)
     except Exception as e:
-        raise ServerError(e.message)
+        raise errors.ServerError(e.message)
 
 def rooted_path(root, path):
     root = os.path.abspath(root)
@@ -57,7 +57,7 @@ def rooted_path(root, path):
 
 def list_file_directory(dirpath):
     user_dirpath = dirpath
-    rootpath = rooted_path(config.FILES_ROOT, '')
+    rootpath = rooted_path(conf.FILES_ROOT, '')
     dirpath = rooted_path(rootpath, dirpath)
     if not dirpath:
         return []

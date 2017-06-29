@@ -113,3 +113,9 @@ http://blog.sina.com.cn/fans656
     add todos
     categoried by tags (long term, short term...)
     version control
+
+2017-06-28 23:58:03
+Functional:
+# node (a more robust lib with file support)
+    # when delete, just mark (can set expire time)
+(reason: use neo4j)

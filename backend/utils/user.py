@@ -36,7 +36,7 @@ def register(username, password=None):
               '(%s, %s, %s, %s)', (username,) + hash_pass(password))
     print 'register user "{}" successfully'.format(username)
 
-def login(username, password):
+def try_login(username, password):
     if not exists(username):
         raise InvalidAuth()
     salt, expected_hashed_pwd, iterations = db.queryone(
@@ -48,7 +48,7 @@ def login(username, password):
 
 def valid_auth(username, password):
     try:
-        login(username, password)
+        try_login(username, password)
         return True
     except InvalidAuth:
         return False

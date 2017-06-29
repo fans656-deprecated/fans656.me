@@ -10,11 +10,11 @@ FRONTEND_BUILD_DIR = abspath(os.path.join(THIS_SCRIPT_DIR, '../frontend/build'))
 
 PORT = 6560
 
-print 'Configurations:'
-indent = ' ' * 4
-for k, v in globals().items():
-    if k.isupper():
-        print indent + '{} = {}'.format(k, v)
+#print 'Configurations:'
+#indent = ' ' * 4
+#for k, v in globals().items():
+#    if k.isupper():
+#        print indent + '{} = {}'.format(k, v)
 
 FILE_RECEIVE_CHUNK_SIZE = 4096
 
@@ -39,11 +39,9 @@ except ImportError:
 
 BACKUP_DUMP_FNAME = '{}.sql'.format(db_name)
 
-local = True
-import os
-if os.path.exists('nginx.conf'):
-    local = False
+local = os.path.exists('local.local')
 
-server_name = 'fans656.me'
-if local:
-    server_name = 'local.dev'
+#if local:
+#    server_name = 'local.dev'
+#else:
+#    server_name = 'fans656.me'
