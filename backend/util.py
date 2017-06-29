@@ -58,3 +58,7 @@ def send_from_directory(*paths):
 
 def utcnow():
     return str(datetime.utcnow()) + ' UTC'
+
+
+def id_from_ctime(ctime):
+    return parse_datetime(ctime).strftime('%Y%m%d%H%M%S')

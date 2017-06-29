@@ -12,6 +12,7 @@ class Session(object):
 
     def __init__(self):
         self.username = ''
+        self.created_at = None
 
 def session_object():
     res = Session()
@@ -23,8 +24,6 @@ def session_object():
                 'cookie_value': cookie_value,
             }
         )
-    print 'session_object.cookie_value', cookie_value
-    print 'exists', exists(cookie_value)
     return res
 
 def current_user():

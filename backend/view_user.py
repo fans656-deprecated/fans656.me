@@ -16,6 +16,15 @@ def post_login():
     return resp
 
 
+def post_register():
+    username = flask.request.json.get('username', '')
+    password = flask.request.json.get('password', '')
+    user_util.try_register(username, password)
+
+    resp = success_response()
+    resp.set_cookie('session', session_util.new_session(username))
+    return resp
+
 def get_logout():
     if session_util.del_session():
         return success_response()

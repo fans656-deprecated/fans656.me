@@ -4,7 +4,7 @@ import traceback
 import flask
 
 import db
-from util import success_response, error_response, utcnow
+from util import success_response, error_response, utcnow, id_from_ctime
 
 def post_blog():
     blog = flask.request.json
@@ -24,7 +24,6 @@ def post_blog():
             )
         )
     )
-    db.execute(query , params)
     blog.update(params)
     return success_response()
 
@@ -33,9 +32,9 @@ def get_blogs():
     args = flask.request.args
     page = int(args.get('page', 1))
     size = min(int(args.get('size') or 20), 99999)
-    total = db.cypher('match (n:Blog) return count(n)')['data'][0][0]
+    total = db.query_one('match (n:Blog) return count(n)')
 
-    r = db.cypher(
+    nodes = db.query_nodes(
         'match (n:Blog) return n '
         'order by n.ctime desc '
         'skip {skip} limit {limit}',
@@ -44,32 +43,40 @@ def get_blogs():
             'limit': size,
         }
     )
-    data = r['data']
-    for d in data:
-        d[0]['data']['id'] = d[0]['metadata']['id']
+    node_id_to_node = {
+        node['persisted_id']: node for node in nodes
+    }
+    rows = db.query(
+        'match (blog:Blog)-[:has_comment]->(comment:Comment) '
+        'return blog.persisted_id, count(comment)'
+    )['data']
+    for blog_id, n_comments in rows:
+        node_id_to_node[blog_id]['n_comments'] = n_comments
 
     return success_response({
-        'blogs': [d[0]['data'] for d in data],
+        'blogs': nodes,
         'page': page,
-        'size': len(data),
+        'size': len(nodes),
         'total': total,
         'n_pages': (total / size) + (1 if total % size else 0),
     })
 
 
-def get_blog(node_id):
+def get_blog(persisted_id):
     blog = db.query_node(
-        'match (n:Blog) where id(n) = {} return n'.format(node_id)
+        'match (n:Blog{persisted_id: {persisted_id}}) return n', {
+            'persisted_id': persisted_id,
+        }
     )
     return success_response({
         'blog': blog,
     })
 
 
-def put_blog(node_id):
+def put_blog(persisted_id):
     blog = flask.request.json
     params = {
-        'id': node_id,
+        'persisted_id': persisted_id,
         'title': blog.get('title'),
         'content': blog['content'],
         'mtime': utcnow(),
@@ -77,7 +84,7 @@ def put_blog(node_id):
     }
     params = {k: v for k, v in params.items() if v is not None}
     query = (
-        'match (n:Blog) where id(n) = {id} '
+        'match (n:Blog{persisted_id: {persisted_id}}) '
         + 'set {}'.format(', '.join(
             'n.{key} = {{{key}}}'.format(key=key) for key in params
         ))
@@ -86,9 +93,39 @@ def put_blog(node_id):
     blog.update(params)
     return success_response({'blog': blog})
 
-def del_blog(node_id):
-    r = db.execute('match (n:Blog) where id(n) = {id} detach delete n', {
-        'id': node_id,
-    })
+
+def del_blog(persisted_id):
+    r = db.execute(
+        'match (n:Blog{persisted_id: {persisted_id}}) detach delete n', {
+            'persisted_id': persisted_id,
+        }
+    )
     assert 'data' in r, 'deletion failed'
     return success_response()
+
+
+def post_comment(blog_id):
+    comment = flask.request.json
+    db.execute(
+        'match (blog:Blog{persisted_id: {id}}) '
+        'create (comment:Comment{visitor_name: {name}, content: {content}}), '
+        '(blog)-[:has_comment]->(comment)'
+        , {
+            'id': blog_id,
+            'name': comment['name'],
+            'content': comment['text'],
+        }
+    )
+    return success_response()
+
+
+def get_comments(blog_id):
+    comments = db.query_nodes(
+        'match (blog:Blog{persisted_id: {id}})-[:has_comment]->(comment) '
+        'return comment', {
+            'id': blog_id,
+        }
+    )
+    return success_response({
+        'comments': comments,
+    })

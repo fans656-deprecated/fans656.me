@@ -7,9 +7,10 @@ Bugs:
         can't backspace on page "1"
 
 Deployment:
-    ) production deployment should use cache for static files
+    . production deployment should use cache for static files
 
 Functional:
+    ) user registration
     ) editor tab in textarea, shift tab to back indent
     ) uploading progress
     ) file explorer

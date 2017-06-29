@@ -30,17 +30,23 @@ def query_one(query, params=None):
         return row
 
 
+def query_nodes(q, params=None):
+    data = query(q, params)
+    rows = data['data']
+    nodes = [row[0]['data'] for row in rows]
+    return nodes
+
+
 def query_node(query, params=None):
     data = query_one(query, params)
     node = data['data']
-    node.update({
-        'id': data['metadata']['id'],
-    })
     return node
 
 
 def execute(query, params=None):
-    return cypher(query, params)
+    r = cypher(query, params)
+    assert 'data' in r, str(r)
+    return r
 
 
 def cypher(query, params=None):
@@ -244,8 +250,14 @@ if __name__ == '__main__':
             restore()
             exit()
 
-    print 'unknown command'
-
-    #from pprint import pprint
-    #r = gen_create_statements()
-    #print r['statements'][0]
+    nodes = query('''
+match (n:Blog) where not exists(n.persisted_id)
+return id(n), n.ctime
+               ''')['data']
+    print len(nodes)
+    #import util
+    #for node_id, ctime in nodes:
+    #    query('match (n) where id(n) = {id} set n.persisted_id = {persisted_id}', {
+    #        'id': node_id,
+    #        'persisted_id': util.id_from_ctime(ctime)
+    #    })

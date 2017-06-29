@@ -22,7 +22,7 @@ export class Blog extends Component {
     const isOwner = this.props.isOwner;
     const blog = this.props.blog;
     let title = blog.title || '';
-    const url = `/blog/${blog.id}` + (isOwner ? '/edit' : '');
+    const url = `/blog/${blog.persisted_id}` + (isOwner ? '/edit' : '');
     const ctime = new Date(blog.ctime).toLocaleDateString()
     const tags = (blog.tags || []).map((tag, i) => {
       return <a className="tag info"
@@ -44,7 +44,6 @@ export class Blog extends Component {
       <ReactMarkdown className="blog-content" source={blog.content}/>
       <div className="footer">
         <div>
-          {/*
           <div className="comments info">
             <div
               className="clickable"
@@ -54,11 +53,14 @@ export class Blog extends Component {
                 };
               })}
             >
-              <span className="number">0</span>
+              <a href="#" className="number"
+                onClick={ev => ev.preventDefault()}
+              >
+                {blog.n_comments || 0}&nbsp;
+              </a>
               <span>Comments</span>
             </div>
           </div>
-          */}
         </div>
         <div className="right">
           <div className="tags">{tags}</div>
@@ -80,7 +82,7 @@ export class Blog extends Component {
           </div>
         </div>
       </div>
-      {/*<Comments visible={this.state.commentsVisible}/>*/}
+      <Comments visible={this.state.commentsVisible} blog={this.props.blog}/>
     </div>
   }
 }
@@ -137,7 +139,7 @@ export class Blogs extends Component {
     const user = this.props.user;
     const isOwner = user && owner === user.username;
     const blogs = this.state.blogs.map((blog, i) => (
-      <Blog key={blog.id} blog={blog} isOwner={isOwner}/>
+      <Blog key={blog.persisted_id} blog={blog} isOwner={isOwner}/>
     ));
     //const pagination = this.state.pagination;
     return <div>
@@ -220,7 +222,7 @@ class EditBlog extends Component {
 
     let res;
     if (blog.id) {
-      res = await fetchJSON('PUT', `/api/blog/${blog.id}`, blog);
+      res = await fetchJSON('PUT', `/api/blog/${blog.persisted_id}`, blog);
     } else {
       res = await fetchJSON('POST', '/api/blog', blog);
     }
@@ -233,7 +235,7 @@ class EditBlog extends Component {
 
   delete = async () => {
     const blog = this.state.blog;
-    const res = await fetchJSON('DELETE', `/api/blog/${blog.id}`);
+    const res = await fetchJSON('DELETE', `/api/blog/${blog.persisted_id}`);
     if (res.errno) {
       alert(res.detail);
     } else {
@@ -353,51 +355,129 @@ class Pagination extends Component {
 }
 Pagination = withRouter(Pagination);
 
-//const Comment = (props) => {
-//  return (
-//    <div className="comment">
-//      <div className="user" style={{
-//        display: 'flex',
-//        alignItems: 'center',
-//        marginBottom: '.2em',
-//      }}>
-//        <img
-//          alt="fans656"
-//          src="http://ub:6561/file/fans656.jpg"
-//          style={{
-//            width: 32, height: 32,
-//            borderRadius: '16px',
-//            boxShadow: '0 0 5px #555',
-//            marginRight: '.5em',
-//          }}
-//        />
-//        <span style={{
-//          position: 'relative',
-//          top: '.2em',
-//        }}>
-//          fans656
-//        </span>
-//      </div>
-//      <div>{props.text}</div>
-//      <div style={{textAlign: 'right'}}>
-//        <span className="info">
-//          {new Date().toLocaleDateString()}
-//        </span>
-//      </div>
-//    </div>
-//  )
-//}
+const Comment = (props) => {
+  return (
+    <div className="comment">
+      <div className="user" style={{
+        display: 'flex',
+        alignItems: 'center',
+        marginBottom: '.8em',
+      }}>
+        <img
+          alt="fans656"
+          src="http://ub:6560/file/Male-512.png"
+          style={{
+            width: 24, height: 24,
+            borderRadius: '16px',
+            border: '1px solid #ccc',
+            marginRight: '.5em',
+          }}
+        />
+        <span style={{
+          position: 'relative',
+          top: '.2em',
+          marginBottom: '0',
+        }}>
+          {props.name}
+        </span>
+      </div>
+      <div>{props.content}</div>
+      <div style={{textAlign: 'right'}}>
+        <span className="info">
+          {new Date().toLocaleDateString()}
+        </span>
+      </div>
+    </div>
+  )
+}
 
-//class Comments extends Component {
-//  render() {
-//    if (!this.props.visible) {
-//      return null;
-//    }
-//    return <div className="comments-content"
-//    >
-//        <Comment text="this is a test comment hello world"/>
-//        <Comment text="this is a another"/>
-//    </div>
-//  }
-//}
+class Comments extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      comments: [],
+    };
+  }
 
+  componentDidMount = () => {
+    this.fetchComments();
+  }
+
+  fetchComments = async () => {
+    const blog = this.props.blog;
+    const res = await fetchJSON('GET', `/api/blog/${blog.persisted_id}/comment`);
+    if (res.errno === 0) {
+      this.setState({comments: res.comments});
+    }
+  }
+
+  onCommentPost = () => {
+    this.fetchComments();
+  }
+
+  render() {
+    if (!this.props.visible) {
+      return null;
+    }
+    const comments = this.state.comments.map(comment => (
+      <Comment name={comment.visitor_name} content={comment.content}/>
+    ));
+    return <div className="comments-content"
+    >
+      {comments}
+      <CommentEdit
+        blog={this.props.blog}
+        onPost={this.onCommentPost}
+      />
+    </div>
+  }
+}
+
+class CommentEdit extends Component {
+  postComment = async () => {
+    const blog = this.props.blog;
+    const url = `/api/blog/${blog.persisted_id}/comment`;
+    const res = await fetchJSON('POST', url, {
+      'name': this.nameInput.value,
+      'text': this.textarea.value,
+    });
+    if (res.errno) {
+      console.log('error', res);
+      alert(res.detail);
+    } else {
+      this.props.onPost();
+      this.textarea.value = '';
+    }
+  }
+
+  render() {
+    return (
+      <div>
+        <textarea
+          placeholder="Write your comment here"
+          onKeyUp={({target}) => {
+            target.style.height = '5px';
+            target.style.height = target.scrollHeight + 15 + 'px';
+          }}
+          style={{
+            boxSizing: 'border-box',
+          }}
+          ref={ref => this.textarea = ref}
+        >
+        </textarea>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          width: '100%',
+        }}>
+          <input type="text" placeholder="Your name"
+            ref={ref => this.nameInput = ref}
+          />
+          <button style={{marginRight: '0'}} onClick={this.postComment}>
+            Post
+          </button>
+        </div>
+      </div>
+    )
+  }
+}

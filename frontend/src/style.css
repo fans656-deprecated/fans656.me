@@ -63,12 +63,20 @@ button {
   background: white;
   color: #333;
   border: none;
-  box-shadow: 0 1px 3px #aaa;
+  box-shadow: 0 0 3px #aaa;
+  margin-right: .6em;
 }
 
 button.primary {
-  background: steelblue;
+  background: #4d98d6;
   color: white;
+  box-shadow: 0 0 5px #aaa;
+}
+
+button.secondary {
+  background: var(--bg-color);
+  border: 1px solid #ddd;
+  box-shadow: none;
 }
 
 button.warnning {
@@ -112,6 +120,7 @@ header > *:last-child {
 
 header .username {
   text-align: right;
+  min-width: 3em;
 }
 
 footer {
@@ -136,7 +145,7 @@ nav ul li {
 
 /* ------------------------------------------ login */
 
-#login-page {
+.login-page {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -159,7 +168,11 @@ form > * {
 }
 
 /* phone (portrait and landscape) ----------- */
-@media only screen and (min-device-width: 320px) and (max-device-width: 1367px) {
+@media only screen and (min-device-width: 320px) and (max-device-width: 800px) {
+  .comments-content > *{
+    width: 100%;
+    margin: 0 auto;
+  }
   .blogs {
     width: 100%;
     margin: 0;
@@ -190,7 +203,6 @@ form > * {
     width: 100%;
     height: 70vh;
     min-height: 20em;
-    font-family: 'Microsoft YaHei';
     padding: .5em;
     line-height: 1.5;
     margin: 0;
@@ -252,8 +264,23 @@ form > * {
   }
 }
 
+@media only screen and (min-width: 800px) and (max-width: 1366px) {
+  .blogs {
+    margin: 3em auto;
+    width: 70%;
+  }
+  .blog {
+    margin-bottom: 2em;
+  }
+}
+
 /* desktop ----------- */
 @media only screen and (min-width: 1366px) {
+  .comments-content > *{
+    width: 90%;
+    margin: 0 auto;
+  }
+
   .narrow {
     max-width: 40%;
   }
@@ -340,6 +367,7 @@ form > * {
 .blog pre, .blog code {
   font-family: "Consolas", "Courier New", "monospace";
   font-size: .9em;
+  overflow-x: scroll;
 }
 
 .blog-content img {
@@ -425,6 +453,7 @@ form > * {
 
 .info {
   filter: opacity(.3);
+  font-size: .9em;
 }
 
 .blog .footer {
@@ -448,14 +477,27 @@ form > * {
 }
 
 .comments-content {
-  margin: 1em;
+  margin-top: 1em;
+}
+
+.comments-content textarea {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 5em;
+  max-height: 20em;
+  box-sizing: border-box;
+  padding: none;
+  margin: none;
 }
 
 .comment {
   padding: .8em 1.2em;
+  padding-bottom: 0;
   background: white;
-  box-shadow: 0 0 3px #aaa;
+  box-shadow: 0 0 1px #999;
   margin-bottom: .8em;
+  box-sizing: border-box;
 }
 
 .datetime {
@@ -477,7 +519,13 @@ form > * {
 
 .edit-blog textarea {
   width: 100%;
+}
+
+textarea {
+  font-family: 'Microsoft YaHei';
   line-height: 1.5;
+  padding: .5em;
+  border: 1px solid #ddd;
 }
 
 .edit-blog .buttons {

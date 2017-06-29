@@ -19,6 +19,23 @@ def try_auth(username, password):
     assert got_hashed_password == expected_hashed_password, 'invalid auth'
 
 
+def try_register(username, password):
+    assert not exists(username), 'username already taken!'
+    salt, hashed_password = get_hashed_salt_and_password(password)
+    db.execute(
+        'create (u:User{'
+            'uername: {username}, '
+            'salt: {salt}, '
+            'hashed_password: {hashed_password}, '
+            'created_at: {created_at}'
+        '})', {
+            'username': username,
+            'salt': salt,
+            'hashed_password': hashed_password,
+            'created_at': utcnow(),
+        }
+    )
+
 def create_user(username, password):
     salt, hashed_password = get_hashed_salt_and_password(password)
     return db.execute('''
