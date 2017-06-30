@@ -19,7 +19,7 @@ def try_auth(username, password):
 
 
 def try_register(username, password):
-    logger(username=username, password=password)
+    #logger(username=username, password=password)
     assert not exists(username), 'username already taken!'
     salt, hashed_password = get_hashed_salt_and_password(password)
     db.execute(
