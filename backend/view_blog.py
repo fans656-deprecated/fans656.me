@@ -43,6 +43,8 @@ def get_blogs():
             'limit': size,
         }
     )
+    # find number of comments
+    # TODO: better neo4j query method
     node_id_to_node = {
         node['persisted_id']: node for node in nodes
     }
@@ -51,7 +53,8 @@ def get_blogs():
         'return blog.persisted_id, count(comment)'
     )['data']
     for blog_id, n_comments in rows:
-        node_id_to_node[blog_id]['n_comments'] = n_comments
+        if blog_id in node_id_to_node:
+            node_id_to_node[blog_id]['n_comments'] = n_comments
 
     return success_response({
         'blogs': nodes,
