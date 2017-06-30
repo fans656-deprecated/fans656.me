@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
+import { Link } from 'react-router-dom'
 
-import { fetchJSON } from './utils'
+import { fetchJSON, fetchData } from './utils'
 
 export default class Comments extends Component {
   constructor(props) {
@@ -10,18 +11,22 @@ export default class Comments extends Component {
     };
   }
 
-  componentDidMount = () => {
-    if (this.props.visible) {
+  componentDidMount() {
+    this.fetchComments();
+  }
+
+  componentWillReceiveProps(props) {
+    if (props.visible) {
       this.fetchComments();
     }
   }
 
   fetchComments = async () => {
     const blog = this.props.blog;
-    const res = await fetchJSON('GET', `/api/blog/${blog.persisted_id}/comment`);
-    if (res.errno === 0) {
+    const url =  `/api/blog/${blog.persisted_id}/comment`;
+    fetchData('GET', url, res => {
       this.setState({comments: res.comments});
-    }
+    });
   }
 
   onCommentPost = () => {
@@ -32,13 +37,18 @@ export default class Comments extends Component {
     if (!this.props.visible) {
       return null;
     }
-    const comments = this.state.comments.map(comment => (
-      <Comment name={comment.visitor_name} content={comment.content}/>
+    const comments = this.state.comments.map((comment, i) => (
+      <Comment
+        key={i}
+        name={comment.visitor_name}
+        content={comment.content}
+      />
     ));
     return <div className="comments-content"
     >
       {comments}
       <CommentEdit
+        user={this.props.user}
         blog={this.props.blog}
         onPost={this.onCommentPost}
       />
@@ -48,7 +58,11 @@ export default class Comments extends Component {
 
 const Comment = (props) => {
   return (
-    <div className="comment">
+    <div className="comment"
+      style={{
+        fontSize: '.9em',
+      }}
+    >
       <div className="user" style={{
         display: 'flex',
         alignItems: 'center',
@@ -101,10 +115,13 @@ class CommentEdit extends Component {
   }
 
   render() {
+    const user = this.props.user;
+    const isLoggedIn = user && user.username;
     return (
       <div>
         <textarea
-          placeholder="Write your comment here"
+          className="comment-edit"
+          placeholder="Write your comment here..."
           onKeyUp={({target}) => {
             target.style.height = '5px';
             target.style.height = target.scrollHeight + 15 + 'px';
@@ -117,13 +134,47 @@ class CommentEdit extends Component {
         </textarea>
         <div style={{
           display: 'flex',
-          justifyContent: 'flex-end',
+          //justifyContent: 'flex-end',
           width: '100%',
         }}>
-          <input type="text" placeholder="Your name"
-            ref={ref => this.nameInput = ref}
-          />
-          <button style={{marginRight: '0'}} onClick={this.postComment}>
+          {!isLoggedIn &&
+            <div>
+              <input className="visitor-name"
+                style={{
+                  padding: '0 1em',
+                  fontSize: '.8em',
+                }}
+                type="text"
+                placeholder="Name"
+                ref={ref => this.nameInput = ref}
+              />
+              <div style={{
+                display: 'inline',
+                fontSize: '.8em',
+                color: '#aaa',
+              }}>
+                <span>&nbsp;or&nbsp;</span>
+                <Link to="/register" style={{
+                  color: '#777',
+                }}>
+                  Register
+                </Link>
+                <span>&nbsp;/&nbsp;</span>
+                <Link to="/login" style={{
+                  color: '#777',
+                }}>
+                  Login
+                </Link>
+              </div>
+            </div>
+          }
+          <button
+            style={{
+              marginLeft: 'auto',
+              marginRight: '1px',
+              boxShadow: '0 0 2px #aaa',
+            }}
+            onClick={this.postComment}>
             Post
           </button>
         </div>

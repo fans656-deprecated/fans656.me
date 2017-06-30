@@ -96,8 +96,12 @@ class App extends React.Component {
 
   componentDidMount() {
     getCurrentUser((resp) => {
+      const user = resp.errno ? null : resp.user;
+      if (user) {
+        user.onChange = () => this.setState({user: user});
+      }
       this.setState({
-        user: !resp.errno ? resp.user : null
+        user: user,
       });
     });
   }
@@ -123,11 +127,10 @@ const UserName = ({user}) => (
     <div style={{
       display: 'flex',
       alignItems: 'center', }}>
-      <img className="avatar" src={user.avatar} height="24" style={{
-        marginRight: '10',
-        borderRadius: '16',
-        boxShadow: '0 0 2px white',
-      }}/>
+      <img className="avatar" src={user.avatar_url} height="28" style={{
+        marginRight: 10,
+        borderRadius: 16,
+      }} alt=""/>
       <span>{user.username}</span>
     </div>
   </Link>
@@ -165,14 +168,14 @@ class Login extends Component {
             ref={input => this.password = input}
           />
           <div>
-            <Link to="/register">
+            <button onClick={this.doLogin} className="primary">
+              Login
+            </button>
+            <Link to="/register" style={{float: 'left'}}>
               <button className="secondary">
                   Register
               </button>
             </Link>
-            <button onClick={this.doLogin} className="primary">
-              Login
-            </button>
           </div>
           <input style={{display: 'none'}} type="submit"/>
         </form>

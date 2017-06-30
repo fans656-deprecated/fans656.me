@@ -1,4 +1,5 @@
 import os
+import logging
 
 abspath = os.path.abspath
 
@@ -45,3 +46,7 @@ local = os.path.exists('local.local')
 #    server_name = 'local.dev'
 #else:
 #    server_name = 'fans656.me'
+
+logging.basicConfig(
+    format='%(asctime)s %(name)s %(levelname)s %(message)s'
+)

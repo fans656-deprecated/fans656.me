@@ -1,7 +1,9 @@
-import os, hashlib, binascii
+import os
+import hashlib
+import binascii
 
 import db
-from util import utcnow
+from util import utcnow, logger
 
 
 def try_auth(username, password):
@@ -20,11 +22,12 @@ def try_auth(username, password):
 
 
 def try_register(username, password):
+    logger(username=username, password=password)
     assert not exists(username), 'username already taken!'
     salt, hashed_password = get_hashed_salt_and_password(password)
     db.execute(
         'create (u:User{'
-            'uername: {username}, '
+            'username: {username}, '
             'salt: {salt}, '
             'hashed_password: {hashed_password}, '
             'created_at: {created_at}'

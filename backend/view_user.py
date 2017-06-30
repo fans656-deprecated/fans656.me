@@ -1,6 +1,10 @@
+import os
+from base64 import decodestring
+
 import flask
 
 import db
+import conf
 import util
 import user_util
 import session_util
@@ -47,7 +51,7 @@ def get_profile(username):
         'user': {
             'username': user['username'],
             'joined_at': user['created_at'],
-            'avatar': user.get('avatar'),
+            'avatar_url': user['avatar_url'],
         },
     })
 
@@ -62,10 +66,27 @@ def get_avatar(username):
 
 def post_avatar(username):
     data = flask.request.json['data']
+    filetype, data = data.split(';')
+    ext = filetype.split('/')[1]
+    data = data.split(',')[1]
+
+    path = 'user/{}/meta/avatar.{}'.format(username, ext)
+    fpath = util.rooted_path(conf.FILES_ROOT, path)
+
+    dirpath = os.path.dirname(fpath)
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+
+    with open(fpath, 'wb') as f:
+        f.write(data.decode('base64'))
+
+    avatar_url = '/file/' + path
     user = db.execute(
         'match (u:User{username: {username}}) '
-        'set u.avatar = {data}', {
+        'set u.avatar_url = {avatar_url}', {
             'username': username,
-            'data': data,
+            'avatar_url': avatar_url,
         })
-    return success_response() if user else error_response('not found')
+    return success_response({
+        'avatar_url': avatar_url,
+    }) if user else error_response('not found')

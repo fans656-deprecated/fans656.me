@@ -167,6 +167,11 @@ form > * {
 
 /* phone (portrait and landscape) ----------- */
 @media only screen and (min-device-width: 320px) and (max-device-width: 800px) {
+  input.visitor-name {
+    margin-right: 0;
+    width: 90%;
+  }
+
   .comments-content > *{
     width: 100%;
     margin: 0 auto;
@@ -276,8 +281,12 @@ form > * {
 
 /* desktop ----------- */
 @media only screen and (min-width: 800px) {
+  input.visitor-name {
+    margin-right: 1em;
+  }
+
   .comments-content > *{
-    width: 90%;
+    width: 100%;
     margin: 0 auto;
   }
 
@@ -454,7 +463,6 @@ form > * {
 
 .info {
   filter: opacity(.3);
-  font-size: .9em;
 }
 
 .blog .footer {
@@ -481,11 +489,11 @@ form > * {
   margin-top: 1em;
 }
 
-.comments-content textarea {
+.comment-edit {
   display: block;
   width: 100%;
   height: auto;
-  min-height: 5em;
+  min-height: 6em;
   max-height: 20em;
   box-sizing: border-box;
   padding: none;

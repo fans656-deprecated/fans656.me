@@ -71,13 +71,16 @@ class Avatar extends Component {
     }
     console.log(file);
     const reader = new FileReader();
+    const user = this.props.user;
     reader.onload = ({target}) => {
       this.fileInput.value = null;
       const data = target.result;
-      fetchData('POST', `/profile/${this.props.user.username}/avatar`, {
+      fetchData('POST', `/profile/${user.username}/avatar`, {
         'data': data,
-      }, () => {
-        this.img.src = data;
+      }, (data) => {
+        this.img.src = data.avatar_url;
+        user.avatar_url = data.avatar_url;
+        user.onChange();
       });
     }
     reader.readAsDataURL(file);
@@ -87,12 +90,12 @@ class Avatar extends Component {
     const user = this.props.user;
     return (
       <div className="avatar">
-        <img src={user.avatar || "/file/Male-512.png"}
+        <img
           className="large avatar"
           alt="Avatar"
           width="200" height="200"
           title="Click to change"
-          src={user.avatar}
+          src={user.avatar_url}
           style={{
             border: 'none',
             outline: 'none',

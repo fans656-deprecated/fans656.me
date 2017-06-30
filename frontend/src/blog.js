@@ -15,7 +15,7 @@ export class Blog extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      commentsVisible: false,
+      commentsVisible: true,
     };
   }
 
@@ -45,7 +45,8 @@ export class Blog extends Component {
       <ReactMarkdown className="blog-content" source={blog.content}/>
       <div className="footer">
         <div>
-          <div className="comments info">
+          <div className={'comments '
+              + (this.state.commentsVisible ? '' : 'info')}>
             <div
               className="clickable"
               onClick={() => this.setState((prevState) => {
@@ -83,7 +84,11 @@ export class Blog extends Component {
           </div>
         </div>
       </div>
-      <Comments visible={this.state.commentsVisible} blog={this.props.blog}/>
+      <Comments
+        visible={this.state.commentsVisible}
+        user={this.props.user}
+        blog={this.props.blog}
+      />
     </div>
   }
 }
@@ -141,7 +146,12 @@ export class Blogs extends Component {
     const user = this.props.user;
     const isOwner = user && owner === user.username;
     const blogs = this.state.blogs.map((blog, i) => (
-      <Blog key={blog.persisted_id} blog={blog} isOwner={isOwner}/>
+      <Blog
+        key={blog.persisted_id}
+        blog={blog}
+        isOwner={isOwner}
+        user={user}
+      />
     ));
     //const pagination = this.state.pagination;
     return <div>

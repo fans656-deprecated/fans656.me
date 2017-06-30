@@ -3,6 +3,7 @@ import os
 import random
 import functools
 import traceback
+import inspect
 from datetime import datetime, timedelta
 
 import flask
@@ -57,6 +58,14 @@ def send_from_directory(*paths):
     return flask.send_from_directory(dirname, fname)
 
 
+def rooted_path(*paths):
+    fpath = os.path.join(*paths)
+    fpath = os.path.abspath(fpath)
+    if not fpath.startswith(paths[0]):
+        raise errors.NotAllowed('are you up to something?')
+    return fpath
+
+
 def utcnow():
     return str(datetime.utcnow()) + ' UTC'
 
@@ -66,3 +75,22 @@ def id_from_ctime(ctime):
     if dt.minute == dt.second == dt.microsecond == 0:
         dt += timedelta(microseconds=random.randint(0, 999999))
     return dt.strftime('%Y%m%d%H%M%SUTC%f')
+
+
+def logger(msg='', *args, **kwargs):
+    caller_frame = inspect.stack()[1]
+    fname = caller_frame[1]
+    funcname = caller_frame[3]
+    now = datetime.now()
+    print now, fname, funcname, msg.format(*args),
+    if kwargs:
+        print kwargs
+    else:
+        print
+
+
+if __name__ == '__main__':
+    def foo():
+        logger('hi')
+
+    foo()

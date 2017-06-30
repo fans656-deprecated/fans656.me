@@ -19,6 +19,8 @@ def query(query, params=None):
 def query_one(query, params=None):
     r = cypher(query, params)
     rows = r['data']
+    if not rows:
+        return None
     row = rows[0]
     if len(row) == 1:
         return row[0]
@@ -35,6 +37,8 @@ def query_nodes(q, params=None):
 
 def query_node(query, params=None):
     data = query_one(query, params)
+    if not data:
+        return None
     node = data['data']
     return node
 
@@ -235,17 +239,7 @@ def purge():
     cypher('match (n) detach delete n')
 
 
-if __name__ == '__main__':
-    import sys
-
-    if len(sys.argv) == 2:
-        if sys.argv[1] == '-b':
-            backup()
-            exit()
-        elif sys.argv[1] == '-r':
-            restore()
-            exit()
-
+def set_persisted_ids():
     nodes = query('''
 match (n:Blog)
 return id(n), n.ctime
@@ -259,3 +253,20 @@ return id(n), n.ctime
             'id': node_id,
             'persisted_id': util.id_from_ctime(ctime)
         })
+
+
+if __name__ == '__main__':
+    import sys
+    from pprint import pprint
+
+    if len(sys.argv) == 2:
+        if sys.argv[1] == '-b':
+            backup()
+            exit()
+        elif sys.argv[1] == '-r':
+            restore()
+            exit()
+
+    #r = query('match (u:User) where not exists(u.username) delete u')
+    r = query('match (u:User) remove u.avatar')
+    pprint(r)

@@ -6,7 +6,7 @@ from flask import request
 
 import db
 import conf
-from util import utcnow
+from util import utcnow, logger
 
 class Session(object):
 
@@ -31,11 +31,13 @@ def current_user():
     username = s.username
     user = db.query_node('match (u:User{username: {username}}) return u',
                          {'username': username})
+    logger(user=user)
+    user = user or {}
     if s.username:
         return {
             'username': user['username'],
             'created_at': user['created_at'],
-            'avatar': user['avatar'],
+            'avatar_url': user.get('avatar_url'),
         }
     else:
         return None
