@@ -28,9 +28,14 @@ def session_object():
 
 def current_user():
     s = session_object()
+    username = s.username
+    user = db.query_node('match (u:User{username: {username}}) return u',
+                         {'username': username})
     if s.username:
         return {
-            'username': s.username,
+            'username': user['username'],
+            'created_at': user['created_at'],
+            'avatar': user['avatar'],
         }
     else:
         return None
@@ -54,8 +59,7 @@ def gen_new_cookie_value():
 def new_session(username):
     cookie_value = gen_new_cookie_value()
     expires_at = expires_at_from_now()
-    print '!' * 40, 'new_session'
-    print db.execute(
+    db.execute(
         'create (s:Session{ '
             'cookie_value: {cookie_value},'
             'username: {username},'

@@ -11,7 +11,9 @@ export default class Comments extends Component {
   }
 
   componentDidMount = () => {
-    this.fetchComments();
+    if (this.props.visible) {
+      this.fetchComments();
+    }
   }
 
   fetchComments = async () => {

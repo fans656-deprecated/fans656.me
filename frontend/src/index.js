@@ -5,6 +5,7 @@ import {
 } from 'react-router-dom'
 
 import { Blogs, ViewBlog, EditBlog } from './blog'
+import Profile from './Profile'
 import Gallery from './Gallery'
 import About from './About'
 import Files from './Files'
@@ -16,7 +17,7 @@ import './style.css'
 const Nav = ({user}) => {
   return <nav>
     <ul>
-      <li><Link to="/">Home</Link></li>
+      <li><a href="/">Home</a></li>
       {/*
       <li><Link to="/blog">Blog</Link></li>
       <li><Link to="/gallery">Gallery</Link></li>
@@ -112,13 +113,24 @@ const Header = (props) => (
   <header className="reverse-color">
     <Nav user={props.user}/>
     {props.user
-      ? <UserName {...props.user}/>
+      ? <UserName user={props.user}/>
       : <Link to="/login">Login</Link>}
   </header>
 );
 
-const UserName = ({username}) => (
-  <Link className="username" to={'/profile/' + username}>{username}</Link>
+const UserName = ({user}) => (
+  <Link className="username" to={'/profile/' + user.username}>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center', }}>
+      <img className="avatar" src={user.avatar} height="24" style={{
+        marginRight: '10',
+        borderRadius: '16',
+        boxShadow: '0 0 2px white',
+      }}/>
+      <span>{user.username}</span>
+    </div>
+  </Link>
 );
 
 class Login extends Component {
@@ -175,6 +187,10 @@ class Register extends Component {
     const username = this.username.value;
     const password = this.password.value;
     const confirmPassword = this.confirmPassword.value;
+    if (!username.match(/[-_a-zA-Z0-9]+/)) {
+      alert('Invalid username!');
+      return;
+    }
     if (username.length === 0) {
       alert('Username required!');
       return;
@@ -232,34 +248,6 @@ class Register extends Component {
     );
   }
 }
-
-class Profile extends Component {
-  doLogout = async () => {
-    const res = await fetchJSON('GET', '/api/logout', {
-      username: this.props.user.username
-    });
-    if (!res.errno) {
-      this.props.onLogout();
-    } else {
-      alert('logout failed, see console for details');
-      console.log(res);
-    }
-  }
-
-  render() {
-    const user = this.props.user;
-    if (!user) {
-      return null;
-    }
-    return (
-      <div className="center narrow center-children">
-        <h1>{user.username}</h1>
-        <button onClick={this.doLogout}>Logout</button>
-      </div>
-    );
-  }
-}
-Profile = withRouter(Profile);
 
 //const TodoPage = (props) => {
 //  const url = props.match.url;

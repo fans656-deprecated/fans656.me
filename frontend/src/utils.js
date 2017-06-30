@@ -45,12 +45,84 @@ export function getDateDiff(pre, now) {
   return [years, months, days, hours, minutes, seconds];
 }
 
+export async function fetchData(method, url, data, callback) {
+  if (callback === undefined && data instanceof Function) {
+    callback = data;
+    data = undefined;
+  }
+  let options;
+  [url, options] = prepareFetch(method, url, data);
+
+  console.log('-----> ' + method + ' ' + url);
+  if (method === 'POST' || method === 'PUT') {
+    console.log(options);
+  }
+  const resp = await fetch(url, options);
+  const text = resp.text();
+  text.then(text => {
+    try {
+      const json = JSON.parse(text);
+      console.log('\n');
+      console.log('[RESPONSE] ' + method + ' ' + url);
+      console.log(json);
+      if (json.errno) {
+        console.log('[RESPONSE with nonzero errno]');
+      } else if (callback) {
+        callback(json);
+      }
+      console.log('\n');
+    } catch (e) {
+      console.log('\n');
+      console.log('[ERROR] ' + method + ' ' + url);
+      console.log('================ Body ================');
+      console.log(text);
+      console.log('============ End of body =============');
+      console.log('[ERROR end]');
+      console.log('\n');
+    }
+  }).catch(e => {
+    console.log('\n');
+    console.log('[ERROR] ' + method + ' ' + url);
+    console.log(e);
+    console.log('[ERROR end]');
+    console.log('\n');
+  });
+}
+
 export async function fetchJSON(method, url, data) {
+  let options;
+  [url, options] = prepareFetch(method, url, data);
+
+  console.log('-----> ' + method + ' ' + url);
+  if (method === 'POST' || method === 'PUT') {
+    console.log(options);
+  }
+  const resp = await fetch(url, options);
+  const json = resp.json();
+  json.then((json) => {
+    console.log('\n');
+    console.log('[RESPONSE] ' + method + ' ' + url);
+    console.log(json);
+    console.log('\n');
+  });
+  if (json.errno) {
+    alert(json.detail);
+    console.log(json.detail);
+    throw Error(json);
+  }
+  return json;
+}
+
+function prepareFetch(method, url, data) {
   url = BACKEND_HOST + url;
   data = data || {};
 
   const headers = new Headers();
   headers.append('Content-Type', 'application/json');
+  headers.append('Accept', 'application/json');
+  if (BACKEND_HOST.slice(5) !== 'https') {
+    headers.append('Cache-Control', 'no-cache');
+  }
   const options = {
     method: method,
     headers: headers,
@@ -71,21 +143,11 @@ export async function fetchJSON(method, url, data) {
             + encodeURIComponent(data[key]));
       }
     });
-    if (args) {
+    if (args.length > 0) {
       url += '?' + args.join('&');
-      console.log('fetchJSON, GET', url);
     }
   }
-
-  console.log('Client -----> Server | fetchJSON ' + url);
-  console.log(options);
-  const resp = await fetch(url, options);
-  const json = resp.json();
-  json.then((json) => {
-    console.log('Client <----- Server | fetchJSON ' + url);
-    console.log(json);
-  });
-  return json;
+  return [url, options];
 }
 
 export async function getCurrentUser(then) {

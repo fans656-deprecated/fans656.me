@@ -1,5 +1,6 @@
 import flask
 
+import db
 import util
 import user_util
 import session_util
@@ -36,3 +37,35 @@ def get_me():
     return success_response({
         'user': session_util.current_user()
     })
+
+
+def get_profile(username):
+    user = db.query_node('match (u:User{username: {username}}) return u', {
+        'username': username,
+    })
+    return success_response({
+        'user': {
+            'username': user['username'],
+            'joined_at': user['created_at'],
+            'avatar': user.get('avatar'),
+        },
+    })
+
+
+def get_avatar(username):
+    data = db.query_one(
+        'match (u:User{username: {username}}) return u.avatar', {
+            'username': username,
+        })
+    return data or ''
+
+
+def post_avatar(username):
+    data = flask.request.json['data']
+    user = db.execute(
+        'match (u:User{username: {username}}) '
+        'set u.avatar = {data}', {
+            'username': username,
+            'data': data,
+        })
+    return success_response() if user else error_response('not found')

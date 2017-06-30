@@ -1,8 +1,9 @@
 # coding: utf-8
 import os
+import random
 import functools
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import flask
 from flask import redirect, jsonify
@@ -61,4 +62,7 @@ def utcnow():
 
 
 def id_from_ctime(ctime):
-    return parse_datetime(ctime).strftime('%Y%m%d%H%M%S')
+    dt = parse_datetime(ctime)
+    if dt.minute == dt.second == dt.microsecond == 0:
+        dt += timedelta(microseconds=random.randint(0, 999999))
+    return dt.strftime('%Y%m%d%H%M%SUTC%f')

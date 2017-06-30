@@ -100,6 +100,11 @@ def get_file(path):
     return util.send_from_directory(conf.FILES_ROOT, path)
 
 
+@app.route('/api/<path:path>')
+def no_such_api(path):
+    return error_response('no such api', 404)
+
+
 @app.route('/')
 @app.route('/<path:path>')
 def index(path=''):

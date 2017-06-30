@@ -64,7 +64,6 @@ button {
   color: #333;
   border: none;
   box-shadow: 0 0 3px #aaa;
-  margin-right: .6em;
 }
 
 button.primary {
@@ -114,13 +113,12 @@ header {
 
 header > *:last-child {
   margin-left: auto;
-  margin-right: 2em;
+  margin-right: 1em;
   text-align: center;
 }
 
 header .username {
   text-align: right;
-  min-width: 3em;
 }
 
 footer {
@@ -264,6 +262,7 @@ form > * {
   }
 }
 
+/*
 @media only screen and (min-width: 800px) and (max-width: 1366px) {
   .blogs {
     margin: 3em auto;
@@ -273,9 +272,10 @@ form > * {
     margin-bottom: 2em;
   }
 }
+*/
 
 /* desktop ----------- */
-@media only screen and (min-width: 1366px) {
+@media only screen and (min-width: 800px) {
   .comments-content > *{
     width: 90%;
     margin: 0 auto;
@@ -295,7 +295,8 @@ form > * {
 
   .blogs {
     margin: 3em auto;
-    width: 45%;
+    min-width: 45%;
+    max-width: 50em;
   }
 
   .blog {
@@ -549,7 +550,7 @@ a {
   color: var(--fg-color);
 }
 
-.about img {
+img.large.avatar {
   box-shadow: 0 0 10px #aaa;
 }
 
@@ -737,4 +738,16 @@ a {
   min-width: 2em;
   height: 1.5em;
   text-align: center;
+}
+
+.profile h1 {
+  margin-bottom: 0;
+}
+
+.profile .avatar img {
+}
+
+.profile .avatar img:hover {
+  box-shadow: inset 0 0 3px #aaa;
+  cursor: pointer;
 }

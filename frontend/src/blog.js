@@ -9,7 +9,7 @@ import $ from 'jquery'
 
 import Comments from './Comments'
 import { Icon, DangerButton } from './common'
-import { fetchJSON } from './utils'
+import { fetchJSON, fetchData } from './utils'
 
 export class Blog extends Component {
   constructor(props) {
@@ -54,7 +54,7 @@ export class Blog extends Component {
                 };
               })}
             >
-              <a href="#" className="number"
+              <a href="#number-of-comments" className="number"
                 onClick={ev => ev.preventDefault()}
               >
                 {blog.n_comments || 0}&nbsp;
@@ -107,24 +107,25 @@ export class Blogs extends Component {
     });
   }
 
-  fetchBlogs = async () => {
+  fetchBlogs = () => {
     const options = qs.parse(window.location.search.slice(1));
     const page = options.page || 1;
     const size = options.size || 20;
 
-    const data = await fetchJSON('GET', '/api/blog', {
+    fetchData('GET', '/api/blog', {
       page: page,
       size: size,
-    });
-    let blogs = data.blogs;
-    this.setState({
-      blogs: blogs,
-      pagination: {
-        page: data.page,
-        size: data.size,
-        total: data.total,
-        nPages: data.n_pages,
-      },
+    }, data => {
+      let blogs = data.blogs;
+      this.setState({
+        blogs: blogs,
+        pagination: {
+          page: data.page,
+          size: data.size,
+          total: data.total,
+          nPages: data.n_pages,
+        },
+      });
     });
   }
 
@@ -274,7 +275,7 @@ export { EditBlog };
 class Panel extends Component {
   render() {
     return <div className="panel">
-      <Link to="/new-blog"><Icon type={IconPlus} /></Link>
+      <Link to="/new-blog" title="New blog"><Icon type={IconPlus} /></Link>
     </div>;
   }
 }

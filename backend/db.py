@@ -18,10 +18,6 @@ def query(query, params=None):
 
 def query_one(query, params=None):
     r = cypher(query, params)
-    print '=' * 70
-    print 'query:', query
-    print r
-    print '=' * 70
     rows = r['data']
     row = rows[0]
     if len(row) == 1:
@@ -251,13 +247,15 @@ if __name__ == '__main__':
             exit()
 
     nodes = query('''
-match (n:Blog) where not exists(n.persisted_id)
+match (n:Blog)
 return id(n), n.ctime
                ''')['data']
-    print len(nodes)
-    #import util
-    #for node_id, ctime in nodes:
-    #    query('match (n) where id(n) = {id} set n.persisted_id = {persisted_id}', {
-    #        'id': node_id,
-    #        'persisted_id': util.id_from_ctime(ctime)
-    #    })
+    import util
+    n = len(nodes)
+    print n
+    for i, (node_id, ctime) in enumerate(nodes):
+        print '{}/{}'.format((i + 1), n)
+        query('match (n) where id(n) = {id} set n.persisted_id = {persisted_id}', {
+            'id': node_id,
+            'persisted_id': util.id_from_ctime(ctime)
+        })

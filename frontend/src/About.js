@@ -28,7 +28,7 @@ export default class About extends Component {
     return (
       <div>
         <div className="about">
-          <img src="/file/fans656.jpg" alt="fans656"/>
+          <img className="large avatar" src="/file/fans656.jpg" alt="fans656"/>
           <p className="nickname">fans656</p>
           <p style={{fontSize: '0.4em'}}> is up running for </p>
           <div className="age">
@@ -57,6 +57,7 @@ export default class About extends Component {
             <a className="icon"
               href="https://github.com/fans656"
               target="_blank"
+              rel="noopener noreferrer"
             >
               <Icon type={IconGithub}/>
               &nbsp;&nbsp;{'github.com/fans656'}
