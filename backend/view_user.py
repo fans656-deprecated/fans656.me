@@ -50,7 +50,7 @@ def get_profile(username):
     return success_response({
         'user': {
             'username': user['username'],
-            'joined_at': user['created_at'],
+            'ctime': user['ctime'],
             'avatar_url': user['avatar_url'],
         },
     })

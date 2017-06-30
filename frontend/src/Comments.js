@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
 
+import { Textarea } from './common'
 import { fetchData } from './utils'
 
 export default class Comments extends Component {
@@ -25,7 +26,7 @@ export default class Comments extends Component {
 
   fetchComments = async () => {
     const blog = this.props.blog;
-    const url =  `/api/blog/${blog.persisted_id}/comment`;
+    const url =  `/api/blog/${blog.id}/comment`;
     fetchData('GET', url, res => {
       this.setState({comments: res.comments});
     });
@@ -33,6 +34,7 @@ export default class Comments extends Component {
 
   onCommentPost = () => {
     this.fetchComments();
+    this.props.onPost();
   }
 
   render() {
@@ -116,8 +118,8 @@ class Comment extends Component {
           </span>
         </div>
         <div>
-          {comment.content.split('\n').map(line =>
-            <p style={{margin: '0'}}>{line}</p>)
+          {comment.content.split('\n').map((line, i) =>
+            <p key={i} style={{margin: '0'}}>{line}</p>)
           }
         </div>
       </div>
@@ -128,7 +130,7 @@ class Comment extends Component {
 
 class CommentEdit extends Component {
   doPost = async () => {
-    const content = this.textarea.value;
+    const content = this.textarea.val();
     if (content.length === 0) {
       alert('Empty?');
       return;
@@ -145,10 +147,10 @@ class CommentEdit extends Component {
     console.log(comment);
 
     const blog = this.props.blog;
-    const url = `/api/blog/${blog.persisted_id}/comment`;
+    const url = `/api/blog/${blog.id}/comment`;
     fetchData('POST', url, comment, () => {
       this.props.onPost();
-      this.textarea.value = null;
+      this.textarea.clear();
     });
   }
 
@@ -157,9 +159,10 @@ class CommentEdit extends Component {
     const isLoggedIn = user && user.username;
     return (
       <div>
-        <textarea
+        <Textarea
           className="comment-edit"
           placeholder="Write your comment here..."
+          submit={this.doPost}
           onKeyUp={({target}) => {
             target.style.height = '5px';
             target.style.height = target.scrollHeight + 15 + 'px';
@@ -169,7 +172,7 @@ class CommentEdit extends Component {
           }}
           ref={ref => this.textarea = ref}
         >
-        </textarea>
+        </Textarea>
         <div style={{
           display: 'flex',
           //justifyContent: 'flex-end',

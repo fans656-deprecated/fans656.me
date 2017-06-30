@@ -92,7 +92,7 @@ class Avatar extends Component {
       <div className="avatar">
         <img
           className="large avatar"
-          alt="Avatar"
+          alt="Click to change"
           width="200" height="200"
           title="Click to change"
           src={user.avatar_url}

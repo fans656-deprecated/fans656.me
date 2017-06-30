@@ -12,7 +12,7 @@ class Session(object):
 
     def __init__(self):
         self.username = ''
-        self.created_at = None
+        self.ctime = None
 
 def session_object():
     res = Session()
@@ -31,12 +31,12 @@ def current_user():
     username = s.username
     user = db.query_node('match (u:User{username: {username}}) return u',
                          {'username': username})
-    logger(user=user)
+    #logger(user=user)
     user = user or {}
     if s.username:
         return {
             'username': user['username'],
-            'created_at': user['created_at'],
+            'ctime': user['ctime'],
             'avatar_url': user.get('avatar_url'),
         }
     else:

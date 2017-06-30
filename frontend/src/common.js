@@ -43,3 +43,51 @@ export class DangerButton extends Component {
     )
   }
 }
+
+export class Textarea extends Component {
+  onKeyDown = (ev) => {
+    // ctrl-enter
+    if (ev.ctrlKey && ev.keyCode === 13) {
+      if (this.props.submit) {
+        this.props.submit();
+      }
+    }
+  }
+
+  val = () => {
+    return this.ref.value;
+  }
+
+  clear = () => {
+    this.ref.value = null;
+  }
+
+  render() {
+    return (
+      <textarea
+        {...this.props}
+        onKeyDown={this.onKeyDown}
+        ref={ref => this.ref = ref}
+      >
+        {this.props.children}
+      </textarea>
+    )
+  }
+}
+
+export class Input extends Component {
+  onKeyDown = (ev) => {
+    // ctrl-enter
+    if (ev.ctrlKey && ev.keyCode === 13) {
+      if (this.props.submit) {
+        this.props.submit();
+      }
+    }
+  }
+
+  render() {
+    return (
+      <input {...this.props} onKeyDown={this.onKeyDown}/>
+    )
+  }
+}

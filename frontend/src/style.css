@@ -436,7 +436,9 @@ form > * {
 }
 
 .blog p {
-  margin: .2em 0; }
+  margin: 0;
+  margin-bottom: 1em;
+}
 
 .blog .footer {
   margin-top: 1em;
@@ -756,6 +758,10 @@ img.large.avatar {
 }
 
 .profile .avatar img:hover {
-  box-shadow: inset 0 0 3px #aaa;
+  box-shadow: none;
   cursor: pointer;
+}
+
+.video {
+  max-width: 100%;
 }

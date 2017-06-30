@@ -210,7 +210,7 @@ def restore_files():
     backup_file_dir = os.path.join(backup_repo_dir, 'files')
     local_file_dir = conf.FILES_ROOT
 
-    execute('rsync -av {}/ {}'.format(backup_file_dir, local_file_dir))
+    shell_execute('rsync -av {}/ {}'.format(backup_file_dir, local_file_dir))
 
     print
     print
@@ -249,9 +249,9 @@ return id(n), n.ctime
     print n
     for i, (node_id, ctime) in enumerate(nodes):
         print '{}/{}'.format((i + 1), n)
-        query('match (n) where id(n) = {id} set n.persisted_id = {persisted_id}', {
-            'id': node_id,
-            'persisted_id': util.id_from_ctime(ctime)
+        query('match (n) where id(n) = {node_id} set n.id = {id}', {
+            'node_id': node_id,
+            'id': util.id_from_ctime(ctime)
         })
 
 
@@ -267,6 +267,9 @@ if __name__ == '__main__':
             restore()
             exit()
 
-    #r = query('match (u:User) where not exists(u.username) delete u')
-    r = query('match (n:Comment) detach delete n')
+    #set_persisted_ids()
+    #r = execute('match (n:Comment) where length(n.content) < 9 return n')
+    r = execute('match (n:Comment)  detach delete n')
     pprint(r)
+    #r = query('match (n:Comment) detach delete n')
+    #pprint(r)

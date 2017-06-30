@@ -15,9 +15,6 @@ def try_auth(username, password):
         }
     )
     _, got_hashed_password = get_hashed_salt_and_password(password, salt)
-    print 'hashes (got/expected)'
-    print got_hashed_password
-    print expected_hashed_password
     assert got_hashed_password == expected_hashed_password, 'invalid auth'
 
 
@@ -30,12 +27,12 @@ def try_register(username, password):
             'username: {username}, '
             'salt: {salt}, '
             'hashed_password: {hashed_password}, '
-            'created_at: {created_at}'
+            'ctime: {ctime}'
         '})', {
             'username': username,
             'salt': salt,
             'hashed_password': hashed_password,
-            'created_at': utcnow(),
+            'ctime': utcnow(),
         }
     )
 
@@ -46,14 +43,14 @@ def create_user(username, password):
             username: {username},
             salt: {salt},
             hashed_password: {hashed_password},
-            created_at: {created_at}
+            ctime: {ctime}
         })
                '''
         , {
             'username': username,
             'salt': salt,
             'hashed_password': hashed_password,
-            'created_at': utcnow(),
+            'ctime': utcnow(),
         }
     )
 

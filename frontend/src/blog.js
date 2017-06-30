@@ -8,7 +8,7 @@ import qs from 'qs'
 import $ from 'jquery'
 
 import Comments from './Comments'
-import { Icon, DangerButton } from './common'
+import { Icon, DangerButton, Textarea, Input } from './common'
 import { fetchJSON, fetchData } from './utils'
 
 export class Blog extends Component {
@@ -16,14 +16,21 @@ export class Blog extends Component {
     super(props);
     this.state = {
       commentsVisible: false,
+      numNewComments: 0,
     };
+  }
+
+  onCommentPost = () => {
+    this.setState(prevState => {
+      return {numNewComments: prevState.numNewComments + 1};
+    });
   }
 
   render() {
     const isOwner = this.props.isOwner;
     const blog = this.props.blog;
     let title = blog.title || '';
-    const url = `/blog/${blog.persisted_id}` + (isOwner ? '/edit' : '');
+    const url = `/blog/${blog.id}` + (isOwner ? '/edit' : '');
     const ctime = new Date(blog.ctime).toLocaleDateString()
     const tags = (blog.tags || []).map((tag, i) => {
       return <a className="tag info"
@@ -58,7 +65,7 @@ export class Blog extends Component {
               <a href="#number-of-comments" className="number"
                 onClick={ev => ev.preventDefault()}
               >
-                {blog.n_comments || 0}&nbsp;
+                {(blog.n_comments || 0) + this.state.numNewComments}&nbsp;
               </a>
               <span>Comments</span>
             </div>
@@ -88,6 +95,7 @@ export class Blog extends Component {
         visible={this.state.commentsVisible}
         user={this.props.user}
         blog={this.props.blog}
+        onPost={this.onCommentPost}
       />
     </div>
   }
@@ -147,7 +155,7 @@ export class Blogs extends Component {
     const isOwner = user && owner === user.username;
     const blogs = this.state.blogs.map((blog, i) => (
       <Blog
-        key={blog.persisted_id}
+        key={blog.id}
         blog={blog}
         isOwner={isOwner}
         user={user}
@@ -169,7 +177,7 @@ export class Blogs extends Component {
 export class ViewBlog extends Component {
   render() {
     return <div className="wide center edit-blog">
-      <textarea></textarea>
+      <Textarea></Textarea>
       <button className="submit">Post</button>
     </div>
   }
@@ -190,16 +198,6 @@ class EditBlog extends Component {
     if (this.props.id) {
       this.fetchBlog(this.props.id);
     }
-    $('#editor,input').keydown((e) => {
-      console.log(e);
-      // ctrl-enter
-      if (e.ctrlKey && e.keyCode === 13) {
-        $('#submit').click();
-      } else if (e.keyCode === 9 && !e.ctrlKey) {
-        e.preventDefault();
-        $('#editor')[0].value += '    ';
-      }
-    });
   }
 
   fetchBlog = async (id) => {
@@ -227,27 +225,22 @@ class EditBlog extends Component {
 
     blog.content = this.state.text;
 
-    const tags = this.state.tagsText.split(',')
+    const tags = this.state.tagsText.split(/[,，]|  /)
       .map(tag => tag.trim())
       .filter(nonempty => nonempty);
     blog.tags = tags;
 
-    let res;
+    const after = () => this.props.history.push('/blog');
     if (blog.id) {
-      res = await fetchJSON('PUT', `/api/blog/${blog.persisted_id}`, blog);
+      fetchData('PUT', `/api/blog/${blog.id}`, blog, after);
     } else {
-      res = await fetchJSON('POST', '/api/blog', blog);
-    }
-    if (res.errno) {
-      alert(res.detail);
-    } else {
-      this.props.history.push('/blog');
+      fetchData('POST', '/api/blog', blog, after);
     }
   }
 
   delete = async () => {
     const blog = this.state.blog;
-    const res = await fetchJSON('DELETE', `/api/blog/${blog.persisted_id}`);
+    const res = await fetchJSON('DELETE', `/api/blog/${blog.id}`);
     if (res.errno) {
       alert(res.detail);
     } else {
@@ -257,15 +250,17 @@ class EditBlog extends Component {
 
   render() {
     return <div className="wide center edit-blog">
-      <textarea
+      <Textarea
         id="editor"
         value={this.state.text}
         onChange={this.onEditorTextChange}
+        submit={this.post}
         ref={(editor) => this.editor = editor}
-      ></textarea>
-      <input className="tags"
+      ></Textarea>
+      <Input className="tags"
         type="text"
         value={this.state.tagsText}
+        submit={this.post}
         onChange={({target}) => this.setState({tagsText: target.value})}
       />
       <div className="buttons">
