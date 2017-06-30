@@ -5,7 +5,9 @@ endpoints = [
     ('POST', '/api/register', view_user.post_register),
     ('GET', '/api/logout', view_user.get_logout),
     ('GET', '/api/me', view_user.get_me),
+
     ('GET', '/api/profile/<username>', view_user.get_profile),
+    ('GET', '/profile/<username>/avatar', view_user.get_avatar),
     ('POST', '/profile/<username>/avatar', view_user.post_avatar),
 
     ('POST', '/api/node', view_node.post_node),

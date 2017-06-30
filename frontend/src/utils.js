@@ -74,6 +74,7 @@ export async function fetchData(method, url, data, callback) {
     } catch (e) {
       console.log('\n');
       console.log('[ERROR] ' + method + ' ' + url);
+      console.log(e);
       console.log('================ Body ================');
       console.log(text);
       console.log('============ End of body =============');

@@ -109,14 +109,30 @@ def del_blog(persisted_id):
 
 def post_comment(blog_id):
     comment = flask.request.json
-    db.execute(
-        'match (blog:Blog{persisted_id: {id}}) '
-        'create (comment:Comment{visitor_name: {name}, content: {content}}), '
-        '(blog)-[:has_comment]->(comment)'
+
+    if 'user' in comment:
+        username = comment['user']['username']
+        is_visitor = False
+    else:
+        username = comment['visitorName']
+        is_visitor = True
+
+    db.execute('''
+        match (blog:Blog{ persisted_id: {blog_id} })
+        create (comment:Comment{
+            username: {username},
+            is_visitor: {is_visitor},
+            content: {content},
+            ctime: {ctime}
+        }),
+        (blog)-[:has_comment]->(comment)
+        '''
         , {
-            'id': blog_id,
-            'name': comment['name'],
-            'content': comment['text'],
+            'blog_id': blog_id,
+            'username': username,
+            'is_visitor': is_visitor,
+            'content': comment['content'],
+            'ctime': utcnow(),
         }
     )
     return success_response()
@@ -125,7 +141,7 @@ def post_comment(blog_id):
 def get_comments(blog_id):
     comments = db.query_nodes(
         'match (blog:Blog{persisted_id: {id}})-[:has_comment]->(comment) '
-        'return comment', {
+        'return comment order by comment.ctime asc', {
             'id': blog_id,
         }
     )

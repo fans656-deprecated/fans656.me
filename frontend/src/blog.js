@@ -15,7 +15,7 @@ export class Blog extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      commentsVisible: true,
+      commentsVisible: false,
     };
   }
 

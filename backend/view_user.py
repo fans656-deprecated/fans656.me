@@ -57,11 +57,11 @@ def get_profile(username):
 
 
 def get_avatar(username):
-    data = db.query_one(
-        'match (u:User{username: {username}}) return u.avatar', {
+    avatar_url = db.query_one(
+        'match (u:User{username: {username}}) return u.avatar_url', {
             'username': username,
         })
-    return data or ''
+    return success_response({'avatar_url': avatar_url})
 
 
 def post_avatar(username):

@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
 
-import { fetchJSON, fetchData } from './utils'
+import { fetchData } from './utils'
 
 export default class Comments extends Component {
   constructor(props) {
@@ -12,7 +12,9 @@ export default class Comments extends Component {
   }
 
   componentDidMount() {
-    this.fetchComments();
+    if (this.props.visible) {
+      this.fetchComments();
+    }
   }
 
   componentWillReceiveProps(props) {
@@ -37,13 +39,18 @@ export default class Comments extends Component {
     if (!this.props.visible) {
       return null;
     }
-    const comments = this.state.comments.map((comment, i) => (
-      <Comment
+    const comments = this.state.comments.map((comment, i) => {
+      console.log('Comment', comment);
+      return <Comment
         key={i}
-        name={comment.visitor_name}
+        comment={comment}
+        username={comment.username}
+        user={comment.user}
+        isVisitor={comment.is_visitor}
+        ctime={comment.ctime}
         content={comment.content}
       />
-    ));
+    });
     return <div className="comments-content"
     >
       {comments}
@@ -56,62 +63,93 @@ export default class Comments extends Component {
   }
 }
 
-const Comment = (props) => {
-  return (
-    <div className="comment"
-      style={{
-        fontSize: '.9em',
-      }}
-    >
-      <div className="user" style={{
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '.8em',
-      }}>
-        <img
-          alt="fans656"
-          src="http://ub:6560/file/Male-512.png"
-          style={{
-            width: 24, height: 24,
-            borderRadius: '16px',
-            border: '1px solid #ccc',
-            marginRight: '.5em',
-          }}
-        />
-        <span style={{
-          position: 'relative',
-          top: '.2em',
-          marginBottom: '0',
+class Comment extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      avatarURL: '/file/anonymous.png',
+    };
+    const comment = props.comment;
+    if (!comment.is_visitor) {
+      fetchData('GET', `/profile/${comment.username}/avatar`, res => {
+        this.setState({avatarURL: res.avatar_url});
+      });
+    }
+  }
+
+  render() {
+    const comment = this.props.comment;
+    const ctime = new Date(this.props.ctime);
+    return (
+      <div className="comment"
+        style={{
+          fontSize: '.9em',
+          paddingBottom: '1em',
+        }}
+      >
+        <div style={{
+          display: 'flex',
         }}>
-          {props.name}
-        </span>
+          <div className="user" style={{
+            display: 'flex',
+            alignItems: 'center',
+            marginBottom: '.2em',
+          }}>
+            <img
+              alt={comment.username}
+              src={this.state.avatarURL}
+              style={{
+                width: 24, height: 24,
+                borderRadius: '16px',
+                marginRight: '.5em',
+              }}
+            />
+            <span style={{
+              position: 'relative',
+              top: '.2em',
+            }}>
+              {comment.username}
+            </span>
+          </div>
+          <span className="datetime info" style={{marginLeft: 'auto',}}>
+            {ctime.toLocaleString()}
+          </span>
+        </div>
+        <div>
+          {comment.content.split('\n').map(line =>
+            <p style={{margin: '0'}}>{line}</p>)
+          }
+        </div>
       </div>
-      <div>{props.content}</div>
-      <div style={{textAlign: 'right'}}>
-        <span className="info">
-          {new Date().toLocaleDateString()}
-        </span>
-      </div>
-    </div>
-  )
+    )
+  }
 }
 
 
 class CommentEdit extends Component {
-  postComment = async () => {
+  doPost = async () => {
+    const content = this.textarea.value;
+    if (content.length === 0) {
+      alert('Empty?');
+      return;
+    }
+    let comment = {
+      content: content,
+    };
+    const user = this.props.user;
+    if (user) {
+      comment.user = user;
+    } else {
+      comment.visitorName = this.nameInput.value;
+    }
+    console.log(comment);
+
     const blog = this.props.blog;
     const url = `/api/blog/${blog.persisted_id}/comment`;
-    const res = await fetchJSON('POST', url, {
-      'name': this.nameInput.value,
-      'text': this.textarea.value,
-    });
-    if (res.errno) {
-      console.log('error', res);
-      alert(res.detail);
-    } else {
+    fetchData('POST', url, comment, () => {
       this.props.onPost();
-      this.textarea.value = '';
-    }
+      this.textarea.value = null;
+    });
   }
 
   render() {
@@ -145,7 +183,7 @@ class CommentEdit extends Component {
                   fontSize: '.8em',
                 }}
                 type="text"
-                placeholder="Name"
+                placeholder="Who are you? (name or email)"
                 ref={ref => this.nameInput = ref}
               />
               <div style={{
@@ -174,7 +212,7 @@ class CommentEdit extends Component {
               marginRight: '1px',
               boxShadow: '0 0 2px #aaa',
             }}
-            onClick={this.postComment}>
+            onClick={this.doPost}>
             Post
           </button>
         </div>

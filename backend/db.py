@@ -268,5 +268,5 @@ if __name__ == '__main__':
             exit()
 
     #r = query('match (u:User) where not exists(u.username) delete u')
-    r = query('match (u:User) remove u.avatar')
+    r = query('match (n:Comment) detach delete n')
     pprint(r)
