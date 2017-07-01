@@ -1,12 +1,3 @@
-/*
-
-) single blog view
-  . refactor blog footer
-  . mobile font-size
-  ) nav prev/next
-) custom url
-
- */
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
 import {
@@ -14,6 +5,7 @@ import {
 } from 'react-router-dom'
 
 import Blogs, { ViewBlog, EditBlog } from './Blogs'
+import Console from './Console'
 import Profile from './Profile'
 import Gallery from './Gallery'
 import About from './About'
@@ -131,16 +123,27 @@ App = withRouter(App);
 const Header = (props) => (
   <header className="reverse-color">
     <Nav user={props.user}/>
-    {props.user
-      ? <UserName user={props.user}/>
-      : <Link to="/login">Login</Link>}
+    <div className="right" style={{
+      marginLeft: 'auto',
+      display: 'inline-flex',
+      alignItems: 'center',
+    }}>
+      <Console style={{
+        marginRight: '1em',
+      }}/>
+      <span>
+        {props.user
+          ? <UserName user={props.user}/>
+          : <Link to="/login">Login</Link>}
+      </span>
+    </div>
   </header>
 );
 
 const UserName = ({user}) => (
   <Link className="username" to={'/profile/' + user.username}>
     <div style={{
-      display: 'flex',
+      display: 'inline-flex',
       alignItems: 'center', }}>
       <img className="avatar" src={user.avatar_url} height="28" style={{
         marginRight: 10,

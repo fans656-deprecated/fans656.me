@@ -289,11 +289,15 @@ class Panel extends Component {
     clearInterval(this.scrollTimer);
   }
 
+  showConsole = () => {
+    this.setState({consoleVisible: true});
+  }
+
   render() {
     const items = [
-      <li onClick={this.toggleConsole} key="console"><a>
-        <Icon title="Search" type={IconSearch}/>
-      </a></li>
+      //<li onClick={this.showConsole} key="console"><a>
+      //  <Icon title="Search" type={IconSearch}/>
+      //</a></li>
     ];
     if (this.props.isOwner) {
       items.push(
@@ -302,9 +306,11 @@ class Panel extends Component {
         </li>
       );
     }
-    return <ul id="panel" className="panel">
-      {items}
-    </ul>;
+    return (
+      <ul id="panel" className="panel">
+        {items}
+      </ul>
+    );
   }
 }
 

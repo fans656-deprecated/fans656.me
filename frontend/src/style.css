@@ -114,7 +114,6 @@ header {
 header > *:last-child {
   margin-left: auto;
   margin-right: 1rem;
-  text-align: center;
 }
 
 header .username {
@@ -167,6 +166,11 @@ form > * {
 
 /* mobile (portrait and landscape) ----------- */
 @media only screen and (min-device-width: 320px) and (max-device-width: 800px) {
+
+  #console {
+    display: none;
+  }
+
   .edit-blog .tags, .edit-blog .custom-url {
     margin: 0 1px;
     padding: 0 .6rem;
@@ -281,6 +285,30 @@ form > * {
 
 /* desktop ----------- */
 @media only screen and (min-width: 800px) {
+
+  #console-input {
+    height: 1.6rem;
+    font: .8rem 'Consolas', 'Courier New', monospace;
+    width: 8rem;
+    padding: 0 .6rem;
+    padding-left: 1.5rem;
+    background: #444;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    color: #eee;
+  }
+
+  #console-input:focus {
+    width: 20rem;
+    transition: 0.3s;
+    background: steelblue;
+  }
+
+  #console svg {
+    position: relative;
+    left: 1.2rem;
+  }
 
   .panel li {
     filter: opacity(.1);
