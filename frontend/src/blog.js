@@ -1,105 +1,14 @@
 import React, { Component } from 'react'
 import { Link, withRouter } from 'react-router-dom'
-import ReactMarkdown from 'react-markdown'
 import IconPlus from 'react-icons/lib/fa/plus'
 import IconCaretLeft from 'react-icons/lib/fa/caret-left'
 import IconCaretRight from 'react-icons/lib/fa/caret-right'
 import qs from 'qs'
 import $ from 'jquery'
 
-import Comments from './Comments'
+import Blog from './Blog'
 import { Icon, DangerButton, Textarea, Input } from './common'
 import { fetchJSON, fetchData } from './utils'
-
-export class Blog extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      commentsVisible: false,
-      numNewComments: 0,
-    };
-  }
-
-  onCommentPost = () => {
-    this.setState(prevState => {
-      return {numNewComments: prevState.numNewComments + 1};
-    });
-  }
-
-  render() {
-    const isOwner = this.props.isOwner;
-    const blog = this.props.blog;
-    let title = blog.title || '';
-    const url = `/blog/${blog.id}` + (isOwner ? '/edit' : '');
-    const ctime = new Date(blog.ctime).toLocaleDateString()
-    const tags = (blog.tags || []).map((tag, i) => {
-      return <a className="tag info"
-        key={i}
-        href={`/blog?tag=${tag}`}
-      >
-        {tag}
-      </a>
-    });
-    return <div className="blog">
-      <a
-        className="anchor"
-        href={url}
-        style={{position: 'absolute', left: '25%'}}
-      >
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      </a>
-      {title && <h2>{title}</h2>}
-      <ReactMarkdown className="blog-content" source={blog.content}/>
-      <div className="footer">
-        <div>
-          <div className={'comments '
-              + (this.state.commentsVisible ? '' : 'info')}>
-            <div
-              className="clickable"
-              onClick={() => this.setState((prevState) => {
-                return {
-                  commentsVisible: !prevState.commentsVisible
-                };
-              })}
-            >
-              <a href="#number-of-comments" className="number"
-                onClick={ev => ev.preventDefault()}
-              >
-                {(blog.n_comments || 0) + this.state.numNewComments}&nbsp;
-              </a>
-              <span>Comments</span>
-            </div>
-          </div>
-        </div>
-        <div className="right">
-          <div className="tags">{tags}</div>
-          <div className="ctime datetime">
-            {isOwner
-                ? (
-                  <Link
-                    className="info"
-                    to={url}
-                    title={new Date(blog.ctime).toLocaleString()}
-                  >{ctime}</Link>
-                ) : (
-                  <span
-                    className="info"
-                    title={new Date(blog.ctime).toLocaleString()}
-                  >{ctime}</span>
-                )
-            }
-          </div>
-        </div>
-      </div>
-      <Comments
-        visible={this.state.commentsVisible}
-        user={this.props.user}
-        blog={this.props.blog}
-        onPost={this.onCommentPost}
-      />
-    </div>
-  }
-}
 
 export class Blogs extends Component {
   constructor(props) {
@@ -122,10 +31,12 @@ export class Blogs extends Component {
 
   fetchBlogs = () => {
     const options = qs.parse(window.location.search.slice(1));
+    const tags = options.tags || [];
     const page = options.page || 1;
     const size = options.size || 20;
 
     fetchData('GET', '/api/blog', {
+      tags: tags,
       page: page,
       size: size,
     }, data => {
@@ -175,11 +86,45 @@ export class Blogs extends Component {
 }
 
 export class ViewBlog extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      blog: null,
+    };
+  }
+
+  componentDidMount() {
+    if (this.props.id) {
+      this.fetchBlog(this.props.id);
+    }
+  }
+
+  fetchBlog = async (id) => {
+    fetchData('GET', `/api/blog/${id}`, res => {
+      this.setState({blog: res.blog});
+    });
+  }
+
   render() {
-    return <div className="wide center edit-blog">
-      <Textarea></Textarea>
-      <button className="submit">Post</button>
-    </div>
+    const owner = this.props.owner;
+    const user = this.props.user;
+    const isOwner = user && owner === user.username;
+    const blog = this.state.blog;
+    if (!blog) {
+      return <h1>Not found</h1>
+    }
+    return (
+      <div className="single-blog-view">
+        <Blog
+          key={blog.id}
+          blog={blog}
+          isOwner={isOwner}
+          user={user}
+          commentsVisible={true}
+          isSingleView={true}
+        />
+      </div>
+    )
   }
 }
 
@@ -220,54 +165,70 @@ class EditBlog extends Component {
     this.setState({text: target.value});
   }
 
-  post = async () => {
+  doPost = async () => {
     const blog = this.state.blog;
 
     blog.content = this.state.text;
+    blog.customUrl = this.customUrlInput.val() || undefined
 
-    const tags = this.state.tagsText.split(/[,，]|  /)
+    const tags = this.state.tagsText.split(/[,，]/)
       .map(tag => tag.trim())
       .filter(nonempty => nonempty);
     blog.tags = tags;
 
-    const after = () => this.props.history.push('/blog');
     if (blog.id) {
-      fetchData('PUT', `/api/blog/${blog.id}`, blog, after);
+      fetchData('PUT', `/api/blog/${blog.id}`, blog, this.after);
     } else {
-      fetchData('POST', '/api/blog', blog, after);
+      fetchData('POST', '/api/blog', blog, this.after);
     }
   }
 
-  delete = async () => {
+  doDelete = async () => {
+    fetchData('DELETE', `/api/blog/${this.state.blog.id}`, this.after);
+  }
+
+  after = () => {
     const blog = this.state.blog;
-    const res = await fetchJSON('DELETE', `/api/blog/${blog.id}`);
-    if (res.errno) {
-      alert(res.detail);
+    const options = qs.parse(window.location.search.slice(1));
+
+    let backURL;
+    if (options['back-to-single-view']) {
+      backURL = `/blog/${blog.id}`
     } else {
-      this.props.history.push('/blog');
+      backURL = '/blog';
     }
+
+    this.props.history.push(backURL);
   }
 
   render() {
     return <div className="wide center edit-blog">
       <Textarea
+        className="content-edit"
         id="editor"
         value={this.state.text}
         onChange={this.onEditorTextChange}
-        submit={this.post}
+        submit={this.doPost}
         ref={(editor) => this.editor = editor}
       ></Textarea>
       <Input className="tags"
+        placeholder="Tags"
         type="text"
         value={this.state.tagsText}
-        submit={this.post}
         onChange={({target}) => this.setState({tagsText: target.value})}
+        submit={this.doPost}
+      />
+      <Input className="custom-url"
+        placeholder="Custom URL"
+        type="text"
+        submit={this.doPost}
+        ref={ref => this.customUrlInput = ref}
       />
       <div className="buttons">
-        <DangerButton id="delete" onClick={this.delete}>
+        <DangerButton id="delete" onClick={this.doDelete}>
           Delete
         </DangerButton>
-        <button id="submit" className="primary" onClick={this.post}>
+        <button id="submit" className="primary" onClick={this.doPost}>
           Post
         </button>
       </div>

@@ -6,10 +6,20 @@ Bugs:
     ) pagination input
         can't backspace on page "1"
 
+Important:
+    ) tags and meta-tags
+        such as only-me blogs (write something private)
+    ) require_me_login
+        require authorization to edit
+    ) mobile nav
+        entry point for "Resume" etc
+    . single blog view
+
 Deployment:
     . production deployment should use cache for static files
 
 Functional:
+    ) search by tags
     ) user registration
     ) editor tab in textarea, shift tab to back indent
     ) uploading progress

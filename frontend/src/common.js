@@ -85,9 +85,20 @@ export class Input extends Component {
     }
   }
 
+  val = () => {
+    return this.ref.value;
+  }
+
+  clear = () => {
+    this.ref.value = null;
+  }
+
   render() {
     return (
-      <input {...this.props} onKeyDown={this.onKeyDown}/>
+      <input {...this.props}
+        onKeyDown={this.onKeyDown}
+        ref={ref => this.ref = ref}
+      />
     )
   }
 }

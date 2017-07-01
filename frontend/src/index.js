@@ -1,3 +1,12 @@
+/*
+
+) single blog view
+  . refactor blog footer
+  . mobile font-size
+  ) nav prev/next
+) custom url
+
+ */
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
 import {
@@ -64,7 +73,11 @@ class App extends React.Component {
 
             {/* view blog */}
             <Route exact path="/blog/:id_or_ref" render={({match}) => 
-              <ViewBlog id={match.params.id_or_ref}/>
+              <ViewBlog
+                id={match.params.id_or_ref}
+                owner="fans656"
+                user={this.state.user}
+              />
             }/>
 
             {/* edit blog */}

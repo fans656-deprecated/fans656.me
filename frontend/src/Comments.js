@@ -1,7 +1,8 @@
 import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
+import IconDelete from 'react-icons/lib/md/delete'
 
-import { Textarea } from './common'
+import { Icon, Textarea } from './common'
 import { fetchData } from './utils'
 
 export default class Comments extends Component {
@@ -27,14 +28,10 @@ export default class Comments extends Component {
   fetchComments = async () => {
     const blog = this.props.blog;
     const url =  `/api/blog/${blog.id}/comment`;
-    fetchData('GET', url, res => {
-      this.setState({comments: res.comments});
+    fetchData('GET', url, ({comments}) => {
+      this.setState({comments: comments});
+      this.props.onChange(comments);
     });
-  }
-
-  onCommentPost = () => {
-    this.fetchComments();
-    this.props.onPost();
   }
 
   render() {
@@ -42,7 +39,6 @@ export default class Comments extends Component {
       return null;
     }
     const comments = this.state.comments.map((comment, i) => {
-      console.log('Comment', comment);
       return <Comment
         key={i}
         comment={comment}
@@ -51,6 +47,8 @@ export default class Comments extends Component {
         isVisitor={comment.is_visitor}
         ctime={comment.ctime}
         content={comment.content}
+        isOwner={this.props.isOwner}
+        onDelete={this.fetchComments}
       />
     });
     return <div className="comments-content"
@@ -59,7 +57,7 @@ export default class Comments extends Component {
       <CommentEdit
         user={this.props.user}
         blog={this.props.blog}
-        onPost={this.onCommentPost}
+        onChange={this.fetchComments}
       />
     </div>
   }
@@ -79,14 +77,19 @@ class Comment extends Component {
     }
   }
 
+  doDelete = () => {
+    const url = `/api/comment/${this.props.comment.id}`;
+    fetchData('DELETE', url, this.props.onDelete);
+  }
+
   render() {
     const comment = this.props.comment;
     const ctime = new Date(this.props.ctime);
     return (
       <div className="comment"
         style={{
-          fontSize: '.9em',
           paddingBottom: '1em',
+          display: 'block',
         }}
       >
         <div style={{
@@ -113,8 +116,26 @@ class Comment extends Component {
               {comment.username}
             </span>
           </div>
-          <span className="datetime info" style={{marginLeft: 'auto',}}>
-            {ctime.toLocaleString()}
+          <span className="info" style={{marginLeft: 'auto',}}>
+            <span className="datetime">
+              {ctime.toLocaleString()}
+            </span>
+            {this.props.isOwner &&
+              <a className="hover-action delete-comment"
+                style={{
+                  position: 'relative',
+                  top: '-0.1rem',
+                  left: '0.5rem',
+                }}
+                onClick={ev => {
+                  ev.preventDefault();
+                  this.doDelete();
+                }}
+                title={`Delete comment ${comment.id}`}
+              >
+                <Icon type={IconDelete} size="small"/>
+              </a>
+            }
           </span>
         </div>
         <div>
@@ -144,12 +165,11 @@ class CommentEdit extends Component {
     } else {
       comment.visitorName = this.nameInput.value;
     }
-    console.log(comment);
 
     const blog = this.props.blog;
     const url = `/api/blog/${blog.id}/comment`;
     fetchData('POST', url, comment, () => {
-      this.props.onPost();
+      this.props.onChange();
       this.textarea.clear();
     });
   }

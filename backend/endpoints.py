@@ -1,25 +1,31 @@
 import view_user, view_node, view_blog
 
 endpoints = [
+    # login
     ('POST', '/api/login', view_user.post_login),
     ('POST', '/api/register', view_user.post_register),
     ('GET', '/api/logout', view_user.get_logout),
     ('GET', '/api/me', view_user.get_me),
 
+    # profile
     ('GET', '/api/profile/<username>', view_user.get_profile),
     ('GET', '/profile/<username>/avatar', view_user.get_avatar),
     ('POST', '/profile/<username>/avatar', view_user.post_avatar),
 
+    # node
     ('POST', '/api/node', view_node.post_node),
     ('PUT', '/api/node/<id>', view_node.put_node),
     ('GET', '/api/node', view_node.get_nodes),
 
+    # blog
     ('POST', '/api/blog', view_blog.post_blog),
     ('GET', '/api/blog', view_blog.get_blogs),
     ('GET', '/api/blog/<id>', view_blog.get_blog),
     ('PUT', '/api/blog/<id>', view_blog.put_blog),
     ('DELETE', '/api/blog/<id>', view_blog.del_blog),
 
+    # comment
     ('POST', '/api/blog/<blog_id>/comment', view_blog.post_comment),
     ('GET', '/api/blog/<blog_id>/comment', view_blog.get_comments),
+    ('DELETE', '/api/comment/<comment_id>', view_blog.delete_comments),
 ]

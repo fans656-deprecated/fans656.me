@@ -94,10 +94,10 @@ button:hover {
 
 input[type=text], input[type=password] {
   border: none;
-  min-width: 16em;
+  min-width: 14rem;
   height: 32px;
   box-shadow: inset 0 0 2px #aaa;
-  padding: 0 .2em;
+  padding: 0 .2rem;
 }
 
 /* ------------------------------------------ header & footer */
@@ -113,7 +113,7 @@ header {
 
 header > *:last-child {
   margin-left: auto;
-  margin-right: 1em;
+  margin-right: 1rem;
   text-align: center;
 }
 
@@ -133,12 +133,12 @@ nav {
 nav ul {
   list-style: none;
   padding: 0;
-  margin: 0 2em;
+  margin: 0 2rem;
 }
 
 nav ul li {
   display: inline-block;
-  margin: 0 1em;
+  margin: 0 1rem;
 }
 
 /* ------------------------------------------ login */
@@ -162,27 +162,30 @@ form > * {
 }
 
 #login-page input {
-  padding: 0 .5em;
+  padding: 0 .5rem;
 }
 
-/* phone (portrait and landscape) ----------- */
+/* mobile (portrait and landscape) ----------- */
 @media only screen and (min-device-width: 320px) and (max-device-width: 800px) {
   input.visitor-name {
     margin-right: 0;
     width: 90%;
+    position: relative;
+    top: -2px;
   }
 
   .comments-content > *{
     width: 100%;
     margin: 0 auto;
   }
+
   .blogs {
     width: 100%;
-    margin: 0;
+    margin: 1rem 0;
   }
 
   .blog {
-    padding: 1em 2em;
+    padding: 1rem 2rem;
   }
 
   .about img {
@@ -195,7 +198,7 @@ form > * {
   }
 
   .blog blockquote {
-    padding-left: 1em;
+    padding-left: 1rem;
   }
   
   .edit-blog > * {
@@ -205,84 +208,78 @@ form > * {
   .edit-blog textarea {
     width: 100%;
     height: 70vh;
-    min-height: 20em;
-    padding: .5em;
+    min-height: 20rem;
+    padding: .5rem;
     line-height: 1.5;
     margin: 0;
   }
 
   .edit-blog .buttons {
-    margin-right: .8em;
-    margin-top: .6em;
-    margin-bottom: 1em;
+    margin-right: .8rem;
+    margin-top: .6rem;
+    margin-bottom: 1rem;
   }
 
   .edit-blog .buttons button {
-    margin-left: 1em;
+    margin-left: 1rem;
   }
 
   .edit-blog .tags {
     width: 100%;
-    padding: 0 .5em;
+    padding: 0 .5rem;
     margin-top: 0;
   }
 
   /* ------------------------------------------ header & footer */
 
   nav ul {
-    margin: 0 1em;
+    margin: 0 1rem;
   }
 
   header > *:last-child {
     margin-left: auto;
-    margin-right: 1em;
+    margin-right: 1rem;
     text-align: center;
   }
 
   nav ul li {
     display: inline-block;
-    margin: 0 .5em;
+    margin: 0 .5rem;
   }
 
   .blog-content a {
-    font-size: .9em;
+    font-size: .9rem;
   }
 
   .panel {
     position: fixed;
-    left: .2em;
-    bottom: .2em;
+    left: .2rem;
+    bottom: .2rem;
   }
 
   .file-explorer {
     width: 100%;
     height: 50vh;
-    margin: 1em 1em;
+    margin: 1rem 1rem;
     padding: 0;
     font-family: 'Consolas';
-    font-size: .9em;
+    font-size: .9rem;
     line-height: 1.0;
     overflow-y: scroll;
     background: white;
   }
 }
 
-/*
-@media only screen and (min-width: 800px) and (max-width: 1366px) {
-  .blogs {
-    margin: 3em auto;
-    width: 70%;
-  }
-  .blog {
-    margin-bottom: 2em;
-  }
-}
-*/
-
 /* desktop ----------- */
 @media only screen and (min-width: 800px) {
+  .single-blog-view {
+    min-width: 45%;
+    max-width: 50rem;
+    margin: 2rem auto;
+  }
+
   input.visitor-name {
-    margin-right: 1em;
+    margin-right: 1rem;
   }
 
   .comments-content > *{
@@ -295,7 +292,7 @@ form > * {
   }
 
   .center {
-    margin: 2em auto;
+    margin: 2rem auto;
   }
 
   .wide {
@@ -303,16 +300,16 @@ form > * {
   }
 
   .blogs {
-    margin: 3em auto;
+    margin: 3rem auto;
     min-width: 45%;
-    max-width: 50em;
+    max-width: 40rem;
   }
 
   .blog {
     background: #fefefe;
-    padding: 2em 3em;
+    padding: 2rem 3rem;
     box-shadow: 0 0 5px #ddd;
-    margin: 1em 0;
+    margin: 1rem 0;
   }
 
   .panel {
@@ -323,11 +320,11 @@ form > * {
 
   .file-explorer {
     width: 50%;
-    height: 30em;
-    margin: 2em auto;
-    padding: 1em 2em;
+    height: 30rem;
+    margin: 2rem auto;
+    padding: 1rem 2rem;
     font-family: 'Consolas';
-    font-size: .9em;
+    font-size: .9rem;
     line-height: 1.5;
     box-shadow: inset 0 0 5px #aaa;
     overflow-y: scroll;
@@ -335,21 +332,21 @@ form > * {
   }
 
   .edit-blog textarea {
-    min-height: 34em;
-    padding: .5em;
+    min-height: 34rem;
+    padding: .5rem;
   }
 
-  .edit-blog .tags {
-    margin: .5em 0;
-    padding: 0 .6em;
-    min-width: 30em;
+  .edit-blog .tags, .edit-blog .custom-url {
+    margin: 0;
+    padding: 0 .6rem;
+    min-width: 30rem;
     max-width: 100vw;
     width: 100%;
   }
 
   .edit-blog .buttons button {
-    margin-top: .5em;
-    margin-left: 1.5em;
+    margin-top: .5rem;
+    margin-left: 1.5rem;
   }
 
   .about .hr {
@@ -357,8 +354,8 @@ form > * {
   }
 
   .blog blockquote {
-    padding-left: 2em;
-    margin: 1em 2em;
+    padding-left: 2rem;
+    margin: 1rem 2rem;
   }
 }
 
@@ -366,27 +363,24 @@ form > * {
 
 /* ------------------------------------------ blogs */
 
-.blogs {
-  font-size: .9em;
-}
-
 .blog {
+  font-size: .9rem;
   line-height: 2;
 }
 
 .blog pre, .blog code {
   font-family: "Consolas", "Courier New", "monospace";
-  font-size: .9em;
-  overflow-x: scroll;
+  font-size: .9rem;
+  overflow-x: auto;
 }
 
 .blog-content img {
-  margin: 1em 0;
+  margin: 1rem 0;
 }
 
 .blog pre {
   background: #e5f3ff;
-  padding: 1em;
+  padding: 1rem;
 }
 
 .blog pre code {
@@ -395,7 +389,7 @@ form > * {
 
 .blog code {
   background: #cce7ff;
-  padding: 0 .3em;
+  padding: 0 .3rem;
   border-radius: 1px;
 }
 
@@ -408,18 +402,10 @@ form > * {
   word-wrap: break-word;
 }
 
-.blog .footer {
+.blog .footer .info-row {
   display: flex;
   align-items: baseline;
 }
-
-/*
-.blog .footer .comments .number {
-  display: inline-block;
-  width: 1em;
-  height: 1em;
-}
-*/
 
 .blog .footer .right {
   margin-left: auto;
@@ -429,19 +415,23 @@ form > * {
   display: inline;
 }
 
+.blog .footer {
+  margin-top: 1rem;
+}
+
+.blog .footer {
+  font-size: .8rem;
+}
+
 .blog blockquote {
   border-left: 5px solid #ddd;
   margin: 0;
-  padding-left: 1em;
+  padding-left: 1rem;
 }
 
 .blog p {
   margin: 0;
-  margin-bottom: 1em;
-}
-
-.blog .footer {
-  margin-top: 1em;
+  margin-bottom: 1rem;
 }
 
 .blog br {
@@ -458,7 +448,7 @@ form > * {
 }
 
 .blog .video embed {
-  padding: 1em;
+  padding: 1rem;
   box-shadow: 0 0 10px #aaa;
   margin: 0 auto;
 }
@@ -467,47 +457,45 @@ form > * {
   filter: opacity(.3);
 }
 
-.blog .footer {
-  font-size: .9em;
-}
-
+/*
 .blog .footer .info:hover {
   filter: opacity(.6);
 }
-
-.blog .tags {
-  margin-right: 4em;
-}
+*/
 
 .blog .tag {
-  margin: 0 .4em;
+  margin: 0 .4rem;
 }
 
 .blog .tag::before {
   content: '# ';
 }
 
+.blog .footer .info-row {
+  margin-bottom: 1rem;
+}
+
 .comments-content {
-  margin-top: 1em;
+  margin-top: 1rem;
 }
 
 .comment-edit {
   display: block;
   width: 100%;
   height: auto;
-  min-height: 6em;
-  max-height: 20em;
+  min-height: 6rem;
+  max-height: 20rem;
   box-sizing: border-box;
   padding: none;
   margin: none;
 }
 
 .comment {
-  padding: .8em 1.2em;
+  padding: .8rem 1.2rem;
   padding-bottom: 0;
   background: white;
   box-shadow: 0 0 1px #999;
-  margin-bottom: .8em;
+  margin-bottom: .8rem;
   box-sizing: border-box;
 }
 
@@ -525,6 +513,11 @@ form > * {
   transition: .3s;
 }
 
+.hover-action svg:hover {
+  color: black;
+  transform: scale(1.2);
+  cursor: pointer;
+}
 
 /* -edit-blog----------------------------------------- */
 
@@ -535,7 +528,7 @@ form > * {
 textarea {
   font-family: 'Microsoft YaHei';
   line-height: 1.5;
-  padding: .5em;
+  padding: .5rem;
   border: 1px solid #ddd;
 }
 
@@ -565,7 +558,7 @@ img.large.avatar {
 }
 
 .about hr {
-  margin: 2em 0;
+  margin: 2rem 0;
 }
 
 .about {
@@ -585,31 +578,31 @@ img.large.avatar {
 
 .about .age span {
   display: table-cell;
-  height: 1.4em;
+  height: 1.4rem;
 }
 
 .about .age p {
-  margin: .3em 0;
+  margin: .3rem 0;
 }
 
 .about .age span.unit {
-  font-size: 0.6em;
+  font-size: 0.6rem;
   filter: opacity(50%);
 }
 
 .about .num {
   display: inline-block;
-  min-width: 2em;
+  min-width: 2rem;
 }
 
 .about .links {
   display: flex;
   align-items: center;
-  margin-top: 1em;
+  margin-top: 1rem;
 }
 
 .about .links > *:first-child {
-  margin-right: 1em;
+  margin-right: 1rem;
 }
 
 .about .links > * {
@@ -622,7 +615,7 @@ img.large.avatar {
 
 .about .hr {
   border-bottom: 1px solid rgba(0,0,0,.2);
-  margin: 1em auto 2em auto;
+  margin: 1rem auto 2rem auto;
 }
 
 .sticky {
@@ -651,7 +644,7 @@ img.large.avatar {
 .tooltip-container .tooltip {
   position: absolute;
   visibility: hidden;
-  min-width: 8em;
+  min-width: 8rem;
   text-align: center;
   right: 30px;
   order: -1;
@@ -685,7 +678,7 @@ img.large.avatar {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  margin: 2em 0;
+  margin: 2rem 0;
 }
 
 .gallery img {
@@ -693,7 +686,7 @@ img.large.avatar {
   max-width: 300px;
   width: auto;
   height: auto;
-  margin: 1em;
+  margin: 1rem;
   box-shadow: 0px 0px 10px #aaa;
   transition: 1s;
 }
@@ -708,7 +701,7 @@ img.large.avatar {
 /* ------------------------------------------ files */
 
 #files-page {
-  margin-top: 1em;
+  margin-top: 1rem;
 }
 
 .file-list li * {
@@ -720,7 +713,7 @@ img.large.avatar {
 }
 
 .file-list li {
-  padding: .2em 1em;
+  padding: .2rem 1rem;
 }
 
 .file-list li:hover {
@@ -734,19 +727,19 @@ img.large.avatar {
 
 #pagination {
   text-align: center;
-  margin: 2em 0;
+  margin: 2rem 0;
 }
 
 #pagination > * {
   display: inline-block;
-  font-size: .8em;
+  font-size: .8rem;
   vertical-align: middle;
 }
 
 #pagination #current-page {
-  width: 2em;
-  min-width: 2em;
-  height: 1.5em;
+  width: 2rem;
+  min-width: 2rem;
+  height: 1.5rem;
   text-align: center;
 }
 
@@ -764,4 +757,23 @@ img.large.avatar {
 
 .video {
   max-width: 100%;
+}
+
+.edit-blog-link svg {
+  position: relative;
+  left: 1rem;
+  top: -0.18rem;
+  filter: opacity(.7);
+}
+
+input::placeholder {
+  filter: opacity(.6);
+}
+
+.edit-blog .content-edit {
+  margin-bottom: 0;
+}
+
+.single-blog-view {
+  margin-top: 2rem;
 }

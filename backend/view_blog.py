@@ -4,10 +4,13 @@ import traceback
 import flask
 
 import db
-from util import success_response, error_response, utcnow, id_from_ctime
+import util
+from util import success_response, error_response, utcnow, new_node_id
 
 def post_blog():
     blog = flask.request.json
+    from pprint import pprint
+    pprint(blog)
     ctime = utcnow()
     params = {
         'content': blog['content'],
@@ -15,7 +18,7 @@ def post_blog():
         'tags': blog.get('tags'),
         'ctime': ctime,
         'mtime': ctime,
-        'id': id_from_ctime(ctime),
+        'id': new_node_id(),
     }
     params = {k: v for k, v in params.items() if v is not None}
     query = (
@@ -32,11 +35,15 @@ def post_blog():
 
 def get_blogs():
     args = flask.request.args
+    tags = util.parse_query_string(args.get('tags'))
     page = int(args.get('page', 1))
     size = min(int(args.get('size') or 20), 99999)
     total = db.query_one('match (n:Blog) return count(n)')
 
-    nodes = db.query_nodes(
+    # TODO: filter by tags is ugly & difficult to implement
+    # when tags are array property of Blog
+    # do it using relationships
+    blogs = db.query_nodes(
         'match (n:Blog) return n '
         'order by n.ctime desc '
         'skip {skip} limit {limit}',
@@ -47,21 +54,21 @@ def get_blogs():
     )
     # find number of comments
     # TODO: better neo4j query method
-    node_id_to_node = {
-        node['id']: node for node in nodes
+    id_to_blog = {
+        blog['id']: blog for blog in blogs
     }
     rows = db.query(
         'match (blog:Blog)-[:has_comment]->(comment:Comment) '
         'return blog.id, count(comment)'
     )['data']
     for blog_id, n_comments in rows:
-        if blog_id in node_id_to_node:
-            node_id_to_node[blog_id]['n_comments'] = n_comments
+        if blog_id in id_to_blog:
+            id_to_blog[blog_id]['n_comments'] = n_comments
 
     return success_response({
-        'blogs': nodes,
+        'blogs': blogs,
         'page': page,
-        'size': len(nodes),
+        'size': len(blogs),
         'total': total,
         'n_pages': (total / size) + (1 if total % size else 0),
     })
@@ -137,7 +144,7 @@ def post_comment(blog_id):
             'is_visitor': is_visitor,
             'content': comment['content'],
             'ctime': ctime,
-            'id': id_from_ctime(ctime),
+            'id': new_node_id(),
         }
     )
     return success_response()
@@ -153,3 +160,12 @@ def get_comments(blog_id):
     return success_response({
         'comments': comments,
     })
+
+
+def delete_comments(comment_id):
+    print db.execute(
+        'match (comment:Comment{id: {id}}) detach delete comment', {
+            'id': comment_id,
+        }
+    )
+    return success_response()

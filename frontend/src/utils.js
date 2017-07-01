@@ -137,11 +137,13 @@ function prepareFetch(method, url, data) {
   } else if ((method === 'GET' && data) || method === 'DELETE') {
     let args = [];
     Object.keys(data).forEach((key) => {
-      const value = data[key];
+      let value = data[key];
       if (value !== undefined && value !== null) {
-        args.push(encodeURIComponent(key)
-            + '='
-            + encodeURIComponent(data[key]));
+        if (value instanceof Array) {
+          value = `[${value.map(encodeURIComponent).join(',')}]`;
+        }
+        const arg = encodeURIComponent(key) + '=' + encodeURIComponent(value);
+        args.push(arg);
       }
     });
     if (args.length > 0) {

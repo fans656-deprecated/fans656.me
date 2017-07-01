@@ -254,6 +254,18 @@ return id(n), n.ctime
             'id': util.id_from_ctime(ctime)
         })
 
+def set_persisted_ids():
+    nodes = query('match (n) return id(n)')['data']
+    import util
+    n = len(nodes)
+    print n
+    for i, (node_id,) in enumerate(nodes):
+        print '{}/{}'.format((i + 1), n)
+        r = query('match (n) where id(n) = {node_id} set n.id = {id}', {
+            'node_id': node_id,
+            'id': str(i + 1),
+        })
+
 
 if __name__ == '__main__':
     import sys
@@ -268,8 +280,6 @@ if __name__ == '__main__':
             exit()
 
     #set_persisted_ids()
-    #r = execute('match (n:Comment) where length(n.content) < 9 return n')
-    r = execute('match (n:Comment)  detach delete n')
+    r = query_node('match (n:Comment) detach delete n')
+    #r = query_node('match (n:Blog{id: {id}}) return n', {'id': 944})
     pprint(r)
-    #r = query('match (n:Comment) detach delete n')
-    #pprint(r)

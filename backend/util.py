@@ -10,6 +10,8 @@ import flask
 from flask import redirect, jsonify
 from dateutil.parser import parse as parse_datetime
 
+import db
+
 
 def handle_exceptions(viewfunc):
     @functools.wraps(viewfunc)
@@ -77,6 +79,10 @@ def id_from_ctime(ctime):
     return dt.strftime('%Y%m%d%H%M%SUTC%f')
 
 
+def new_node_id():
+    return unicode(db.query_one('match (n) return count(n)') + 1)
+
+
 def logger(msg='', *args, **kwargs):
     caller_frame = inspect.stack()[1]
     fname = caller_frame[1]
@@ -87,6 +93,13 @@ def logger(msg='', *args, **kwargs):
         print kwargs
     else:
         print
+
+
+def parse_query_string(s):
+    if s.startswith('['):
+        return [part.strip() for part in s[1:-1].split(',')]
+    else:
+        return s
 
 
 if __name__ == '__main__':
