@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 
-import { fetchJSON } from './utils'
+import { fetchData } from './utils'
 
 export default class Gallery extends Component {
   constructor(props) {
@@ -14,11 +14,10 @@ export default class Gallery extends Component {
     this.fetchImages();
   }
 
-  fetchImages = async () => {
-    const res = await fetchJSON('GET', '/api/file/images/girls/nude');
-    if (!res.errno) {
+  fetchImages = () => {
+    fetchData('GET', '/api/file/images/girls/nude', res => {
       this.setState({files: res.files});
-    }
+    });
   }
 
   render() {

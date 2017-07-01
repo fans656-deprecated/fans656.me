@@ -3,13 +3,13 @@ import { Link, withRouter } from 'react-router-dom'
 import IconCaretLeft from 'react-icons/lib/fa/caret-left'
 import IconCaretRight from 'react-icons/lib/fa/caret-right'
 import IconPlus from 'react-icons/lib/md/add'
-import IconSearch from 'react-icons/lib/md/search'
+//import IconSearch from 'react-icons/lib/md/search'
 import qs from 'qs'
 import $ from 'jquery'
 
 import Blog from './Blog'
 import { Icon, DangerButton, Textarea, Input } from './common'
-import { fetchJSON, fetchData } from './utils'
+import { fetchData } from './utils'
 
 export default class Blogs extends Component {
   constructor(props) {
@@ -17,17 +17,44 @@ export default class Blogs extends Component {
     this.state = {
       blogs: [],
       pagination: {},
+      searched: null,
     };
   }
 
   componentDidMount() {
+    this.props.registerConsoleHandler(this.consoleHandler);
     this.fetchBlogs();
     $('.blog-content img').each((img) => {
-      console.log(img.attr('src'));
       img.click(() => {
         window.open(img.attr('src'), '_blank');
       });
     });
+    $('#editor').focus();
+  }
+
+  componentWillUnmount() {
+    this.props.unregisterConsoleHandler(this.consoleHandler);
+  }
+
+  consoleHandler = ({data}) => {
+    if (!data || data.length === 0) {
+      this.setState({searched: null});
+    } else {
+      const tags = data.split(',').map(s => s.trim()).filter(s => s.length > 0);
+      fetchData('POST', '/api/blog/search', {
+        by: 'tags',
+        match: 'partial',
+        tags: tags,
+      }, res => {
+        this.setState({
+          searched: {
+            blogs: res.blogs,
+            pagination: res.pagination,
+            tags: res.tags,
+          }
+        });
+      });
+    }
   }
 
   fetchBlogs = () => {
@@ -40,22 +67,15 @@ export default class Blogs extends Component {
       tags: tags,
       page: page,
       size: size,
-    }, data => {
-      let blogs = data.blogs;
+    }, res => {
       this.setState({
-        blogs: blogs,
-        pagination: {
-          page: data.page,
-          size: data.size,
-          total: data.total,
-          nPages: data.n_pages,
-        },
+        blogs: res.blogs,
+        pagination: res.pagination,
       });
     });
   }
 
   navigateToNthPage = (page) => {
-    console.log('navigate to page', page);
     this.setState({
       navigation: {page: page}
     });
@@ -65,7 +85,22 @@ export default class Blogs extends Component {
     const owner = this.props.owner;
     const user = this.props.user;
     const isOwner = user && owner === user.username;
-    const blogs = this.state.blogs.map((blog, i) => (
+    let blogs, pagination, tags;
+    let tagged = false;
+    if (this.state.searched) {
+      const searched = this.state.searched;
+      blogs = searched.blogs;
+      pagination = searched.pagination;
+      tags = searched.tags;
+    } else {
+      blogs = this.state.blogs;
+      pagination = this.state.pagination;
+      tags = qs.parse(window.location.search.slice(1)).tags || [];
+      if (tags.length !== 0) {
+        tagged = true;
+      }
+    }
+    blogs = blogs.map((blog, i) => (
       <Blog
         key={blog.id}
         blog={blog}
@@ -73,13 +108,28 @@ export default class Blogs extends Component {
         user={user}
       />
     ));
-    //const pagination = this.state.pagination;
+    const total = pagination.total;
+    const blogsPlural = total === 1 ? 'blog' : 'blogs';
+    const tagsText = `${total} ${blogsPlural} tagged ${tags.join(', ')}`;
     return <div>
+      {(this.state.searched || tagged) &&
+          <p
+            style={{
+              width: '100%',
+              marginTop: '1.2rem',
+              marginBottom: '-2.0rem',
+              textAlign: 'center',
+              color: 'steelblue',
+              fontSize: '.8rem',
+            }}
+          >{tagsText}</p>
+      }
       <div className="blogs">
         {blogs}
       </div>
-      <Pagination {...this.state.pagination}
+      <Pagination {...pagination}
         onNavigate={this.navigateToNthPage}
+        tags={tags}
       />
       <Panel isOwner={isOwner}/>
     </div>
@@ -147,11 +197,7 @@ class EditBlog extends Component {
   }
 
   fetchBlog = async (id) => {
-    const res = await fetchJSON('GET', `/api/blog/${id}`);
-    if (res.errno) {
-      console.log('error', res);
-      alert(res.detail);
-    } else {
+    fetchData('GET', `/api/blog/${id}`, res => {
       const blog = res.blog;
       const tags = blog.tags || [];
       this.setState({
@@ -159,7 +205,7 @@ class EditBlog extends Component {
         text: blog.content,
         tagsText: tags.join(', '),
       });
-    }
+    });
   }
 
   onEditorTextChange = ({target}) => {
@@ -253,7 +299,6 @@ class Panel extends Component {
   componentDidMount() {
     // mobile panel auto hide
     const isDesktop = window.matchMedia('(min-device-width: 800px)').matches;
-    console.log('isDesktop', isDesktop);
     if (isDesktop) {
       return;
     }
@@ -334,30 +379,31 @@ class Pagination extends Component {
   }
 
   navigateToNthPage = (page) => {
-    console.log('navigateToNthPage', page);
-    try {
-      page = parseInt(page, 10);
-      const options = qs.parse(window.location.search.slice(1));
-      const size = options.size;
-      let url = '/blog';
-      if (page === 1) {
-        if (size) {
-          url += `?size=${size}`;
-        }
-      } else if (1 < page && page <= this.props.nPages) {
-        url += `?page=${page}`;
-        if (size) {
-          url += `&size=${size}`;
-        }
-      } else {
-        console.log('wrong page', page);
-        return;
-      }
-      console.log('do navigateToNthPage', url);
-      window.location.href = url;
-    } catch (e) {
-      console.log(e);
+    window.location.href = this.getNavigationURL(page);
+  }
+
+  getNavigationURL = (page) => {
+    page = parseInt(page, 10);
+
+    const query = qs.parse(window.location.search.slice(1));
+
+    page = Math.min(page, this.props.nPages);
+    page = Math.max(page, 1);
+
+    query.page = page;
+    query.tags = [...new Set(
+      (this.props.tags || []).concat(query.tags || [])
+    )];
+    if (!query.tags) {
+      delete query.tags;
     }
+    if (query.page === 1) {
+      delete query.page;
+    }
+
+    const queryString = qs.stringify(query)
+    const url = '/blog' + (queryString ? '?' + queryString : '');
+    return url;
   }
 
   onKeyUp = (ev) => {
@@ -371,7 +417,7 @@ class Pagination extends Component {
       return null;
     }
     return <div id="pagination">
-      <a href={`/blog?page=${Math.max(this.state.page - 1, 1)}`}>
+      <a href={this.getNavigationURL(this.state.page - 1)}>
         <Icon type={IconCaretLeft} size="large"/>
       </a>
       <input
@@ -383,7 +429,7 @@ class Pagination extends Component {
       />
       <span>&nbsp;/&nbsp;</span>
       <span className="n-pages">{this.props.nPages}</span>
-      <a href={`/blog?page=${Math.min(this.state.page + 1, this.props.nPages)}`}>
+      <a href={this.getNavigationURL(this.state.page + 1)}>
         <Icon type={IconCaretRight} size="large"/>
       </a>
     </div>

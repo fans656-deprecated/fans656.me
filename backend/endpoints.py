@@ -1,4 +1,4 @@
-import view_user, view_node, view_blog
+import view_user, view_node, view_blog, view_console
 
 endpoints = [
     # login
@@ -18,6 +18,8 @@ endpoints = [
     ('GET', '/api/blog/<id>', view_blog.get_blog),
     ('PUT', '/api/blog/<id>', view_blog.put_blog),
     ('DELETE', '/api/blog/<id>', view_blog.del_blog),
+
+    ('POST', '/api/blog/search', view_blog.search),
 
     # comment
     ('POST', '/api/blog/<blog_id>/comment', view_blog.post_comment),

@@ -297,6 +297,7 @@ form > * {
     outline: none;
     box-shadow: none;
     color: #eee;
+    transition: 0.1s;
   }
 
   #console-input:focus {

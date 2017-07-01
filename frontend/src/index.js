@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom'
 import {
   BrowserRouter as Router, Link, Route, withRouter, Switch,
 } from 'react-router-dom'
+import $ from 'jquery'
 
 import Blogs, { ViewBlog, EditBlog } from './Blogs'
 import Console from './Console'
@@ -37,18 +38,53 @@ class App extends React.Component {
     super(props);
     this.state = {
       user: null,
+      consoleHandlers: [],
     }
+  }
+
+  keypress = (ev) => {
+    const body = $('body');
+    if (ev.key === 's' && ev.target === body[0]) {
+      $('#console input').focus();
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
+  }
+
+  registerConsoleHandler = (handler) => {
+    this.setState(prevState => {
+      const handlers = prevState.consoleHandlers;
+      handlers.push(handler);
+      return {
+        consoleHandlers: handlers,
+      }
+    });
+  }
+
+  unregisterConsoleHandler = (target_handler) => {
+    this.setState(prevState => {
+      const handlers = prevState.consoleHandlers;
+      for (let i = 0; i < handlers.length; ++i) {
+        const handler = handlers[i];
+        if (handler === target_handler) {
+          handlers.splice(i, 1);
+          break;
+        }
+      }
+      return {
+        consoleHandlers: handlers,
+      }
+    });
   }
 
   render() {
     return (
       <div id="root-page">
-        <Header user={this.state.user}/>
+        <Header user={this.state.user}
+          consoleHandlers={this.state.consoleHandlers}
+        />
         <main id="main">
           <Switch>
-            <Route exact path="/" render={() => 
-              <Blogs owner="fans656" user={this.state.user}/>
-            }/>
             <Route exact path="/about" component={About}/>
             <Route exact path="/login" component={Login}/>
             <Route exact path="/register" component={Register}/>
@@ -56,8 +92,17 @@ class App extends React.Component {
 
             {/* ---------------------------------------------- blog */}
             {/* blogs */}
+            <Route exact path="/" render={() => 
+                <Blogs owner="fans656" user={this.state.user}
+                  registerConsoleHandler={this.registerConsoleHandler}
+                  unregisterConsoleHandler={this.unregisterConsoleHandler}
+                />
+            }/>
             <Route exact path="/blog" render={() => 
-              <Blogs owner="fans656" user={this.state.user}/>
+                <Blogs owner="fans656" user={this.state.user}
+                  registerConsoleHandler={this.registerConsoleHandler}
+                  unregisterConsoleHandler={this.unregisterConsoleHandler}
+                />
             }/>
 
             {/* post blog */}
@@ -102,6 +147,7 @@ class App extends React.Component {
   }
 
   componentDidMount() {
+    $('body').keypress(this.keypress);
     getCurrentUser((resp) => {
       const user = resp.errno ? null : resp.user;
       if (user) {
@@ -128,9 +174,12 @@ const Header = (props) => (
       display: 'inline-flex',
       alignItems: 'center',
     }}>
-      <Console style={{
-        marginRight: '1em',
-      }}/>
+      <Console
+        style={{
+          marginRight: '1em',
+        }}
+        handlers={props.consoleHandlers}
+      />
       <span>
         {props.user
           ? <UserName user={props.user}/>
@@ -170,11 +219,7 @@ class Login extends Component {
 
   render() {
     return (
-      <div className="login-page"
-        onKeyUp={ev => {
-          console.log(ev);
-        }}
-      >
+      <div className="login-page">
         <form className="dialog" onSubmit={this.doLogin}>
           <h1>Login</h1>
           <input

@@ -275,5 +275,3 @@ if __name__ == '__main__':
             exit()
 
     #set_persisted_ids()
-
-    pquery('match (n:Blog) return n limit 2', one=True)

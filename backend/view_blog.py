@@ -1,7 +1,9 @@
 import re
+import itertools
 import traceback
 
 import flask
+from f6 import each
 
 import db
 import user_util
@@ -39,62 +41,29 @@ def post_blog():
 
 def get_blogs():
     args = flask.request.args
-    tags = util.parse_query_string(args.get('tags'))
+    tags = filter(bool, util.parse_query_string(args.get('tags', [])))
     page = int(args.get('page', 1))
-    size = min(int(args.get('size') or 20), 99999)
-    total = db.query('match (n:Blog) return count(n)', one=True)
+    size = min(int(args.get('size') or 20), 999)
 
-    # TODO: filter by tags is ugly & difficult to implement
-    # when tags are array property of Blog
-    # do it using relationships
-    stmt = '''
-        match (blog:Blog) where true
-    ''' + get_blog_preds() +  '''
-        return blog
-        order by blog.ctime desc
-        skip {skip} limit {limit}
-    '''
-    print stmt
-    blogs = db.query(stmt, {
-            'skip': (page - 1) * size,
-            'limit': size,
-        }, cols=1)
-    # find number of comments
-    # TODO: better neo4j query method
-    id_to_blog = {
-        blog['id']: blog for blog in blogs
-    }
-    rows = db.query(
-        'match (blog:Blog)-[:has_comment]->(comment:Comment) '
-        'return blog.id, count(comment)'
-    )
-    for blog_id, n_comments in rows:
-        if blog_id in id_to_blog:
-            id_to_blog[blog_id]['n_comments'] = n_comments
-
-    # get tags
-    for blog in blogs:
-        blog['tags'] = tags_by_blog_id(blog['id'])
-
-    return success_response({
-        'blogs': blogs,
-        'page': page,
-        'size': len(blogs),
-        'total': total,
-        'n_pages': (total / size) + (1 if total % size else 0),
-    })
+    if tags:
+        return response_blogs_by_tags(tags, page=page, size=size)
+    else:
+        blogs, total = query_blogs(page=page, size=size)
+        return success_response({
+            'blogs': blogs,
+            'pagination': make_pagination(blogs, page, size, total),
+        })
 
 
 def get_blog(id):
     query = (
         'match (blog:Blog{id: {id}}) where True '
-        + get_blog_preds()
+        + get_blog_mandatory_preds()
         + 'return blog'
     )
     blog = db.query(query, {
         'id': id,
     }, one=True)
-    print blog
     if not blog:
         return error_response('not found', 403)
     blog['tags'] = tags_by_blog_id(id)
@@ -194,6 +163,17 @@ def delete_comments(comment_id):
     return success_response()
 
 
+def search():
+    args = flask.request.json
+
+    by = args['by']
+    match = args['match']
+
+    if by == 'tags' and match == 'partial':
+        return response_blogs_by_tags(args.get('tags', []))
+    return error_response('unsupported by={}'.format(data['by']))
+
+
 def tags_by_blog_id(id):
     tags = db.query(
         'match (:Blog{id: {id}})-[rel:has_tag]->(tag) '
@@ -224,14 +204,127 @@ def update_tags(blog):
     print r
 
 
-def get_blog_preds():
-    user = user_util.current_user()
+def response_blogs_by_tags(tags, page=1, size=20):
+    blogs, total = query_blogs('''
+        match (blog:Blog)-[:has_tag]->(tag:Tag)
+        where any(
+            partial_tag in {search__partial_tags}
+            where tag.content contains partial_tag
+        )
+    ''', {
+        'search__partial_tags': tags
+    }, page=page, size=size)
+
+    tags = list(set(itertools.chain(*each(blogs)['tags'])))
+
+    return success_response({
+        'blogs': blogs or [],
+        'pagination': {
+            'page': page,
+            'size': len(blogs),
+            'total': total,
+            'nPages': (total / size) + (1 if total % size else 0),
+        },
+        'tags': tags,
+    })
+
+
+def query_blogs(preds='', params=None, page=1, size=20):
+    params = params or {}
+
+    stmt = '''
+        match (blog:Blog) where true
+    ''' + get_blog_mandatory_preds() + ' ' + preds
+
+    total_stmt = stmt + ' return count(distinct blog)'
+    #print '=' * 40, 'total_stmt'
+    #print total_stmt
+    #raw_input()
+    total = db.query(total_stmt, params, one=True)
+
+    params.update({
+        'skip': (page - 1) * size,
+        'limit': size,
+    })
+    blogs_stmt = stmt + '''
+        return distinct blog
+        order by blog.ctime desc
+        skip {skip} limit {limit}
+    '''
+    #print '=' * 40, 'blogs_stmt'
+    #print blogs_stmt
+    #raw_input()
+    blogs = db.query(blogs_stmt, params, cols=1)
+
+    attach_num_comments_to_blogs(blogs)
+    attach_tags_to_blogs(blogs)
+    return blogs, total
+
+
+def get_blog_mandatory_preds():
+    try:
+        user = user_util.current_user()
+    except RuntimeError:
+        user = {'username': 'fans656'}
     username = user and user.get('username', None)
 
     preds = ''
     if username != 'fans656':
         preds += ('''
-            and not ((blog)-[:has_tag]->(:Tag{content: '_secret'}))
-            and not ((blog)-[:has_tag]->(:Tag{content: '_me'}))
+            and not ((blog)-[:has_tag]->(:Tag{content: '..'}))
+            and not ((blog)-[:has_tag]->(:Tag{content: '.'}))
                   ''')
     return preds
+
+
+def attach_num_comments_to_blogs(blogs):
+    id_to_blog = {
+        blog['id']: blog for blog in blogs
+    }
+    rows = db.query(
+        'match (blog:Blog)-[:has_comment]->(comment:Comment) '
+        'return blog.id, count(comment)'
+    )
+    for blog_id, n_comments in rows:
+        if blog_id in id_to_blog:
+            id_to_blog[blog_id]['n_comments'] = n_comments
+
+
+def attach_tags_to_blogs(blogs):
+    for blog in blogs:
+        blog['tags'] = tags_by_blog_id(blog['id'])
+
+
+def make_pagination(blogs, page, size, total):
+    return {
+        'page': page,
+        'size': len(blogs),
+        'total': total,
+        'nPages': (total / size) + (1 if total % size else 0),
+    }
+
+
+if __name__ == '__main__':
+    from pprint import pprint
+
+    blogs, total = query_blogs('''
+        match (blog)-[:has_tag]->(tag:Tag) where
+        any(partial_tag in {partial_tags} where tag.content contains partial_tag)
+        ''', {
+            'partial_tags': ['dev', 'mus'],
+        }
+    )
+    pprint([blog['tags'] for blog in blogs])
+    print total
+    #pprint(r)
+    exit()
+
+    r = db.query('''
+match (blog:Blog) where True
+match (blog)-[:has_tag]->(tag:Tag) where
+any(partial_tag in ["dev", "music"] where tag.content contains partial_tag)
+            and not ((blog)-[:has_tag]->(:Tag{content: '_secret'}))
+            and not ((blog)-[:has_tag]->(:Tag{content: '_me'}))
+return blog
+             ''')
+    print len(r)

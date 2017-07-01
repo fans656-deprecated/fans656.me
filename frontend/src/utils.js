@@ -53,7 +53,7 @@ export async function fetchData(method, url, data, callback) {
   let options;
   [url, options] = prepareFetch(method, url, data);
 
-  console.log('-----> ' + method + ' ' + url);
+  console.log(method + ' ' + url);
   if (method === 'POST' || method === 'PUT') {
     console.log(options);
   }
@@ -63,13 +63,15 @@ export async function fetchData(method, url, data, callback) {
     try {
       const json = JSON.parse(text);
       console.log('\n');
-      console.log('[RESPONSE] ' + method + ' ' + url);
+      console.log('=== RESPONSE ==================================');
+      console.log(method + ' ' + url);
       console.log(json);
       if (json.errno) {
         console.log('[RESPONSE with nonzero errno]');
       } else if (callback) {
         callback(json);
       }
+      console.log('=== RESPONSE END ==============================');
       console.log('\n');
     } catch (e) {
       console.log('\n');
@@ -102,8 +104,10 @@ export async function fetchJSON(method, url, data) {
   const json = resp.json();
   json.then((json) => {
     console.log('\n');
-    console.log('[RESPONSE] ' + method + ' ' + url);
+    console.log('=== RESPONSE ==================================');
+    console.log(method + ' ' + url);
     console.log(json);
+    console.log('=== RESPONSE END ==============================');
     console.log('\n');
   });
   if (json.errno) {

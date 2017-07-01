@@ -1,15 +1,8 @@
 import React, { Component } from 'react'
-import { Link, withRouter } from 'react-router-dom'
-import IconCaretLeft from 'react-icons/lib/fa/caret-left'
-import IconCaretRight from 'react-icons/lib/fa/caret-right'
-import IconPlus from 'react-icons/lib/md/add'
 import IconSearch from 'react-icons/lib/md/search'
-import qs from 'qs'
 import $ from 'jquery'
 
-import Blog from './Blog'
-import { Icon, DangerButton, Textarea, Input } from './common'
-import { fetchJSON, fetchData } from './utils'
+import { Icon } from './common'
 
 export default class Console extends Component {
   constructor(props) {
@@ -18,6 +11,7 @@ export default class Console extends Component {
       text: '',
       focus: false,
     };
+    this.typeEaseTimer = null;
   }
 
   componentDidMount() {
@@ -37,16 +31,69 @@ export default class Console extends Component {
   onTextChange = ({target}) => {
     const text = target.value;
     this.setState(prevState => {
-      const prevText = prevState.text;
-      console.log(text);
+      //const prevText = prevState.text;
       return {text: text};
+    }, () => {
+      if (this.typeEaseTimer) {
+        clearTimeout(this.typeEaseTimer);
+        this.typeEaseTimer = null;
+      }
+      this.typeEaseTimer = setTimeout(this.onTypeEase, 500);
     });
   }
 
+  onTypeEase = () => {
+    clearTimeout(this.typeEaseTimer);
+    this.typeEaseTimer = null;
+
+    const text = this.state.text;
+    const event = new Event({
+      type: 'typeEase',
+      data: text,
+      accepted: false,
+    });
+    for (const handler of this.props.handlers) {
+      try {
+        handler(event);
+        if (event.accepted) {
+          break;
+        }
+      } catch (e) {
+        event.accepted = false;
+      }
+    }
+    return;
+
+    //fetchData('POST', '/api/console', {
+    //  url: window.location.href,
+    //  cmd: text,
+    //}, res => {
+    //  this.props.onConsoleDataChange({
+    //    type: 'blogs',
+    //    detail: `Found ${res.total} results matching "${text}"`,
+    //    blogs: res.blogs,
+    //    pagination: {
+    //      page: res.page,
+    //      size: res.size,
+    //      total: res.total,
+    //      nPages: res.n_pages,
+    //    }
+    //  });
+    //});
+  }
+
+  onKeyUp = ev => {
+    if (ev.key === 'Enter') {
+      this.onTypeEase();
+    }
+  }
+
   render() {
+    const hasHandlers = this.props.handlers.length !== 0;
     return (
       <div id="console" style={{
         marginRight: '3rem',
+        visibility: hasHandlers ? 'visible' : 'hidden',
       }}>
         <Icon type={IconSearch} size="small"/>
         <input
@@ -55,8 +102,21 @@ export default class Console extends Component {
           value={this.state.text}
           title="Type ? for help"
           onChange={this.onTextChange}
+          onKeyUp={this.onKeyUp}
         />
       </div>
     );
+  }
+}
+
+class Event {
+  constructor(props) {
+    this.type = props.type;
+    this.data = props.data;
+    this.accepted = false;
+  }
+
+  accept = () => {
+    this.accepted = true;
   }
 }

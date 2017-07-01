@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import IconEdit from 'react-icons/lib/md/mode-edit'
+import qs from 'qs'
 
 import Comments from './Comments'
 import { Icon } from './common'
@@ -59,8 +60,7 @@ class Footer extends Component {
     const blog = this.props.blog;
     const ctime = new Date(blog.ctime).toLocaleDateString()
     const tags = (blog.tags || []).map((tag, i) => {
-      let url = `/blog?tags=[${tag}]`;
-      url = undefined;  // filter by tag is TODO
+      let url = `/blog?${qs.stringify({tags: [tag]})}`;
       return <a className="tag info"
         key={i}
         href={url}

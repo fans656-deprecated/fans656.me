@@ -6,6 +6,11 @@ Bugs:
     ) pagination input
         can't backspace on page "1"
 
+Console:
+    ) input tab sequence
+    ) pagination
+    ) help
+
 Important:
     . require_me_login
         require authorization to edit

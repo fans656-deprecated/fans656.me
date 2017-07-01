@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 
-import { fetchJSON } from './utils'
+import { fetchData } from './utils'
 import { BACKEND_HOST } from './conf'
 
 export default class Files extends Component {
@@ -136,11 +136,8 @@ export class FileExplorer extends Component {
   fetchFileList = async () => {
     const path = this.state.path;
     const url = '/api/file' + (path ? '/' + path : '');
-    const res = await fetchJSON('GET', url + '?' + new Date().getTime());
-    if (res.errno) {
-      console.log(res);
-    } else {
+    fetchData('GET', url + '?' + new Date().getTime(), res => {
       this.setState({files: res.files});
-    }
+    });
   }
 }
