@@ -12,11 +12,6 @@ endpoints = [
     ('GET', '/profile/<username>/avatar', view_user.get_avatar),
     ('POST', '/profile/<username>/avatar', view_user.post_avatar),
 
-    # node
-    ('POST', '/api/node', view_node.post_node),
-    ('PUT', '/api/node/<id>', view_node.put_node),
-    ('GET', '/api/node', view_node.get_nodes),
-
     # blog
     ('POST', '/api/blog', view_blog.post_blog),
     ('GET', '/api/blog', view_blog.get_blogs),

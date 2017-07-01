@@ -44,9 +44,9 @@ def get_me():
 
 
 def get_profile(username):
-    user = db.query_node('match (u:User{username: {username}}) return u', {
+    user = db.query('match (u:User{username: {username}}) return u', {
         'username': username,
-    })
+    }, one=True)
     return success_response({
         'user': {
             'username': user['username'],
@@ -57,10 +57,10 @@ def get_profile(username):
 
 
 def get_avatar(username):
-    avatar_url = db.query_one(
+    avatar_url = db.query(
         'match (u:User{username: {username}}) return u.avatar_url', {
             'username': username,
-        })
+        }, one=True)
     return success_response({'avatar_url': avatar_url})
 
 

@@ -167,6 +167,13 @@ form > * {
 
 /* mobile (portrait and landscape) ----------- */
 @media only screen and (min-device-width: 320px) and (max-device-width: 800px) {
+  .edit-blog .tags, .edit-blog .custom-url {
+    margin: 0 1px;
+    padding: 0 .6rem;
+    min-width: 20rem;
+    max-width: 100vw;
+    width: 100%;
+  }
   input.visitor-name {
     margin-right: 0;
     width: 90%;
@@ -272,7 +279,7 @@ form > * {
 
 /* desktop ----------- */
 @media only screen and (min-width: 800px) {
-  .single-blog-view {
+  .single-blog-view, .edit-blog {
     min-width: 45%;
     max-width: 50rem;
     margin: 2rem auto;
@@ -469,10 +476,6 @@ form > * {
 
 .blog .tag::before {
   content: '# ';
-}
-
-.blog .footer .info-row {
-  margin-bottom: 1rem;
 }
 
 .comments-content {

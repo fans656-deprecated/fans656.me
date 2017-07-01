@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 '''
 Bugs:
-    ) home navigation reload
+    . home navigation reload
         when in /blog?page=2 etc, then navigate to "Home"(/home) doesn't reload
     ) pagination input
         can't backspace on page "1"
 
 Important:
-    ) require_me_login
+    . require_me_login
         require authorization to edit
     ) tags and meta-tags
         such as only-me blogs (write something private)

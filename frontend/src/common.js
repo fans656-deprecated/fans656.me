@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import {
   NORMAL_ICON_SIZE, LARGE_ICON_SIZE, SMALL_ICON_SIZE
 } from './constants'
+import { excludedSpread } from './utils'
 
 export const Icon = (props) => {
   let size = NORMAL_ICON_SIZE;
@@ -65,7 +66,7 @@ export class Textarea extends Component {
   render() {
     return (
       <textarea
-        {...this.props}
+        {...excludedSpread(this.props, ['submit'])}
         onKeyDown={this.onKeyDown}
         ref={ref => this.ref = ref}
       >
@@ -95,7 +96,8 @@ export class Input extends Component {
 
   render() {
     return (
-      <input {...this.props}
+      <input
+        {...excludedSpread(this.props, ['submit'])}
         onKeyDown={this.onKeyDown}
         ref={ref => this.ref = ref}
       />

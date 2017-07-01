@@ -1,16 +1,10 @@
 import React, { Component } from 'react'
-import { Link, withRouter } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
-import IconPlus from 'react-icons/lib/fa/plus'
-import IconCaretLeft from 'react-icons/lib/fa/caret-left'
-import IconCaretRight from 'react-icons/lib/fa/caret-right'
 import IconEdit from 'react-icons/lib/md/mode-edit'
-import qs from 'qs'
-import $ from 'jquery'
 
 import Comments from './Comments'
-import { Icon, DangerButton, Textarea, Input } from './common'
-import { fetchJSON, fetchData } from './utils'
+import { Icon } from './common'
 
 export default class Blog extends Component {
   render() {
@@ -43,7 +37,7 @@ class Footer extends Component {
   }
 
   onCommentsChange = (comments) => {
-    if (this.state.numComments != comments.length) {
+    if (this.state.numComments !== comments.length) {
       this.setState({numComments: comments.length});
     }
     //this.setState(prevState => {

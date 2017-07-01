@@ -18,12 +18,11 @@ def session_object():
     res = Session()
     cookie_value = get_session()
     if exists(cookie_value):
-        res.username = db.query_one(
+        res.username = db.query(
             'match (s:Session{cookie_value: {cookie_value}}) '
             'return s.username', {
                 'cookie_value': cookie_value,
-            }
-        )
+            }, one=True)
     return res
 
 
@@ -31,11 +30,10 @@ def get_session():
     return request.cookies.get('session', None)
 
 def exists(cookie_value):
-    return db.query_one(
+    return db.query(
         'match (s:Session{cookie_value: {cookie_value}}) return count(s)', {
             'cookie_value': cookie_value,
-        }
-    ) != 0
+        }, one=True) != 0
 
 def gen_new_cookie_value():
     while True:
@@ -70,11 +68,11 @@ def is_logged_in():
         db.execute('match (s:Session) where expires_at < {now} delete s', {
             utcnow()
         })
-    expires_at = db.query_one(
+    expires_at = db.query(
         'match (s:Session) where s.cookie_value = {cookie_value} '
         'return s.expires_at ', {
             'cookie_value': cookie_value,
-        })
+        }, one=True)
     if expires_at < utcnow():
         return False
     db.execute(

@@ -156,3 +156,12 @@ function prepareFetch(method, url, data) {
 export async function getCurrentUser(then) {
   fetchJSON('GET', '/api/me').then(then);
 }
+
+export function excludedSpread(props, excludes) {
+  excludes = excludes || [];
+  props = {...props};
+  for (const propName of excludes) {
+    delete props[propName];
+  }
+  return props;
+}

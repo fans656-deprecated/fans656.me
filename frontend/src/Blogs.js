@@ -10,7 +10,7 @@ import Blog from './Blog'
 import { Icon, DangerButton, Textarea, Input } from './common'
 import { fetchJSON, fetchData } from './utils'
 
-export class Blogs extends Component {
+export default class Blogs extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -203,9 +203,10 @@ class EditBlog extends Component {
 
   render() {
     if (!this.props.user) {
-      return <h1>You're not logged in</h1>;
+      console.log('you are not logged in');
+      return null;
     }
-    return <div className="wide center edit-blog">
+    return <div className="edit-blog">
       <Textarea
         className="content-edit"
         id="editor"

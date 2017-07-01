@@ -13,7 +13,7 @@ import {
   BrowserRouter as Router, Link, Route, withRouter, Switch,
 } from 'react-router-dom'
 
-import { Blogs, ViewBlog, EditBlog } from './blog'
+import Blogs, { ViewBlog, EditBlog } from './Blogs'
 import Profile from './Profile'
 import Gallery from './Gallery'
 import About from './About'
@@ -69,7 +69,9 @@ class App extends React.Component {
             }/>
 
             {/* post blog */}
-            <Route exact path="/new-blog" render={() => <EditBlog/>}/>
+            <Route exact path="/new-blog" render={() => (
+              <EditBlog user={this.state.user}/>
+            )}/>
 
             {/* view blog */}
             <Route exact path="/blog/:id_or_ref" render={({match}) => 
@@ -165,7 +167,11 @@ class Login extends Component {
 
   render() {
     return (
-      <div className="login-page">
+      <div className="login-page"
+        onKeyUp={ev => {
+          console.log(ev);
+        }}
+      >
         <form className="dialog" onSubmit={this.doLogin}>
           <h1>Login</h1>
           <input

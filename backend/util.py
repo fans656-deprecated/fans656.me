@@ -80,7 +80,7 @@ def id_from_ctime(ctime):
 
 
 def new_node_id():
-    return unicode(db.query_one('match (n) return count(n)') + 1)
+    return unicode(db.query('match (n) return count(n)', one=True) + 1)
 
 
 def logger(msg='', *args, **kwargs):

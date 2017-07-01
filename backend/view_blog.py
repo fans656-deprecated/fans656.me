@@ -11,16 +11,16 @@ from util import success_response, error_response, utcnow, new_node_id
 @user_util.require_me_login
 def post_blog():
     blog = flask.request.json
-    from pprint import pprint
-    pprint(blog)
     ctime = utcnow()
+    tags = blog.get('tags', [])
+
+    blog_id = new_node_id()
     params = {
         'content': blog['content'],
         'title': blog.get('title'),
-        'tags': blog.get('tags'),
         'ctime': ctime,
         'mtime': ctime,
-        'id': new_node_id(),
+        'id': blog_id,
     }
     params = {k: v for k, v in params.items() if v is not None}
     query = (
@@ -31,6 +31,8 @@ def post_blog():
         )
     )
     db.execute(query, params)
+    update_tags(blog, tags)
+
     blog.update(params)
     return success_response()
 
@@ -40,20 +42,23 @@ def get_blogs():
     tags = util.parse_query_string(args.get('tags'))
     page = int(args.get('page', 1))
     size = min(int(args.get('size') or 20), 99999)
-    total = db.query_one('match (n:Blog) return count(n)')
+    total = db.query('match (n:Blog) return count(n)', one=True)
 
     # TODO: filter by tags is ugly & difficult to implement
     # when tags are array property of Blog
     # do it using relationships
-    blogs = db.query_nodes(
-        'match (n:Blog) return n '
-        'order by n.ctime desc '
-        'skip {skip} limit {limit}',
-        {
+    stmt = '''
+        match (blog:Blog) where true
+    ''' + get_blog_preds() +  '''
+        return blog
+        order by blog.ctime desc
+        skip {skip} limit {limit}
+    '''
+    print stmt
+    blogs = db.query(stmt, {
             'skip': (page - 1) * size,
             'limit': size,
-        }
-    )
+        }, cols=1)
     # find number of comments
     # TODO: better neo4j query method
     id_to_blog = {
@@ -62,10 +67,14 @@ def get_blogs():
     rows = db.query(
         'match (blog:Blog)-[:has_comment]->(comment:Comment) '
         'return blog.id, count(comment)'
-    )['data']
+    )
     for blog_id, n_comments in rows:
         if blog_id in id_to_blog:
             id_to_blog[blog_id]['n_comments'] = n_comments
+
+    # get tags
+    for blog in blogs:
+        blog['tags'] = tags_by_blog_id(blog['id'])
 
     return success_response({
         'blogs': blogs,
@@ -77,11 +86,18 @@ def get_blogs():
 
 
 def get_blog(id):
-    blog = db.query_node(
-        'match (n:Blog{id: {id}}) return n', {
-            'id': id,
-        }
+    query = (
+        'match (blog:Blog{id: {id}}) where True '
+        + get_blog_preds()
+        + 'return blog'
     )
+    blog = db.query(query, {
+        'id': id,
+    }, one=True)
+    print blog
+    if not blog:
+        return error_response('not found', 403)
+    blog['tags'] = tags_by_blog_id(id)
     return success_response({
         'blog': blog,
     })
@@ -95,7 +111,6 @@ def put_blog(id):
         'title': blog.get('title'),
         'content': blog['content'],
         'mtime': utcnow(),
-        'tags': blog['tags'],
     }
     params = {k: v for k, v in params.items() if v is not None}
     query = (
@@ -105,6 +120,7 @@ def put_blog(id):
         ))
     )
     db.execute(query , params)
+    update_tags(blog)
     blog.update(params)
     return success_response({'blog': blog})
 
@@ -155,7 +171,7 @@ def post_comment(blog_id):
 
 
 def get_comments(blog_id):
-    comments = db.query_nodes(
+    comments = db.query(
         'match (blog:Blog{id: {id}})-[:has_comment]->(comment) '
         'return comment order by comment.ctime asc', {
             'id': blog_id,
@@ -176,3 +192,46 @@ def delete_comments(comment_id):
     if 'data' not in r:
         return error_response('not found', 404)
     return success_response()
+
+
+def tags_by_blog_id(id):
+    tags = db.query(
+        'match (:Blog{id: {id}})-[rel:has_tag]->(tag) '
+        'return tag.content order by rel.index asc', {
+            'id': id,
+        }, cols=1)
+    return tags
+
+
+def update_tags(blog):
+    tags = blog.get('tags', [])
+    for i, tag in enumerate(tags):
+        print 'update tag', tag
+        db.query('match (blog:Blog{id: {id}}) '
+                 'merge (blog)-[:has_tag{index: {index}}]->'
+                 '(tag:Tag{content: {tag}})', {
+                     'id': blog['id'],
+                     'index': i,
+                     'tag': tag,
+                 })
+    r = db.query('match (blog:Blog{id: {id}})-[rel:has_tag]->(tag) '
+             'where not tag.content in {tags} '
+             'delete rel', {
+                 'id': blog['id'],
+                 'tags': tags,
+             })
+    print 'delete tags'
+    print r
+
+
+def get_blog_preds():
+    user = user_util.current_user()
+    username = user and user.get('username', None)
+
+    preds = ''
+    if username != 'fans656':
+        preds += ('''
+            and not ((blog)-[:has_tag]->(:Tag{content: '_secret'}))
+            and not ((blog)-[:has_tag]->(:Tag{content: '_me'}))
+                  ''')
+    return preds

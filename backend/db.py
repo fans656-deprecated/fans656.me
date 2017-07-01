@@ -12,46 +12,37 @@ from f6 import each
 import conf
 
 
-def query(query, params=None):
-    return cypher(query, params)
+def query(stmt, params=None, rows=None, cols=None, one=False):
+    if one:
+        rows = cols = 1
+
+    extract = lambda row: map(extract_node, row) if row else None
+    r = cypher(stmt, params)
+    assert 'data' in r, str(r)
+    data_rows = r['data']
+    if not data_rows:
+        return []
+    if rows == 1:
+        data_rows = data_rows[:1]
+    res = [extract(row) for row in data_rows]
+    if cols == 1:
+        res = [t[0] for t in res]
+    return res[0] if rows == 1 else res
 
 
-def query_one(query, params=None):
-    r = cypher(query, params)
-    rows = r['data']
-    if not rows:
-        return None
-    row = rows[0]
-    if len(row) == 1:
-        return row[0]
-    else:
-        return row
+def pquery(stmt, params=None, pause=False, rows=None, cols=None, one=False):
+    pprint(query(stmt, params, rows, cols, one=one))
 
 
-def query_nodes(q, params=None):
-    data = query(q, params)
-    rows = data['data']
-    nodes = [row[0]['data'] for row in rows]
-    return nodes
-
-
-def query_node(query, params=None):
-    data = query_one(query, params)
-    if not data:
-        return None
-    node = data['data']
-    return node
-
-
-def execute(query, params=None):
-    r = cypher(query, params)
+def execute(stmt, params=None):
+    r = cypher(stmt, params)
     assert 'data' in r, str(r)
     return r
 
 
-def cypher(query, params=None):
+def cypher(stmt, params=None):
     data = {
-        'query': query,
+        'query': stmt,
         'params': params or {},
     }
     r = requests.post(
@@ -131,7 +122,7 @@ def create_repr(value):
         return unicode(value)
 
 def make(q, cls):
-    r = query(q)
+    r = cypher(q)
     rows = r['data']
     objs = [cls(row[0]) for row in rows]
     return objs
@@ -240,7 +231,7 @@ def purge():
 
 
 def set_persisted_ids():
-    nodes = query('''
+    nodes = cypher('''
 match (n:Blog)
 return id(n), n.ctime
                ''')['data']
@@ -249,22 +240,26 @@ return id(n), n.ctime
     print n
     for i, (node_id, ctime) in enumerate(nodes):
         print '{}/{}'.format((i + 1), n)
-        query('match (n) where id(n) = {node_id} set n.id = {id}', {
+        cypher('match (n) where id(n) = {node_id} set n.id = {id}', {
             'node_id': node_id,
             'id': util.id_from_ctime(ctime)
         })
 
 def set_persisted_ids():
-    nodes = query('match (n) return id(n)')['data']
+    nodes = cypher('match (n) return id(n)')['data']
     import util
     n = len(nodes)
     print n
     for i, (node_id,) in enumerate(nodes):
         print '{}/{}'.format((i + 1), n)
-        r = query('match (n) where id(n) = {node_id} set n.id = {id}', {
+        r = cypher('match (n) where id(n) = {node_id} set n.id = {id}', {
             'node_id': node_id,
             'id': str(i + 1),
         })
+
+
+def extract_node(row):
+    return row['data'] if isinstance(row, dict) and 'metadata' in row else row
 
 
 if __name__ == '__main__':
@@ -280,5 +275,5 @@ if __name__ == '__main__':
             exit()
 
     #set_persisted_ids()
-    r = query_node('match (n:Session) return n')
-    pprint(r)
+
+    pquery('match (n:Blog) return n limit 2', one=True)

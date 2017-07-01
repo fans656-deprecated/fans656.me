@@ -11,12 +11,11 @@ from errors import Forbidden_403
 
 def try_auth(username, password):
     assert exists(username), 'user does not exist'
-    salt, expected_hashed_password = db.query_one(
+    salt, expected_hashed_password = db.query(
         'match (u:User{username: {username}}) '
         'return u.salt, u.hashed_password', {
             'username': username
-        }
-    )
+        }, one=True)
     _, got_hashed_password = get_hashed_salt_and_password(password, salt)
     assert got_hashed_password == expected_hashed_password, 'invalid auth'
 
@@ -68,10 +67,9 @@ def delete_user(username):
 
 
 def exists(username):
-    return db.query_one(
+    return db.query(
         'match (n:User{username: {username}}) return count(n)'
-        , {'username': username}
-    ) != 0
+        , {'username': username}, one=True) != 0
 
 
 def get_hashed_salt_and_password(password, salt=None):
@@ -85,8 +83,8 @@ def get_hashed_salt_and_password(password, salt=None):
 def current_user():
     s = session_util.session_object()
     username = s.username
-    user = db.query_node('match (u:User{username: {username}}) return u',
-                         {'username': username})
+    user = db.query('match (u:User{username: {username}}) return u',
+                    {'username': username}, one=True)
     user = user or {}
     if s.username:
         return {
