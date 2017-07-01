@@ -7,10 +7,10 @@ Bugs:
         can't backspace on page "1"
 
 Important:
-    ) tags and meta-tags
-        such as only-me blogs (write something private)
     ) require_me_login
         require authorization to edit
+    ) tags and meta-tags
+        such as only-me blogs (write something private)
     ) mobile nav
         entry point for "Resume" etc
     . single blog view

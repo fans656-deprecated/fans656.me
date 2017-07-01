@@ -26,21 +26,6 @@ def session_object():
         )
     return res
 
-def current_user():
-    s = session_object()
-    username = s.username
-    user = db.query_node('match (u:User{username: {username}}) return u',
-                         {'username': username})
-    #logger(user=user)
-    user = user or {}
-    if s.username:
-        return {
-            'username': user['username'],
-            'ctime': user['ctime'],
-            'avatar_url': user.get('avatar_url'),
-        }
-    else:
-        return None
 
 def get_session():
     return request.cookies.get('session', None)

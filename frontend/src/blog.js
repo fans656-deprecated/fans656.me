@@ -111,7 +111,7 @@ export class ViewBlog extends Component {
     const isOwner = user && owner === user.username;
     const blog = this.state.blog;
     if (!blog) {
-      return <h1>Not found</h1>
+      return null;
     }
     return (
       <div className="single-blog-view">
@@ -202,6 +202,9 @@ class EditBlog extends Component {
   }
 
   render() {
+    if (!this.props.user) {
+      return <h1>You're not logged in</h1>;
+    }
     return <div className="wide center edit-blog">
       <Textarea
         className="content-edit"

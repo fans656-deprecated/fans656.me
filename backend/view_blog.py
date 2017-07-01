@@ -4,9 +4,11 @@ import traceback
 import flask
 
 import db
+import user_util
 import util
 from util import success_response, error_response, utcnow, new_node_id
 
+@user_util.require_me_login
 def post_blog():
     blog = flask.request.json
     from pprint import pprint
@@ -85,6 +87,7 @@ def get_blog(id):
     })
 
 
+@user_util.require_me_login
 def put_blog(id):
     blog = flask.request.json
     params = {
@@ -106,6 +109,7 @@ def put_blog(id):
     return success_response({'blog': blog})
 
 
+@user_util.require_me_login
 def del_blog(id):
     r = db.execute(
         'match (n:Blog{id: {id}}) detach delete n', {
@@ -162,10 +166,13 @@ def get_comments(blog_id):
     })
 
 
+@user_util.require_me_login
 def delete_comments(comment_id):
-    print db.execute(
+    r = db.execute(
         'match (comment:Comment{id: {id}}) detach delete comment', {
             'id': comment_id,
         }
     )
+    if 'data' not in r:
+        return error_response('not found', 404)
     return success_response()

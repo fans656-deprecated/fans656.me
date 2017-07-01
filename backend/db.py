@@ -280,6 +280,5 @@ if __name__ == '__main__':
             exit()
 
     #set_persisted_ids()
-    r = query_node('match (n:Comment) detach delete n')
-    #r = query_node('match (n:Blog{id: {id}}) return n', {'id': 944})
+    r = query_node('match (n:Session) return n')
     pprint(r)

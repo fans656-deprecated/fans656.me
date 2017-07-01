@@ -39,7 +39,7 @@ def get_logout():
 
 def get_me():
     return success_response({
-        'user': session_util.current_user()
+        'user': user_util.current_user()
     })
 
 
@@ -64,7 +64,12 @@ def get_avatar(username):
     return success_response({'avatar_url': avatar_url})
 
 
+@user_util.require_login
 def post_avatar(username):
+    current_user = user_util.current_user()
+    if username != current_user['username']:
+        return error_response('up to something?', 403)
+
     data = flask.request.json['data']
     filetype, data = data.split(';')
     ext = filetype.split('/')[1]

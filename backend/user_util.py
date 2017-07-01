@@ -1,9 +1,12 @@
 import os
 import hashlib
 import binascii
+import functools
 
 import db
-from util import utcnow, logger
+from util import error_response, utcnow, logger
+import session_util
+from errors import Forbidden_403
 
 
 def try_auth(username, password):
@@ -77,3 +80,39 @@ def get_hashed_salt_and_password(password, salt=None):
     hashed_pwd = hashlib.pbkdf2_hmac('sha256', password, salt, 100000)
     hashed_pwd = binascii.hexlify(hashed_pwd)
     return salt, hashed_pwd
+
+
+def current_user():
+    s = session_util.session_object()
+    username = s.username
+    user = db.query_node('match (u:User{username: {username}}) return u',
+                         {'username': username})
+    user = user or {}
+    if s.username:
+        return {
+            'username': user['username'],
+            'ctime': user['ctime'],
+            'avatar_url': user.get('avatar_url'),
+        }
+    else:
+        return None
+
+
+def require_login(viewfunc):
+    @functools.wraps(viewfunc)
+    def wrapper(*args, **kwargs):
+        user = current_user()
+        if not user:
+            return error_response('you are not logged in', Forbidden_403)
+        return viewfunc(*args, **kwargs)
+    return wrapper
+
+
+def require_me_login(viewfunc):
+    @functools.wraps(viewfunc)
+    def wrapper(*args, **kwargs):
+        user = current_user()
+        if not user or user['username'] != 'fans656':
+            return error_response('you are not "fans656"', Forbidden_403)
+        return viewfunc(*args, **kwargs)
+    return wrapper

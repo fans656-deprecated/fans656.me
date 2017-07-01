@@ -82,7 +82,7 @@ class App extends React.Component {
 
             {/* edit blog */}
             <Route exact path="/blog/:id_or_ref/edit" render={({match}) => 
-              <EditBlog id={match.params.id_or_ref}/>
+              <EditBlog id={match.params.id_or_ref} user={this.state.user}/>
             }/>
 
             {/* profile */}
