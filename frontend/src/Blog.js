@@ -65,9 +65,11 @@ class Footer extends Component {
     const blog = this.props.blog;
     const ctime = new Date(blog.ctime).toLocaleDateString()
     const tags = (blog.tags || []).map((tag, i) => {
+      let url = `/blog?tags=[${tag}]`;
+      url = undefined;  // filter by tag is TODO
       return <a className="tag info"
         key={i}
-        href={`/blog?tags=[${tag}]`}
+        href={url}
       >
         {tag}
       </a>
