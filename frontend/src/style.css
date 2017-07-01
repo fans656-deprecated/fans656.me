@@ -261,7 +261,9 @@ form > * {
   .panel {
     position: fixed;
     left: .2rem;
-    bottom: .2rem;
+    bottom: 1rem;
+    transform: scale(1.2);
+    filter: opacity(0.5);
   }
 
   .file-explorer {
@@ -279,6 +281,15 @@ form > * {
 
 /* desktop ----------- */
 @media only screen and (min-width: 800px) {
+
+  .panel li {
+    filter: opacity(.1);
+  }
+
+  .panel li:hover {
+    filter: opacity(1.0);
+    transition: .3s;
+  }
   .single-blog-view, .edit-blog {
     min-width: 45%;
     max-width: 50rem;
@@ -507,13 +518,9 @@ form > * {
 }
 
 .panel {
-  filter: opacity(.1);
-  transition: .3s;
-}
-
-.panel:hover {
-  filter: opacity(1.0);
-  transition: .3s;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .hover-action svg:hover {

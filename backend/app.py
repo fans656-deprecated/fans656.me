@@ -9,7 +9,7 @@ Bugs:
 Important:
     . require_me_login
         require authorization to edit
-    ) tags and meta-tags
+    . tags and meta-tags
         such as only-me blogs (write something private)
     ) mobile nav
         entry point for "Resume" etc
@@ -19,18 +19,18 @@ Deployment:
     . production deployment should use cache for static files
 
 Functional:
+    ) custom url
     ) search by tags
-    ) user registration
+    . user registration
     ) editor tab in textarea, shift tab to back indent
     ) uploading progress
     ) file explorer
-    ) blog/file ref
 
 Presentations:
     ) css var 360 browser compatibility (use less/sass?)
-    ) css video mobile width
-    ) xiami/video post http => https
-    ) code horz scroll
+    . css video mobile width
+    . xiami/video post http => https
+    . code horz scroll
 
 Apps:
     ) TODO page

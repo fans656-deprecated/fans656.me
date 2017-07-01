@@ -1,8 +1,9 @@
 import React, { Component } from 'react'
 import { Link, withRouter } from 'react-router-dom'
-import IconPlus from 'react-icons/lib/fa/plus'
 import IconCaretLeft from 'react-icons/lib/fa/caret-left'
 import IconCaretRight from 'react-icons/lib/fa/caret-right'
+import IconPlus from 'react-icons/lib/md/add'
+import IconSearch from 'react-icons/lib/md/search'
 import qs from 'qs'
 import $ from 'jquery'
 
@@ -80,7 +81,7 @@ export default class Blogs extends Component {
       <Pagination {...this.state.pagination}
         onNavigate={this.navigateToNthPage}
       />
-      {isOwner && <Panel/>}
+      <Panel isOwner={isOwner}/>
     </div>
   }
 }
@@ -243,10 +244,67 @@ EditBlog = withRouter(EditBlog);
 export { EditBlog };
 
 class Panel extends Component {
+  constructor(props) {
+    super(props);
+    this.scrolling = false;
+    this.lastY = null;
+  }
+
+  componentDidMount() {
+    // mobile panel auto hide
+    const isDesktop = window.matchMedia('(min-device-width: 800px)').matches;
+    console.log('isDesktop', isDesktop);
+    if (isDesktop) {
+      return;
+    }
+    $(window).scroll(ev => {
+      this.scrolling = true;
+    });
+    const deltaY = 100;
+    const duration = 300;
+    const panel = $('#panel');
+    panel.hide(duration);
+    this.scrollTimer = setInterval(() => {
+      if (this.scrolling) {
+        const y = $(window).scrollTop();
+        if (this.lastY === null) {
+          this.lastY = y;
+        } else {
+          // scroll down enough
+          if (y - this.lastY > deltaY) {
+            panel.hide(duration);
+            this.lastY = y;
+            // scroll up enough
+          } else if (this.lastY - y > deltaY) {
+            panel.show(duration);
+            this.lastY = y;
+          }
+        }
+        this.scrolling = false;
+      }
+    }, 250);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.scrollTimer);
+  }
+
   render() {
-    return <div className="panel">
-      <Link to="/new-blog" title="New blog"><Icon type={IconPlus} /></Link>
-    </div>;
+    const items = [
+      <li onClick={this.toggleConsole} key="console"><a>
+        <Icon title="Search" type={IconSearch}/>
+      </a></li>
+    ];
+    if (this.props.isOwner) {
+      items.push(
+        <li key="new-blog">
+          <Link to="/new-blog" title="New blog"><Icon type={IconPlus} /></Link>
+        </li>
+      );
+    }
+    return <ul id="panel" className="panel">
+      {items}
+    </ul>;
   }
 }
 
