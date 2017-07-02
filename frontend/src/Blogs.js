@@ -217,9 +217,7 @@ class EditBlog extends Component {
     const tags = this.state.tagsText.split(/[,，]/)
       .map(tag => tag.trim())
       .filter(nonempty => nonempty);
-    if (tags.length) {
-      blog.tags = tags;
-    }
+    blog.tags = tags || undefined;
 
     if (blog.id) {
       fetchData('PUT', `/api/blog/${blog.id}`, blog, this.after);
@@ -264,7 +262,9 @@ class EditBlog extends Component {
         placeholder="Tags"
         type="text"
         value={this.state.tagsText}
-        onChange={({target}) => this.setState({tagsText: target.value})}
+        onChange={({target}) => {
+          this.setState({tagsText: target.value});
+        }}
         submit={this.doPost}
       />
       <Input className="custom-url"

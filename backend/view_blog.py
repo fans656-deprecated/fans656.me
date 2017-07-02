@@ -57,6 +57,15 @@ def get_blogs():
 
 
 def get_blog(id):
+    blog = do_get_blog_by_id(id)
+    if not blog:
+        return error_response('not found', 403)
+    return success_response({
+        'blog': blog,
+    })
+
+
+def do_get_blog_by_id(id):
     query = (
         'match (blog:Blog{id: {id}}) where True '
         + get_blog_mandatory_preds()
@@ -66,11 +75,9 @@ def get_blog(id):
         'id': id,
     }, one=True)
     if not blog:
-        return error_response('not found', 403)
+        return None
     blog['tags'] = tags_by_blog_id(id)
-    return success_response({
-        'blog': blog,
-    })
+    return blog
 
 
 @user_util.require_me_login
@@ -190,6 +197,8 @@ def tags_by_blog_id(id):
 
 def update_tags(blog):
     tags = blog.get('tags', [])
+    print blog
+    print tags
     db.query('match (blog:Blog{id: {id}})-[rel:has_tag]->(tag) '
              'delete rel', {
                  'id': blog['id'],

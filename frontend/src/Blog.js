@@ -124,7 +124,15 @@ class Footer extends Component {
 }
 
 class CommentsToggle extends Component {
+  componentDidMount() {
+    this.syncCommentsToggleState(this.props);
+  }
+
   componentWillReceiveProps(props) {
+    this.syncCommentsToggleState(props);
+  }
+
+  syncCommentsToggleState = props => {
     if (props.isSingleView || props.commentsVisible) {
       $('.comments.toggle').addClass('toggled');
     } else {

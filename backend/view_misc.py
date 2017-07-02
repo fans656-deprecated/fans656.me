@@ -6,6 +6,7 @@ from f6 import each
 import db
 import conf
 import util
+import view_blog
 from util import success_response, error_response
 
 
@@ -32,9 +33,12 @@ def get_custom_url(path):
         return error_response('Oops, not found', 404)
     labels = node['meta']['labels']
     if 'Blog' in labels:
+        blog = view_blog.do_get_blog_by_id(node['id'])
+        if not blog:
+            return error_response('not found', 404)
         return success_response({
             'type': 'blog',
-            'blog': node,
+            'blog': blog,
         })
     else:
         return success_response({
