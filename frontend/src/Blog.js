@@ -90,7 +90,9 @@ class Footer extends Component {
             }
           </div>
           <div className="column right">
-            <div className="tags filter" style={{marginRight: '1em'}}>{tags}</div>
+            <div className="tags filter" style={{marginRight: '1em'}}>
+              {tags}
+            </div>
             <div className="ctime datetime filter">
               <Link
                 to={`/blog/${blog.id}`}

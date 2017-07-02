@@ -166,7 +166,7 @@ form > * {
 
 /* mobile (portrait and landscape) ----------- */
 @media only screen and (min-device-width: 320px) and (max-device-width: 800px) {
-
+  
   #console {
     display: none;
   }
@@ -240,6 +240,11 @@ form > * {
     padding: 0 .5rem;
     margin-top: 0;
   }
+
+  .blog .footer .info-row .tags * {
+    display: none;
+  }
+
 
   /* ------------------------------------------ header & footer */
 

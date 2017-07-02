@@ -288,5 +288,5 @@ if __name__ == '__main__':
             exit()
 
     #set_persisted_ids()
-    r = query('match (n) where not exists(n.id) return n')
+    r = query('match (n:User) return n')
     pprint(r)
