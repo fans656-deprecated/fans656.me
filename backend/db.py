@@ -12,11 +12,16 @@ from f6 import each
 import conf
 
 
-def query(stmt, params=None, rows=None, cols=None, one=False):
+def query(stmt, params=None, rows=None, cols=None, one=False,
+          relationship=False):
     if one:
         rows = cols = 1
 
-    extract = lambda row: map(extract_node, row) if row else None
+    if relationship:
+        _extract_node = lambda x: x
+    else:
+        _extract_node = extract_node
+    extract = lambda row: map(_extract_node, row) if row else None
     r = cypher(stmt, params)
     assert 'data' in r, str(r)
     data_rows = r['data']
@@ -58,7 +63,6 @@ class Node(object):
     def __init__(self, node):
         metadata = node['metadata']
         self.labels = metadata['labels']
-        self.node_id = metadata['id']
         self.properties = node['data']
         if 'id' not in self.properties:
             self.properties['id'] = self.node_id
@@ -68,7 +72,6 @@ class Node(object):
 
     def __unicode__(self):
         return json.dumps({
-            'node_id': self.node_id,
             'labels': self.labels,
             'properties': self.properties
         })
@@ -82,20 +85,18 @@ class Node(object):
 
 class Relationship(object):
 
-    def __init__(self, rel):
-        metadata = rel['metadata']
-        self.rel_id = metadata['id']
+    def __init__(self, rel, start_id, end_id):
+        self.rel = rel
         self.type = rel['type']
-        self.start_id = rel['start'].split('/')[-1]
-        self.end_id = rel['end'].split('/')[-1]
+        self.start_id = start_id
+        self.end_id = end_id
         self.properties = rel['data']
 
     @property
     def create_statement(self):
         s = (
             u'match (start), (end) '
-            u'where id(start) = {start_id} '
-            u'and id(end) = {end_id} '
+            u'where start.id = "{start_id}" and end.id = "{end_id}" '
             u'create (start)-[:{type}{properties}]->(end) '
         )
         return s.format(
@@ -129,7 +130,12 @@ def make(q, cls):
 
 def gen_create_statements():
     nodes = make('match (n) return n', Node)
-    rels = make('match ()-[r]->() return r', Relationship)
+
+    r = query('match (start)-[rel]->(end) return rel, start.id, end.id',
+              relationship=True)
+    rels = [Relationship(rel, start_id, end_id)
+            for rel, start_id, end_id in r]
+
     stmts = itertools.chain(each(nodes).create_statement,
                             each(rels).create_statement)
     return list(stmts)
@@ -282,3 +288,5 @@ if __name__ == '__main__':
             exit()
 
     #set_persisted_ids()
+    r = query('match (n) where not exists(n.id) return n')
+    pprint(r)

@@ -190,20 +190,27 @@ def tags_by_blog_id(id):
 
 def update_tags(blog):
     tags = blog.get('tags', [])
-    for i, tag in enumerate(tags):
-        db.query('match (blog:Blog{id: {id}}) '
-                 'merge (blog)-[:has_tag{index: {index}}]->'
-                 '(tag:Tag{content: {tag}})', {
-                     'id': blog['id'],
-                     'index': i,
-                     'tag': tag,
-                 })
-    r = db.query('match (blog:Blog{id: {id}})-[rel:has_tag]->(tag) '
-             'where not tag.content in {tags} '
+    db.query('match (blog:Blog{id: {id}})-[rel:has_tag]->(tag) '
              'delete rel', {
                  'id': blog['id'],
-                 'tags': tags,
              })
+    for i, tag in enumerate(tags):
+        # TODO: silly implementation
+        tag_exists = db.query(
+            'match (tag:Tag{content: {tag}}) return count(tag)', {
+                'tag': tag,
+            }, one=True)
+        if not tag_exists:
+            db.query('create (tag:Tag{content: {tag}, id: {tag}})', {
+                'tag': tag,
+            })
+        db.query(
+            'match (blog:Blog{id: {blog_id}}), (tag:Tag{id: {tag_id}})'
+            'create (blog)-[:has_tag{index: {index}}]->(tag)', {
+                'blog_id': blog['id'],
+                'tag_id': tag,
+                'index': i,
+            })
 
 
 def response_blogs_by_tags(tags, page=1, size=20):
@@ -308,25 +315,3 @@ def make_pagination(blogs, page, size, total):
 
 if __name__ == '__main__':
     from pprint import pprint
-
-    blogs, total = query_blogs('''
-        match (blog)-[:has_tag]->(tag:Tag) where
-        any(partial_tag in {partial_tags} where tag.content contains partial_tag)
-        ''', {
-            'partial_tags': ['dev', 'mus'],
-        }
-    )
-    pprint([blog['tags'] for blog in blogs])
-    print total
-    #pprint(r)
-    exit()
-
-    r = db.query('''
-match (blog:Blog) where True
-match (blog)-[:has_tag]->(tag:Tag) where
-any(partial_tag in ["dev", "music"] where tag.content contains partial_tag)
-            and not ((blog)-[:has_tag]->(:Tag{content: '_secret'}))
-            and not ((blog)-[:has_tag]->(:Tag{content: '_me'}))
-return blog
-             ''')
-    print len(r)
