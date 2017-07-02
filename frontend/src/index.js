@@ -186,7 +186,7 @@ const Header = (props) => {
         handlers={props.consoleHandlers}
       />
       <span>
-        {props.user
+        {props.user.isLoggedIn()
           ? <UserName user={props.user}/>
           : <Link to="/login">Login</Link>}
       </span>
