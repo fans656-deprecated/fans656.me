@@ -199,10 +199,10 @@ class CommentEdit extends Component {
             <div className="vistor-name-input-and-post-button">
               <input className="visitor-name"
                 style={{
-                  padding: '0 .7em',
+                  padding: '0 .4rem',
                 }}
                 type="text"
-                placeholder="Who are you? (name or email)"
+                placeholder="Who are you?"
                 ref={ref => this.nameInput = ref}
               />
               <div style={{

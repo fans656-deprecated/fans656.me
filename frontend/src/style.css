@@ -186,7 +186,8 @@ form > * {
 
   input.visitor-name {
     margin-right: 0;
-    min-width: 12.3rem;
+    min-width: 8rem;
+    float: left;
   }
 
   .comments-content > *{
