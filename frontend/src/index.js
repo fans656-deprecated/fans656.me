@@ -5,6 +5,7 @@ import {
 } from 'react-router-dom'
 import $ from 'jquery'
 
+import Blog from './Blog'
 import Blogs, { ViewBlog, EditBlog } from './Blogs'
 import Console from './Console'
 import Profile from './Profile'
@@ -12,7 +13,7 @@ import Gallery from './Gallery'
 import About from './About'
 import Files from './Files'
 
-import { fetchJSON, getCurrentUser } from './utils'
+import { fetchJSON, fetchData, getCurrentUser } from './utils'
 
 import './style.css'
 
@@ -27,8 +28,8 @@ const Nav = ({user}) => {
       <li><Link to="/movie">Movie</Link></li>
       */}
       <li><Link to="/about">About</Link></li>
-      {user && <li>|</li>}
-      {user && <li><Link to="/files">Files</Link></li>}
+      {user.isMe() && <li>|</li>}
+      {user.isMe() && <li><Link to="/files">Files</Link></li>}
     </ul>
   </nav>
 }
@@ -37,7 +38,7 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      user: null,
+      user: new User(),
       consoleHandlers: [],
     }
   }
@@ -93,13 +94,13 @@ class App extends React.Component {
             {/* ---------------------------------------------- blog */}
             {/* blogs */}
             <Route exact path="/" render={() => 
-                <Blogs owner="fans656" user={this.state.user}
+                <Blogs user={this.state.user}
                   registerConsoleHandler={this.registerConsoleHandler}
                   unregisterConsoleHandler={this.unregisterConsoleHandler}
                 />
             }/>
             <Route exact path="/blog" render={() => 
-                <Blogs owner="fans656" user={this.state.user}
+                <Blogs user={this.state.user}
                   registerConsoleHandler={this.registerConsoleHandler}
                   unregisterConsoleHandler={this.unregisterConsoleHandler}
                 />
@@ -114,7 +115,6 @@ class App extends React.Component {
             <Route exact path="/blog/:id_or_ref" render={({match}) => 
               <ViewBlog
                 id={match.params.id_or_ref}
-                owner="fans656"
                 user={this.state.user}
               />
             }/>
@@ -135,8 +135,10 @@ class App extends React.Component {
             {/* ---------------------------------------------- personal */}
             <Route path="/files" component={Files}/>
 
-            {/* ---------------------------------------------- todo page */}
-            {/*<Route exact path="*" component={TodoPage}/>*/}
+            {/* ---------------------------------------------- custom url */}
+            {<Route exact path="*" render={(props) => (
+              <CustomURLPage {...props} user={this.state.user}/>
+            )}/>}
           </Switch>
         </main>
         <footer className="reverse-color">
@@ -148,14 +150,17 @@ class App extends React.Component {
 
   componentDidMount() {
     $('body').keypress(this.keypress);
-    getCurrentUser((resp) => {
-      const user = resp.errno ? null : resp.user;
-      if (user) {
-        user.onChange = () => this.setState({user: user});
-      }
-      this.setState({
-        user: user,
-      });
+    getCurrentUser(res => {
+      const user = new User(res.user);
+      user.onChange = () => this.setState({user: user});
+      this.setState({user: user});
+      //const user = res.errno ? null : res.user;
+      //if (user) {
+      //  user.onChange = () => this.setState({user: user});
+      //}
+      //this.setState({
+      //  user: user,
+      //});
     });
   }
 
@@ -166,8 +171,8 @@ class App extends React.Component {
 }
 App = withRouter(App);
 
-const Header = (props) => (
-  <header className="reverse-color">
+const Header = (props) => {
+  return <header className="reverse-color">
     <Nav user={props.user}/>
     <div className="right" style={{
       marginLeft: 'auto',
@@ -187,7 +192,7 @@ const Header = (props) => (
       </span>
     </div>
   </header>
-);
+};
 
 const UserName = ({user}) => (
   <Link className="username" to={'/profile/' + user.username}>
@@ -319,22 +324,65 @@ class Register extends Component {
   }
 }
 
-//const TodoPage = (props) => {
-//  const url = props.match.url;
-//  console.log(url);
-//  return <div style={{
-//    fontSize: '1em',
-//    display: 'flex',
-//    justifyContent: 'center',
-//    alignItems: 'center',
-//    minHeight: '70vh',
-//  }}>
-//    <div style={{textAlign: 'center'}}>
-//      <h1>404</h1>
-//      <p>oops, page not found</p>
-//    </div>
-//  </div>
-//}
+class CustomURLPage extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      res: null,
+    };
+  }
+
+  componentWillReceiveProps(props) {
+    const path = props.match.url;
+    const setState = res => this.setState({res: res});
+    if (path) {
+      fetchData('GET', '/api/custom-url' + path, setState, setState);
+    }
+  }
+
+  render() {
+    if (!this.state.res) {
+      return null;
+    } else {
+      const res = this.state.res;
+      if (res.errno) {
+        return <div style={{
+          fontSize: '1em',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '70vh',
+        }}>
+          <div style={{textAlign: 'center'}}>
+            <h1>{res.errno}</h1>
+            <p>{res.detail}</p>
+          </div>
+        </div>
+      } else if (res.type === 'blog') {
+        return (
+          <ViewBlog blog={res.blog} user={this.props.user}/>
+        )
+      } else {
+        return <pre>{res.detail}</pre>
+      }
+    }
+  }
+}
+
+class User {
+  constructor(user) {
+    user = user || {
+      username: ''
+    };
+
+    Object.assign(this, user);
+  }
+
+  valid = () => this.username.length > 0
+  isLoggedIn = () => this.valid()
+  isMe = () => this.username === 'fans656'
+  isOwner = () => this.isMe()
+}
 
 ReactDOM.render((
   <Router>

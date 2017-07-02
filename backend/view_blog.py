@@ -15,6 +15,7 @@ def post_blog():
     blog = flask.request.json
     ctime = utcnow()
     tags = blog.get('tags', [])
+    print blog
 
     blog_id = new_node_id()
     params = {
@@ -33,9 +34,9 @@ def post_blog():
         )
     )
     db.execute(query, params)
-    update_tags(blog, tags)
-
     blog.update(params)
+    update_tags(blog)
+
     return success_response()
 
 
@@ -81,6 +82,11 @@ def put_blog(id):
         'content': blog['content'],
         'mtime': utcnow(),
     }
+
+    custom_url = blog.get('custom_url')
+    if custom_url:
+        params['custom_url'] = blog['custom_url']
+
     params = {k: v for k, v in params.items() if v is not None}
     query = (
         'match (n:Blog{id: {id}}) '
@@ -144,8 +150,7 @@ def get_comments(blog_id):
         'match (blog:Blog{id: {id}})-[:has_comment]->(comment) '
         'return comment order by comment.ctime asc', {
             'id': blog_id,
-        }
-    )
+        }, cols=1)
     return success_response({
         'comments': comments,
     })
@@ -186,7 +191,6 @@ def tags_by_blog_id(id):
 def update_tags(blog):
     tags = blog.get('tags', [])
     for i, tag in enumerate(tags):
-        print 'update tag', tag
         db.query('match (blog:Blog{id: {id}}) '
                  'merge (blog)-[:has_tag{index: {index}}]->'
                  '(tag:Tag{content: {tag}})', {
@@ -200,8 +204,6 @@ def update_tags(blog):
                  'id': blog['id'],
                  'tags': tags,
              })
-    print 'delete tags'
-    print r
 
 
 def response_blogs_by_tags(tags, page=1, size=20):

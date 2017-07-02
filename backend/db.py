@@ -259,7 +259,14 @@ def set_persisted_ids():
 
 
 def extract_node(row):
-    return row['data'] if isinstance(row, dict) and 'metadata' in row else row
+    if isinstance(row, dict) and 'metadata' in row:
+        r =  row['data']
+        r['meta'] = {
+            'labels': row['metadata']['labels'],
+        }
+        return r
+    else:
+        return row
 
 
 if __name__ == '__main__':

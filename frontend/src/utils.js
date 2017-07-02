@@ -45,9 +45,10 @@ export function getDateDiff(pre, now) {
   return [years, months, days, hours, minutes, seconds];
 }
 
-export async function fetchData(method, url, data, callback) {
-  if (callback === undefined && data instanceof Function) {
-    callback = data;
+export async function fetchData(method, url, data, success, error) {
+  if (data instanceof Function) {
+    error = success;
+    success = data;
     data = undefined;
   }
   let options;
@@ -68,8 +69,11 @@ export async function fetchData(method, url, data, callback) {
       console.log(json);
       if (json.errno) {
         console.log('[RESPONSE with nonzero errno]');
-      } else if (callback) {
-        callback(json);
+        if (error) {
+          error(json);
+        }
+      } else if (success) {
+        success(json);
       }
       console.log('=== RESPONSE END ==============================');
       console.log('\n');
@@ -157,8 +161,8 @@ function prepareFetch(method, url, data) {
   return [url, options];
 }
 
-export async function getCurrentUser(then) {
-  fetchJSON('GET', '/api/me').then(then);
+export function getCurrentUser(then) {
+  fetchData('GET', '/api/me', then, then);
 }
 
 export function excludedSpread(props, excludes) {

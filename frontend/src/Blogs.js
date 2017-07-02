@@ -82,9 +82,7 @@ export default class Blogs extends Component {
   }
 
   render() {
-    const owner = this.props.owner;
     const user = this.props.user;
-    const isOwner = user && owner === user.username;
     let blogs, pagination, tags;
     let tagged = false;
     if (this.state.searched) {
@@ -104,8 +102,7 @@ export default class Blogs extends Component {
       <Blog
         key={blog.id}
         blog={blog}
-        isOwner={isOwner}
-        user={user}
+        user={this.props.user}
       />
     ));
     const total = pagination.total;
@@ -131,7 +128,7 @@ export default class Blogs extends Component {
         onNavigate={this.navigateToNthPage}
         tags={tags}
       />
-      <Panel isOwner={isOwner}/>
+      <Panel user={this.props.user}/>
     </div>
   }
 }
@@ -145,7 +142,9 @@ export class ViewBlog extends Component {
   }
 
   componentDidMount() {
-    if (this.props.id) {
+    if (this.props.blog) {
+      this.setState({blog: this.props.blog});
+    } else if (this.props.id) {
       this.fetchBlog(this.props.id);
     }
   }
@@ -157,9 +156,7 @@ export class ViewBlog extends Component {
   }
 
   render() {
-    const owner = this.props.owner;
     const user = this.props.user;
-    const isOwner = user && owner === user.username;
     const blog = this.state.blog;
     if (!blog) {
       return null;
@@ -169,8 +166,7 @@ export class ViewBlog extends Component {
         <Blog
           key={blog.id}
           blog={blog}
-          isOwner={isOwner}
-          user={user}
+          user={this.props.user}
           commentsVisible={true}
           isSingleView={true}
         />
@@ -216,12 +212,14 @@ class EditBlog extends Component {
     const blog = this.state.blog;
 
     blog.content = this.state.text;
-    blog.customUrl = this.customUrlInput.val() || undefined
+    blog.custom_url = this.customUrlInput.val() || undefined
 
     const tags = this.state.tagsText.split(/[,，]/)
       .map(tag => tag.trim())
       .filter(nonempty => nonempty);
-    blog.tags = tags;
+    if (tags.length) {
+      blog.tags = tags;
+    }
 
     if (blog.id) {
       fetchData('PUT', `/api/blog/${blog.id}`, blog, this.after);
@@ -249,7 +247,7 @@ class EditBlog extends Component {
   }
 
   render() {
-    if (!this.props.user) {
+    if (!this.props.user.isLoggedIn()) {
       console.log('you are not logged in');
       return null;
     }
@@ -273,6 +271,7 @@ class EditBlog extends Component {
         placeholder="Custom URL"
         type="text"
         submit={this.doPost}
+        defaultValue={this.state.blog.custom_url}
         ref={ref => this.customUrlInput = ref}
       />
       <div className="buttons">
@@ -344,7 +343,7 @@ class Panel extends Component {
       //  <Icon title="Search" type={IconSearch}/>
       //</a></li>
     ];
-    if (this.props.isOwner) {
+    if (this.props.user.isOwner()) {
       items.push(
         <li key="new-blog">
           <Link to="/new-blog" title="New blog"><Icon type={IconPlus} /></Link>

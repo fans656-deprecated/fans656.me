@@ -2,7 +2,9 @@ import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import IconEdit from 'react-icons/lib/md/mode-edit'
+import IconLink from 'react-icons/lib/md/link'
 import qs from 'qs'
+import $ from 'jquery'
 
 import Comments from './Comments'
 import { Icon } from './common'
@@ -16,8 +18,7 @@ export default class Blog extends Component {
       <Footer
         blog={blog}
         user={this.props.user}
-        isOwner={this.props.isOwner}
-        commentsVisible={this.props.commentsVisible}
+        commentsVisible={this.props.commentsVisible || this.props.isSingleView}
         isSingleView={this.props.isSingleView}
       />
     </div>
@@ -71,25 +72,34 @@ class Footer extends Component {
 
     return (
       <div className="footer">
-        <div className="info-row">
-          <CommentsToggle
-            commentsVisible={this.state.commentsVisible}
-            onClick={this.toggleCommentsVisible}
-            numComments={this.state.numComments}
-            isSingleView={this.props.isSingleView}
-          />
-          <div className="right">
-            <div className="tags" style={{marginRight: '1em'}}>{tags}</div>
-            <div className="ctime datetime">
+        <div className="info-row info">
+          <div className="column left">
+            <CommentsToggle
+              commentsVisible={this.state.commentsVisible}
+              onClick={this.toggleCommentsVisible}
+              numComments={this.state.numComments}
+              isSingleView={this.props.isSingleView}
+            />
+            {blog.custom_url &&
+              <a className="custom-url filter"
+                href={blog.custom_url}
+                title={`Custom URL ${window.location.origin}${blog.custom_url}`}
+              >
+                <Icon type={IconLink} size="small"/>
+              </a>
+            }
+          </div>
+          <div className="column right">
+            <div className="tags filter" style={{marginRight: '1em'}}>{tags}</div>
+            <div className="ctime datetime filter">
               <Link
-                className="info"
                 to={`/blog/${blog.id}`}
                 title={new Date(blog.ctime).toLocaleString()}
               >{ctime}</Link>
             </div>
-            {this.props.isOwner &&
+            {this.props.user.isOwner() &&
                 <a
-                  className="edit-blog-link info"
+                  className="edit-blog-link filter"
                   href={`/blog/${blog.id}/edit`
                       + (this.props.isSingleView ? '?back-to-single-view=1' : '')
                   }
@@ -102,38 +112,42 @@ class Footer extends Component {
             }
           </div>
         </div>
-        {this.props.isSingleView && <br/>}
         <Comments
           visible={this.state.commentsVisible}
           user={this.props.user}
           blog={this.props.blog}
           onChange={this.onCommentsChange}
-          isOwner={this.props.isOwner}
         />
       </div>
     )
   }
 }
 
-const CommentsToggle = (props) => {
-  let infoClassName = '';
-  if (props.isSingleView || !props.commentsVisible) {
-    infoClassName = 'info';
+class CommentsToggle extends Component {
+  componentWillReceiveProps(props) {
+    if (props.isSingleView || props.commentsVisible) {
+      $('.comments.toggle').addClass('toggled');
+    } else {
+      $('.comments.toggle').removeClass('toggled');
+    }
   }
-  return (
-    <div>
-      <div className={'comments ' + infoClassName}>
-        <div className="clickable"
-          onClick={props.onClick}
-        >
-          <a href="#number-of-comments" className="number"
-            onClick={ev => ev.preventDefault()}
+
+  render() {
+    return (
+      <div>
+        <div className="comments toggle filter">
+          <div className="clickable"
+            onClick={this.props.onClick}
           >
-            {props.numComments}&nbsp;
-          </a>
-          <span>Comments</span>
+            <a href="#number-of-comments" className="number"
+              onClick={ev => ev.preventDefault()}
+            >
+              {this.props.numComments}&nbsp;
+            </a>
+            <span>Comments</span>
+          </div>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 }

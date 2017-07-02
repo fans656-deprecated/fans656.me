@@ -43,16 +43,14 @@ export default class Comments extends Component {
         key={i}
         comment={comment}
         username={comment.username}
-        user={comment.user}
+        user={this.props.user}
         isVisitor={comment.is_visitor}
         ctime={comment.ctime}
         content={comment.content}
-        isOwner={this.props.isOwner}
         onDelete={this.fetchComments}
       />
     });
-    return <div className="comments-content"
-    >
+    return <div className="comments-content">
       {comments}
       <CommentEdit
         user={this.props.user}
@@ -92,7 +90,7 @@ class Comment extends Component {
           display: 'block',
         }}
       >
-        <div style={{
+        <div className="comment-header" style={{
           display: 'flex',
         }}>
           <div className="user" style={{
@@ -117,11 +115,11 @@ class Comment extends Component {
             </span>
           </div>
           <span className="info" style={{marginLeft: 'auto',}}>
-            <span className="datetime">
+            <span className="datetime filter">
               {ctime.toLocaleString()}
             </span>
-            {this.props.isOwner &&
-              <a className="hover-action delete-comment"
+            {this.props.user.isOwner() &&
+              <a className="hover-action delete-comment filter"
                 style={{
                   position: 'relative',
                   top: '-0.1rem',
@@ -138,7 +136,7 @@ class Comment extends Component {
             }
           </span>
         </div>
-        <div>
+        <div className="comment-content">
           {comment.content.split('\n').map((line, i) =>
             <p key={i} style={{margin: '0'}}>{line}</p>)
           }
@@ -160,7 +158,7 @@ class CommentEdit extends Component {
       content: content,
     };
     const user = this.props.user;
-    if (user) {
+    if (user.isLoggedIn()) {
       comment.user = user;
     } else {
       comment.visitorName = this.nameInput.value;
@@ -176,7 +174,6 @@ class CommentEdit extends Component {
 
   render() {
     const user = this.props.user;
-    const isLoggedIn = user && user.username;
     return (
       <div>
         <Textarea
@@ -198,7 +195,7 @@ class CommentEdit extends Component {
           //justifyContent: 'flex-end',
           width: '100%',
         }}>
-          {!isLoggedIn &&
+          {!user.isLoggedIn() &&
             <div>
               <input className="visitor-name"
                 style={{

@@ -1,4 +1,4 @@
-import view_user, view_node, view_blog, view_console
+import view_user, view_node, view_blog, view_console, view_misc, view_file
 
 endpoints = [
     # login
@@ -25,4 +25,16 @@ endpoints = [
     ('POST', '/api/blog/<blog_id>/comment', view_blog.post_comment),
     ('GET', '/api/blog/<blog_id>/comment', view_blog.get_comments),
     ('DELETE', '/api/comment/<comment_id>', view_blog.delete_comments),
+
+    # file
+    ('POST', '/api/file/<path:fpath>', view_file.post_file),
+    ('GET', '/api/file', view_file.list_root_file_directory),
+    ('GET', '/api/file/<path:dirpath>', view_file.list_file_directory),
+
+    # misc
+    ('GET', '/api/custom-url/<path:path>', view_misc.get_custom_url),
+    ('GET', '/api/<path:path>', view_misc.no_such_api),
+
+    ('GET', '/static/<path:path>', view_misc.get_static),
+    ('GET', '/file/<path:path>', view_misc.get_file),
 ]

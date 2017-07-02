@@ -57,7 +57,9 @@ def send_from_directory(*paths):
         raise errors.NotAllowed('are you up to something?')
     dirname = os.path.dirname(fpath)
     fname = os.path.basename(fpath)
-    return flask.send_from_directory(dirname, fname)
+    return flask.send_from_directory(
+        dirname.encode('utf8'),
+        fname.encode('utf8'))
 
 
 def rooted_path(*paths):

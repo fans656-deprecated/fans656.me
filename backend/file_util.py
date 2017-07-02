@@ -62,7 +62,7 @@ def list_file_directory(dirpath):
     if not dirpath:
         return []
     host = get_host_from_url(request.url)
-    endpoint_dirpath = os.path.join('file', dirpath)
+    endpoint_dirpath = os.path.join(u'file', dirpath)
     res = []
     if dirpath != rootpath:
         name = os.path.basename(os.path.basename(dirpath))
@@ -75,10 +75,13 @@ def list_file_directory(dirpath):
             'url': '',
             'isdir': True,
         })
+    print 'dirpath', type(dirpath)
     for fname in os.listdir(dirpath):
+        if not isinstance(fname, unicode):
+            fname = fname.decode('utf8')
         fpath = os.path.join(dirpath, fname)
         user_fpath = os.path.join(user_dirpath, fname)
-        isdir = os.path.isdir(fpath)
+        isdir = os.path.isdir(fpath.encode('utf8'))
         if isdir:
             url = 'api/file/' + user_fpath
         else:
