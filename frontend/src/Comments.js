@@ -196,7 +196,7 @@ class CommentEdit extends Component {
           width: '100%',
         }}>
           {!user.isLoggedIn() &&
-            <div>
+            <div className="vistor-name-input-and-post-button">
               <input className="visitor-name"
                 style={{
                   padding: '0 .7em',
