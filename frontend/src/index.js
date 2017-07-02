@@ -165,7 +165,7 @@ class App extends React.Component {
   }
 
   onLogout = () => {
-    this.setState({user: null});
+    this.setState({user: new User()});
     this.props.history.push('/');
   }
 }

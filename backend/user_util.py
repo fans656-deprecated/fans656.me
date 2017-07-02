@@ -15,7 +15,7 @@ def try_auth(username, password):
         'match (u:User{username: {username}}) '
         'return u.salt, u.hashed_password', {
             'username': username
-        }, one=True)
+        }, rows=1)
     _, got_hashed_password = get_hashed_salt_and_password(password, salt)
     assert got_hashed_password == expected_hashed_password, 'invalid auth'
 
