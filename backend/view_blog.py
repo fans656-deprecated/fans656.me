@@ -330,15 +330,19 @@ def parse_content(content, blog_id):
     for line in lines:
         if not line:
             break
-        m = re.match(r'\[_\]: (.*) ?(.*)?', line)
-        url = m.group(1)
-        meta = m.group(2)
-        if url.startswith('https://leetcode.com/problems/'):
-            p = multiprocessing.Process(
-                target=get_leetcode_problem,
-                args=(url, blog_id)
-            )
-            p.start()
+        try:
+            m = re.match(r'\[_\]: (.*) ?(.*)?', line)
+            url = m.group(1)
+            meta = m.group(2)
+            if url.startswith('https://leetcode.com/problems/'):
+                p = multiprocessing.Process(
+                    target=get_leetcode_problem,
+                    args=(url, blog_id)
+                )
+                p.start()
+        except Exception as e:
+            print e
+            continue
 
 
 def get_leetcode_problem(url, blog_id):
