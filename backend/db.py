@@ -288,5 +288,7 @@ if __name__ == '__main__':
             exit()
 
     #set_persisted_ids()
-    r = query('match (n:User) return n')
+    r = query('match (n:Blog) where exists(n.url) return n', cols=1)
     pprint(r)
+    #r = query('match (n:Blog) where exists(n.url) remove n.leetcodePage, n.leetcodeURL, n.url')#'delete d.url, d.leetcodeURL, d.leetcodePage')
+    #pprint([t.keys() for t in r])

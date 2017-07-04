@@ -10,11 +10,48 @@ import Comments from './Comments'
 import { Icon } from './common'
 
 export default class Blog extends Component {
+  constructor(props) {
+    super(props);
+
+    this.parse(props.blog);
+  }
+
+  componentWillReceiveProps(props) {
+    this.parse(props.blog);
+  }
+
+  parse = blog => {
+    if (blog.leetcode) {
+      let leetcode;
+      try {
+        leetcode = JSON.parse(blog.leetcode);
+      } catch (e) {
+        console.log(e);
+        return;
+      }
+      const title = $(`<a href="${leetcode.url}"/>`)
+        .append($(`<h2>Leetcode ${leetcode.title}</h2>`));
+      const description = $(leetcode.description);
+      this.preContent = title;
+      this.afterContent = $('<div/>')
+        .append($(`<a href="${leetcode.url}"><h2>Original Problem:</h2></a>`))
+        .append(description);
+    }
+  }
+
+  componentDidMount() {
+    const blog = this.props.blog;
+    $(`.blog#${blog.id} .pre-content`).append(this.preContent);
+    $(`.blog#${blog.id} .after-content`).append(this.afterContent);
+  }
+
   render() {
     const blog = this.props.blog;
-    return <div className="blog">
+    return <div className="blog" id={blog.id}>
       <Title className="title" text={blog.title}/>
+      <div className="pre-content"/>
       <ReactMarkdown className="blog-content" source={blog.content}/>
+      <div className="after-content"/>
       <Footer
         blog={blog}
         user={this.props.user}

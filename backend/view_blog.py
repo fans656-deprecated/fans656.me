@@ -1,8 +1,12 @@
 import re
+import json
+import multiprocessing
+import subprocess
 import itertools
 import traceback
 
 import flask
+from pyquery import PyQuery
 from f6 import each
 
 import db
@@ -15,7 +19,6 @@ def post_blog():
     blog = flask.request.json
     ctime = utcnow()
     tags = blog.get('tags', [])
-    print blog
 
     blog_id = new_node_id()
     params = {
@@ -34,6 +37,7 @@ def post_blog():
         )
     )
     db.execute(query, params)
+    parse_content(blog['content'], blog_id)
     blog.update(params)
     update_tags(blog)
 
@@ -102,6 +106,7 @@ def put_blog(id):
         ))
     )
     db.execute(query , params)
+    parse_content(blog['content'], id)
     update_tags(blog)
     blog.update(params)
     return success_response({'blog': blog})
@@ -197,8 +202,6 @@ def tags_by_blog_id(id):
 
 def update_tags(blog):
     tags = blog.get('tags', [])
-    print blog
-    print tags
     db.query('match (blog:Blog{id: {id}})-[rel:has_tag]->(tag) '
              'delete rel', {
                  'id': blog['id'],
@@ -320,6 +323,38 @@ def make_pagination(blogs, page, size, total):
         'total': total,
         'nPages': (total / size) + (1 if total % size else 0),
     }
+
+
+def parse_content(content, blog_id):
+    lines = [l.strip() for l in content.split('\n')]
+    for line in lines:
+        if not line:
+            break
+        m = re.match(r'\[_\]: (.*) ?(.*)?', line)
+        url = m.group(1)
+        meta = m.group(2)
+        if url.startswith('https://leetcode.com/problems/'):
+            p = multiprocessing.Process(
+                target=get_leetcode_problem,
+                args=(url, blog_id)
+            )
+            p.start()
+
+
+def get_leetcode_problem(url, blog_id):
+    raw_page = subprocess.check_output('curl -s ' + url, shell=True)
+    d = PyQuery(raw_page)
+    title_text = d('.question-title h3').text()
+    description = d('.question-description').html()
+    db.query('match (blog:Blog{id: {id}}) '
+             'set blog.leetcode = {leetcode}', {
+                 'id': blog_id,
+                 'leetcode': json.dumps({
+                     'url': url,
+                     'title': title_text,
+                     'description': description,
+                 })
+    })
 
 
 if __name__ == '__main__':

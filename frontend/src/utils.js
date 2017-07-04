@@ -51,6 +51,7 @@ export async function fetchData(method, url, data, success, error) {
     success = data;
     data = undefined;
   }
+  const externalURL = url.startsWith('http');
   let options;
   [url, options] = prepareFetch(method, url, data);
 
@@ -60,6 +61,9 @@ export async function fetchData(method, url, data, success, error) {
   }
   const resp = await fetch(url, options);
   const text = resp.text();
+  if (externalURL) {
+    text.then(success);
+  }
   text.then(text => {
     try {
       const json = JSON.parse(text);
@@ -123,7 +127,9 @@ export async function fetchJSON(method, url, data) {
 }
 
 function prepareFetch(method, url, data) {
-  url = BACKEND_HOST + url;
+  if (!url.startsWith('http')) {
+    url = BACKEND_HOST + url;
+  }
   data = data || {};
 
   const headers = new Headers();
