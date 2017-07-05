@@ -30,6 +30,11 @@ def post_blog():
         'mtime': ctime,
         'id': blog_id,
     }
+
+    custom_url = blog.get('custom_url')
+    if custom_url:
+        params['custom_url'] = blog['custom_url']
+
     params = {k: v for k, v in params.items() if v is not None}
     query = (
         'create (n:Blog{{{}}})'.format(
