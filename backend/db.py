@@ -65,7 +65,7 @@ class Node(object):
         self.labels = metadata['labels']
         self.properties = node['data']
         if 'id' not in self.properties:
-            self.properties['id'] = self.node_id
+            self.properties['id'] = metadata['id']
 
     def __repr__(self):
         return unicode(self).encode('utf8')
@@ -118,7 +118,7 @@ def create_repr(value):
     if isinstance(value, list):
         return u'[{}]'.format(u', '.join(create_repr(t) for t in value))
     elif isinstance(value, (str, unicode)):
-        return u'"{}"'.format(value.replace('"', r'\"'))
+        return u'"{}"'.format(value.replace('"', r'\"').replace('\\', '\\\\'))
     else:
         return unicode(value)
 
@@ -142,9 +142,10 @@ def gen_create_statements():
 
 
 def backup():
-    backup_neo4j()
+    #backup_neo4j()
+    backup_neo4j_json()
     backup_files()
-    git_commit_and_push()
+    #git_commit_and_push()
     #print 'backuped but not sync in cloud, you need to uncomment git push in db.py'
 
 
@@ -164,6 +165,35 @@ def backup_neo4j():
             'statements': gen_create_statements(),
         }, f, indent=2)
 
+
+def backup_neo4j_json():
+    root = conf.BACKUP_REPO_DIR
+    if not os.path.exists(root):
+        os.makedirs(root)
+
+    nodes = []
+    rels = []
+
+    nodes = query('match (n) return n', cols=1)
+
+    r = query(
+        'match (start)-[rel]->(end) return rel, start.id, end.id',
+        cols=3, relationship=True)
+    for rel, start_id, end_id in r:
+        rel_json = {
+            'data': rel['data'],
+            'type': rel['type'],
+            'start_id': start_id,
+            'end_id': end_id,
+        }
+        rels.append(rel_json)
+
+    dump_fpath = os.path.join(conf.BACKUP_REPO_DIR, conf.BACKUP_DUMP_FNAME)
+    with open(dump_fpath, 'w') as f:
+        f.write(json.dumps({
+            'nodes': nodes,
+            'rels': rels,
+        }, indent=2))
 
 def restore_neo4j():
     dump_fpath = os.path.join(conf.BACKUP_REPO_DIR, conf.BACKUP_DUMP_FNAME)
@@ -236,32 +266,32 @@ def purge():
     cypher('match (n) detach delete n')
 
 
-def set_persisted_ids():
-    nodes = cypher('''
-match (n:Blog)
-return id(n), n.ctime
-               ''')['data']
-    import util
-    n = len(nodes)
-    print n
-    for i, (node_id, ctime) in enumerate(nodes):
-        print '{}/{}'.format((i + 1), n)
-        cypher('match (n) where id(n) = {node_id} set n.id = {id}', {
-            'node_id': node_id,
-            'id': util.id_from_ctime(ctime)
-        })
-
-def set_persisted_ids():
-    nodes = cypher('match (n) return id(n)')['data']
-    import util
-    n = len(nodes)
-    print n
-    for i, (node_id,) in enumerate(nodes):
-        print '{}/{}'.format((i + 1), n)
-        r = cypher('match (n) where id(n) = {node_id} set n.id = {id}', {
-            'node_id': node_id,
-            'id': str(i + 1),
-        })
+#def set_persisted_ids():
+#    nodes = cypher('''
+#match (n:Blog)
+#return id(n), n.ctime
+#               ''')['data']
+#    import util
+#    n = len(nodes)
+#    print n
+#    for i, (node_id, ctime) in enumerate(nodes):
+#        print '{}/{}'.format((i + 1), n)
+#        cypher('match (n) where id(n) = {node_id} set n.id = {id}', {
+#            'node_id': node_id,
+#            'id': util.id_from_ctime(ctime)
+#        })
+#
+#def set_persisted_ids():
+#    nodes = cypher('match (n) return id(n)')['data']
+#    import util
+#    n = len(nodes)
+#    print n
+#    for i, (node_id,) in enumerate(nodes):
+#        print '{}/{}'.format((i + 1), n)
+#        r = cypher('match (n) where id(n) = {node_id} set n.id = {id}', {
+#            'node_id': node_id,
+#            'id': str(i + 1),
+#        })
 
 
 def extract_node(row):
@@ -287,8 +317,4 @@ if __name__ == '__main__':
             restore()
             exit()
 
-    #set_persisted_ids()
-    r = query('match (n:Blog) where exists(n.url) return n', cols=1)
-    pprint(r)
-    #r = query('match (n:Blog) where exists(n.url) remove n.leetcodePage, n.leetcodeURL, n.url')#'delete d.url, d.leetcodeURL, d.leetcodePage')
-    #pprint([t.keys() for t in r])
+    backup_neo4j_json()
