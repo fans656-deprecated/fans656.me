@@ -86,7 +86,7 @@ def new_node_id():
     id = unicode(db.query('match (n) return count(n)', one=True) + 1)
     assert db.query('match (blog:Blog{id: {id}}) return count(n)', {
         'id': id,
-    }, one=True) === 0
+    }, one=True) == 0
     return id
 
 
