@@ -844,3 +844,7 @@ input::placeholder {
 .toggle.toggled {
   filter: opacity(1.0);
 }
+
+.read-search-result:hover {
+  cursor: pointer;
+}

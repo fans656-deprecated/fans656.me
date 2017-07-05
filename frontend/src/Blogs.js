@@ -103,6 +103,7 @@ export default class Blogs extends Component {
         key={blog.id}
         blog={blog}
         user={this.props.user}
+        registerConsoleHandler={this.props.registerConsoleHandler}
       />
     ));
     const total = pagination.total;
@@ -169,6 +170,7 @@ export class ViewBlog extends Component {
           user={this.props.user}
           commentsVisible={true}
           isSingleView={true}
+          registerConsoleHandler={this.props.registerConsoleHandler}
         />
       </div>
     )

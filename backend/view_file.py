@@ -11,6 +11,8 @@ def post_file(fpath):
         return success_response()
     else:
         filesize = int(flask.request.headers.get('Content-Length'))
+        print 'fpath', fpath.encode('utf8')
+        print 'filesize', filesize
         try:
             file_util.save(fpath, filesize)
             return success_response({

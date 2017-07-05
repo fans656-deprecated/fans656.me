@@ -11,6 +11,13 @@ INVALID_CHARS = set(r'\*?"[]{}<>:;|=,~`!@#$%^&' + "'")
 def save(fpath, total_size):
     user_fpath = fpath
     fpath = os.path.join(conf.FILES_ROOT, fpath)
+    print fpath
+    fpath = fpath.encode('utf8')
+    try:
+        print os.path.exists(fpath)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
     if os.path.exists(fpath) and os.path.isdir(fpath):
         raise errors.Existed('path {} will overwrite a directory'.format(user_fpath))
     if any(ch in INVALID_CHARS for ch in fpath):

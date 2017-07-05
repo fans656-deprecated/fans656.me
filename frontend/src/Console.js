@@ -42,13 +42,13 @@ export default class Console extends Component {
     });
   }
 
-  onTypeEase = () => {
+  onTypeEase = (type) => {
     clearTimeout(this.typeEaseTimer);
     this.typeEaseTimer = null;
 
     const text = this.state.text;
     const event = new Event({
-      type: 'typeEase',
+      type: type || 'typeEase',
       data: text,
       accepted: false,
     });
@@ -63,28 +63,11 @@ export default class Console extends Component {
       }
     }
     return;
-
-    //fetchData('POST', '/api/console', {
-    //  url: window.location.href,
-    //  cmd: text,
-    //}, res => {
-    //  this.props.onConsoleDataChange({
-    //    type: 'blogs',
-    //    detail: `Found ${res.total} results matching "${text}"`,
-    //    blogs: res.blogs,
-    //    pagination: {
-    //      page: res.page,
-    //      size: res.size,
-    //      total: res.total,
-    //      nPages: res.n_pages,
-    //    }
-    //  });
-    //});
   }
 
   onKeyUp = ev => {
     if (ev.key === 'Enter') {
-      this.onTypeEase();
+      this.onTypeEase('enter');
     }
   }
 

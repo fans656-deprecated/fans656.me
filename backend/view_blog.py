@@ -1,5 +1,7 @@
 import re
+import os
 import json
+import urlparse
 import multiprocessing
 import subprocess
 import itertools
@@ -330,6 +332,7 @@ def parse_content(content, blog_id):
     for line in lines:
         if not line:
             break
+        # leetcode
         try:
             m = re.match(r'\[_\]: (.*) ?(.*)?', line)
             url = m.group(1)
@@ -341,8 +344,48 @@ def parse_content(content, blog_id):
                 )
                 p.start()
         except Exception as e:
-            print e
+            traceback.print_exc()
             continue
+        # txt
+        try:
+            m = re.match(r'\[_\]: ([^ ]*).*', line)
+            url = m.group(1)
+            path = urlparse.urlparse(str(url)).path
+            path = urlparse.unquote(path).decode('utf8')
+            is_txt_file = path.startswith('/file') and path.endswith('.txt')
+            if is_txt_file:
+                attrs = {
+                    'name': os.path.splitext(os.path.basename(path))[0],
+                    'encoding': 'utf8',
+                }
+                user_attrs, description = get_attrs_and_description(lines)
+                attrs.update(user_attrs)
+                db.query('match (blog:Blog{id: {id}}) set blog.type = "txt", '
+                         'blog.path = {path}, '
+                         'blog.attrs = {attrs}, '
+                         'blog.description = {description}', {
+                             'id': blog_id,
+                             'path': path,
+                             'attrs': json.dumps(attrs),
+                             'description': description,
+                         })
+        except Exception as e:
+            traceback.print_exc()
+            continue
+
+
+def get_attrs_and_description(lines):
+    lines = lines[2:]
+    if lines[0] == '{':
+        try:
+            i_endline = next(i for i, l in enumerate(lines) if l == '}')
+            attrs_lines = lines[:i_endline+1]
+            description_lines = lines[i_endline+2:]
+            return (json.loads('\n'.join(attrs_lines)),
+                    '\n'.join(description_lines))
+        except StopIteration:
+            pass
+    return {}, '\n'.join(lines)
 
 
 def get_leetcode_problem(url, blog_id):

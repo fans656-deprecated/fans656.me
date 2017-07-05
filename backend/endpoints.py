@@ -1,4 +1,5 @@
 import view_user, view_node, view_blog, view_console, view_misc, view_file
+import view_read
 
 endpoints = [
     # login
@@ -30,6 +31,9 @@ endpoints = [
     ('POST', '/api/file/<path:fpath>', view_file.post_file),
     ('GET', '/api/file', view_file.list_root_file_directory),
     ('GET', '/api/file/<path:dirpath>', view_file.list_file_directory),
+
+    # read
+    ('GET', '/api/read/<blog_id>', view_read.get_read),
 
     # misc
     ('GET', '/api/custom-url/<path:path>', view_misc.get_custom_url),

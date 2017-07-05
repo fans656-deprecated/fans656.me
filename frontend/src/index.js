@@ -116,6 +116,7 @@ class App extends React.Component {
               <ViewBlog
                 id={match.params.id_or_ref}
                 user={this.state.user}
+                registerConsoleHandler={this.registerConsoleHandler}
               />
             }/>
 
@@ -137,7 +138,9 @@ class App extends React.Component {
 
             {/* ---------------------------------------------- custom url */}
             {<Route exact path="*" render={(props) => (
-              <CustomURLPage {...props} user={this.state.user}/>
+              <CustomURLPage {...props} user={this.state.user}
+                registerConsoleHandler={this.registerConsoleHandler}
+              />
             )}/>}
           </Switch>
         </main>
@@ -360,7 +363,9 @@ class CustomURLPage extends Component {
         </div>
       } else if (res.type === 'blog') {
         return (
-          <ViewBlog blog={res.blog} user={this.props.user}/>
+          <ViewBlog blog={res.blog} user={this.props.user}
+            registerConsoleHandler={this.props.registerConsoleHandler}
+          />
         )
       } else {
         return <pre>{res.detail}</pre>

@@ -3,21 +3,22 @@ import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import IconEdit from 'react-icons/lib/md/mode-edit'
 import IconLink from 'react-icons/lib/md/link'
+import IconBook from 'react-icons/lib/fa/book'
 import qs from 'qs'
 import $ from 'jquery'
 
 import Comments from './Comments'
+import Reader from './Reader'
 import { Icon } from './common'
+import { fetchData } from './utils'
 
 export default class Blog extends Component {
   constructor(props) {
     super(props);
 
-    this.parse(props.blog);
-  }
-
-  componentWillReceiveProps(props) {
-    this.parse(props.blog);
+    this.state = {
+      replaceContent: null
+    };
   }
 
   parse = blog => {
@@ -36,10 +37,82 @@ export default class Blog extends Component {
       this.afterContent = $('<div/>')
         .append($(`<a href="${leetcode.url}"><h2>Original Problem:</h2></a>`))
         .append(description);
+    } else if (blog.type === 'txt') {
+      // book read mode
+      if (this.props.isSingleView) {
+        let options = {
+          page: 1,
+          size: 1000,
+          offset: 0,
+          ...qs.parse(window.location.search.slice(1)),
+        };
+        let url = '/api/read/' + blog.id + window.location.search;
+        fetchData('GET', url, res => {
+          this.setState({
+            replaceContent: (
+              <Reader
+                name={res.name}
+                attrs={JSON.parse(res.attrs)}
+                url={'/api/read/' + blog.id}
+                options={options}
+                content={res.content}
+                registerConsoleHandler={this.props.registerConsoleHandler}
+              />
+            ),
+            replaceAll: true,
+          });
+        });
+      // blog entry mode
+      } else {
+        fetchData('GET', '/api/read/' + blog.id, res => {
+          const url = blog.custom_url || `/blog/${blog.id}`;
+          const attrs = JSON.parse(res.attrs);
+          const replaceContent = (
+            <div>
+              <div>
+                <a href={url} style={{
+                  fontWeight: 'bold',
+                  fontSize: '1.1rem',
+                }}>
+                  <Icon type={IconBook} style={{
+                    position: 'relative',
+                    top: '-2px',
+                  }}/>
+                  <span style={{
+                    marginLeft: '.5rem',
+                  }}>
+                    {res.name}
+                  </span>
+                  <span style={{
+                    margin: '0 .5rem',
+                  }}>-</span>
+                  <span>
+                    {attrs.author}
+                  </span>
+                </a>
+              </div>
+              {blog.description && <div style={{
+                marginTop: '1rem',
+              }}>
+                <ReactMarkdown className="blog-content"
+                  source={blog.description}
+                />
+              </div>
+              }
+            </div>
+          );
+          this.setState({
+            replaceContent: replaceContent,
+            replaceAll: false,
+          });
+        });
+      }
     }
   }
 
   componentDidMount() {
+    this.parse(this.props.blog);
+
     const blog = this.props.blog;
     $(`.blog#${blog.id} .pre-content`).append(this.preContent);
     $(`.blog#${blog.id} .after-content`).append(this.afterContent);
@@ -47,10 +120,15 @@ export default class Blog extends Component {
 
   render() {
     const blog = this.props.blog;
+    if (this.state.replaceAll) {
+      return this.state.replaceContent;
+    }
     return <div className="blog" id={blog.id}>
       <Title className="title" text={blog.title}/>
       <div className="pre-content"/>
+      {this.state.replaceContent ? this.state.replaceContent :
       <ReactMarkdown className="blog-content" source={blog.content}/>
+      }
       <div className="after-content"/>
       <Footer
         blog={blog}
