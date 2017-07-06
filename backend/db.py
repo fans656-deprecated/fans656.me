@@ -5,6 +5,7 @@ import json
 import itertools
 import subprocess
 from datetime import datetime
+from collections import defaultdict
 
 import requests
 from f6 import each
@@ -150,7 +151,7 @@ def backup():
 
 
 def restore():
-    restore_neo4j()
+    restore_neo4j_json()
     restore_files()
 
 
@@ -175,13 +176,22 @@ def backup_neo4j_json():
     rels = []
 
     nodes = query('match (n) return n', cols=1)
+    label2nodes = defaultdict(lambda: [])
+    for node in nodes:
+        label = node['meta']['labels']
+        if label:
+            label = label[0]
+        else:
+            label = None
+        del node['meta']
+        label2nodes[label].append(node)
 
     r = query(
         'match (start)-[rel]->(end) return rel, start.id, end.id',
         cols=3, relationship=True)
     for rel, start_id, end_id in r:
         rel_json = {
-            'data': rel['data'],
+            'props': rel['data'],
             'type': rel['type'],
             'start_id': start_id,
             'end_id': end_id,
@@ -191,7 +201,7 @@ def backup_neo4j_json():
     dump_fpath = os.path.join(conf.BACKUP_REPO_DIR, conf.BACKUP_DUMP_FNAME)
     with open(dump_fpath, 'w') as f:
         f.write(json.dumps({
-            'nodes': nodes,
+            'nodes': label2nodes,
             'rels': rels,
         }, indent=2))
 
@@ -207,6 +217,32 @@ def restore_neo4j():
             print stmt
             assert False
         print '{}/{}'.format(i + 1, n)
+
+
+def restore_neo4j_json():
+    dump_fpath = os.path.join(conf.BACKUP_REPO_DIR, conf.BACKUP_DUMP_FNAME)
+    with open(dump_fpath) as f:
+        data = json.load(f)
+        label_to_nodes = data['nodes']
+        rels = data['rels']
+    purge()
+    for label, nodes in label_to_nodes.items():
+        query(u'unwind $props_list as props '
+              u'create (n:{}) set n = props'.format(label), {
+                  'props_list': nodes,
+              })
+    for rel in rels:
+        query(
+            u'match (start), (end) '
+            u'where start.id = "{start_id}" and end.id = "{end_id}" '
+            u'create (start)-[rel:{rel_type}]->(end) '.format(
+                rel_type=rel['type'],
+                start_id=rel['start_id'],
+                end_id=rel['end_id'],
+            ) + 'set rel = {props}', {
+                'props': rel['props'],
+            }
+        )
 
 
 def shell_execute(cmd, replacecmd=None):
@@ -317,4 +353,17 @@ if __name__ == '__main__':
             restore()
             exit()
 
-    backup_neo4j_json()
+    r = query('match (n) where length(labels(n)) = 0 delete n')
+    query('''
+        unwind $props_list as props
+        create (n:{label})
+        set n = props,
+                  ''', {
+                      'label': 'Test',
+                      'props_list': [
+                          {'content': 'foo'},
+                          {'session': '123', 'index': 5},
+                      ],
+                  })
+    r = query('match (n) where length(labels(n)) = 0 return n')
+    pprint(r)
