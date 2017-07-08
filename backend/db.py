@@ -143,10 +143,9 @@ def gen_create_statements():
 
 
 def backup():
-    #backup_neo4j()
     backup_neo4j_json()
     backup_files()
-    #git_commit_and_push()
+    git_commit_and_push()
     #print 'backuped but not sync in cloud, you need to uncomment git push in db.py'
 
 
@@ -225,6 +224,7 @@ def restore_neo4j_json():
         data = json.load(f)
         label_to_nodes = data['nodes']
         rels = data['rels']
+    print 'Nodes and rels loaded'
     purge()
     for label, nodes in label_to_nodes.items():
         query(u'unwind $props_list as props '
@@ -234,7 +234,7 @@ def restore_neo4j_json():
     for rel in rels:
         query(
             u'match (start), (end) '
-            u'where start.id = "{start_id}" and end.id = "{end_id}" '
+            u'where start.id = {start_id} and end.id = {end_id} '
             u'create (start)-[rel:{rel_type}]->(end) '.format(
                 rel_type=rel['type'],
                 start_id=rel['start_id'],
@@ -243,6 +243,7 @@ def restore_neo4j_json():
                 'props': rel['props'],
             }
         )
+    print 'Nodes and rels restored'
 
 
 def shell_execute(cmd, replacecmd=None):
@@ -353,17 +354,13 @@ if __name__ == '__main__':
             restore()
             exit()
 
-    r = query('match (n) where length(labels(n)) = 0 delete n')
-    query('''
-        unwind $props_list as props
-        create (n:{label})
-        set n = props,
-                  ''', {
-                      'label': 'Test',
-                      'props_list': [
-                          {'content': 'foo'},
-                          {'session': '123', 'index': 5},
-                      ],
-                  })
-    r = query('match (n) where length(labels(n)) = 0 return n')
+    #r = query(r'''match (n) where not n.id =~ '\\d+' return id(n)''', cols=1)
+    #for i, node_id in enumerate(r):
+    #    query('match (n) where id(n) = {id} set n.id = {persist_id}', {
+    #        'id': node_id,
+    #        'persist_id': 1000 + i,
+    #    })
+    #pprint(r)
+    r = query('match ()-[rel]->() return rel', cols=1,
+              relationship=True)
     pprint(r)

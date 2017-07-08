@@ -220,14 +220,15 @@ def update_tags(blog):
                 'tag': tag,
             }, one=True)
         if not tag_exists:
-            db.query('create (tag:Tag{content: {tag}, id: {tag}})', {
+            db.query('create (tag:Tag{content: {tag}, id: {id}})', {
                 'tag': tag,
+                'id': new_node_id(),
             })
         db.query(
-            'match (blog:Blog{id: {blog_id}}), (tag:Tag{id: {tag_id}})'
+            'match (blog:Blog{id: {blog_id}}), (tag:Tag{content: {tag}})'
             'create (blog)-[:has_tag{index: {index}}]->(tag)', {
                 'blog_id': blog['id'],
-                'tag_id': tag,
+                'tag': tag,
                 'index': i,
             })
 

@@ -83,7 +83,7 @@ def id_from_ctime(ctime):
 
 
 def new_node_id():
-    id = unicode(db.query('match (n) return count(n)', one=True) + 3)
+    id = db.query('match (n) return max(n.id)', one=True) + 1
     return id
 
 
