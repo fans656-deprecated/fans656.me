@@ -167,6 +167,14 @@ form > * {
 /* mobile (portrait and landscape) ----------- */
 @media only screen and (min-device-width: 320px) and (max-device-width: 800px) {
   
+  .reader {
+    margin: 0 auto;
+    padding: 0 .8rem;
+    line-height: 2;
+    letter-spacing: .1em;
+    font-weight: 100;
+  }
+  
   #console {
     display: none;
   }
@@ -295,6 +303,15 @@ form > * {
 
 /* desktop ----------- */
 @media only screen and (min-width: 800px) {
+  
+  .reader {
+    width: 70%;
+    margin: 0 auto;
+    padding: 0 4em;
+    line-height: 2;
+    letter-spacing: .1em;
+    font-weight: 100;
+  }
 
   #console-input {
     height: 1.6rem;

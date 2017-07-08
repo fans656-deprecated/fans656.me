@@ -100,14 +100,7 @@ export default class Reader extends Component {
 
   render() {
     if (this.state.search.length > 0) { 
-      return <div style={{
-        width: '70%',
-        margin: '0 auto',
-        padding: '0 4em',
-        lineHeight: '2',
-        letterSpacing: '.1em',
-        fontWeight: '100',
-      }}>
+      return <div className="reader">
         {this.state.search.map((occurrence, i) => {
           const pattern = occurrence.pattern;
           const text = occurrence.context;
@@ -163,15 +156,7 @@ export default class Reader extends Component {
       offset += lines[i].length + 1;
     }
     const attrs = this.props.attrs;
-    return <div className="reader" style={{
-      width: '70%',
-      margin: '0 auto',
-      padding: '0 4em',
-      fontSize: '1.1em',
-      lineHeight: '2',
-      letterSpacing: '.1em',
-      fontWeight: '100',
-    }}>
+    return <div className="reader">
         <div>
           <h1 style={{textAlign: 'center'}}>{this.props.name}</h1>
           {attrs.author && <p style={{textAlign: 'right'}}>{attrs.author}</p>}
