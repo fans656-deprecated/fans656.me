@@ -9,7 +9,7 @@
   --input-bg-color: #fcfcfc;
   --btn-bg-color: #eeeeee;
   --btn-hover-bg-color: #dddddd;
-  --btn-fg-color: var(--fg-color);
+  --btn-fg-color: #333333;
 }
 
 html {
@@ -17,19 +17,19 @@ html {
 }
 
 .reverse-color {
-  background: var(--fg-color);
-  color: var(--bg-color);
+  background: #333333;
+  color: aliceblue;
 }
 
 .reverse-color a {
   text-decoration: none;
-  color: var(--bg-color);
+  color: aliceblue;
 }
 
 html,body {
   margin: 0;
-  background: var(--bg-color);
-  color: var(--fg-color);
+  background: aliceblue;
+  color: #333333;
   font-family: 'Arial';
   height: 100%;
 }
@@ -73,7 +73,7 @@ button.primary {
 }
 
 button.secondary {
-  background: var(--bg-color);
+  background: aliceblue;
   border: 1px solid #ddd;
   box-shadow: none;
 }
@@ -103,7 +103,7 @@ input[type=text], input[type=password] {
 /* ------------------------------------------ header & footer */
 
 header, footer {
-  box-shadow: 0 0 5px var(--fg-color);
+  box-shadow: 0 0 5px #333333;
 }
 
 header {
@@ -473,7 +473,7 @@ form > * {
 }
 
 .blog-content a {
-  border-bottom: 1px dashed var(--fg-color);
+  border-bottom: 1px dashed #333333;
   word-wrap: break-word;
 }
 
@@ -620,17 +620,17 @@ textarea {
 /* ------------------------------------------ */
 
 a {
-  color: var(--fg-color);
+  color: #333333;
   text-decoration: none;
 }
 
 .content a[!icon] {
-  border-bottom: 1px solid var(--info-color);
+  border-bottom: 1px solid #aaaaaa;
   padding-bottom: 2px;
 }
 
 .content a:hover {
-  color: var(--fg-color);
+  color: #333333;
 }
 
 img.large.avatar {
@@ -741,7 +741,7 @@ img.large.avatar {
   margin-top: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: transparent transparent transparent var(--fg-color);
+  border-color: transparent transparent transparent #333333;
   z-order: 1
 }
 

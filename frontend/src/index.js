@@ -21,6 +21,7 @@ const Nav = ({user}) => {
   return <nav>
     <ul>
       <li><a href="/">Home</a></li>
+      <li><Link to="/portal">Portal</Link></li>
       {/*
       <li><Link to="/blog">Blog</Link></li>
       <li><Link to="/gallery">Gallery</Link></li>
