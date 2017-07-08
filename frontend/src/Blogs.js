@@ -163,16 +163,14 @@ export class ViewBlog extends Component {
       return null;
     }
     return (
-      <div className="single-blog-view">
-        <Blog
-          key={blog.id}
-          blog={blog}
-          user={this.props.user}
-          commentsVisible={true}
-          isSingleView={true}
-          registerConsoleHandler={this.props.registerConsoleHandler}
-        />
-      </div>
+      <Blog
+        key={blog.id}
+        blog={blog}
+        user={this.props.user}
+        commentsVisible={true}
+        isSingleView={true}
+        registerConsoleHandler={this.props.registerConsoleHandler}
+      />
     )
   }
 }

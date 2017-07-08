@@ -9,6 +9,7 @@ import $ from 'jquery'
 
 import Comments from './Comments'
 import Reader from './Reader'
+import Gallery from './Gallery'
 import { Icon } from './common'
 import { fetchData } from './utils'
 
@@ -107,6 +108,32 @@ export default class Blog extends Component {
           });
         });
       }
+    // JSON
+    } else if (blog.content.substring(0, 2) === '{\n') {
+      const lines = blog.content.split('\n');
+      const iJsonEndLine = lines.indexOf('}');
+      if (iJsonEndLine === -1) {
+        return;
+      }
+      const jsonStr = lines.slice(0, iJsonEndLine + 1).join('\n');
+      const json = JSON.parse(jsonStr);
+      const content = lines.slice(iJsonEndLine + 1, lines.length).join('\n');
+      if (json.type === 'gallery') {
+        this.setState({
+          replaceContent: (
+            <div>
+              <Gallery json={json}
+                viewtype={this.props.isSingleView ? 'page' : 'item'}
+                blogURL={blog.custom_url || '/blog/' + blog.id}
+              />
+              <ReactMarkdown className="blog-content"
+                source={content}
+              />
+            </div>
+          ),
+          replaceAll: this.props.isSingleView,
+        });
+      }
     }
   }
 
@@ -123,7 +150,8 @@ export default class Blog extends Component {
     if (this.state.replaceAll) {
       return this.state.replaceContent;
     }
-    return <div className="blog" id={blog.id}>
+    const className = this.props.isSingleView ? 'single-blog-view' : ''
+    return <div className={'blog ' + className} id={blog.id}>
       <Title className="title" text={blog.title}/>
       <div className="pre-content"/>
       {this.state.replaceContent ? this.state.replaceContent :

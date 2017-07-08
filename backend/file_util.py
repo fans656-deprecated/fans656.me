@@ -82,7 +82,6 @@ def list_file_directory(dirpath):
             'url': '',
             'isdir': True,
         })
-    print 'dirpath', type(dirpath)
     for fname in os.listdir(dirpath):
         if not isinstance(fname, unicode):
             fname = fname.decode('utf8')
@@ -100,6 +99,7 @@ def list_file_directory(dirpath):
             'url': url,
             'isdir': isdir,
         })
+    res.sort(key=lambda f: f['name'])
     return res
 
 def get_host_from_url(url):

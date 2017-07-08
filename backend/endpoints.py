@@ -1,5 +1,5 @@
 import view_user, view_node, view_blog, view_console, view_misc, view_file
-import view_read
+import view_read, view_gallery
 
 endpoints = [
     # login
@@ -34,6 +34,9 @@ endpoints = [
 
     # read
     ('GET', '/api/read/<int:blog_id>', view_read.get_read),
+
+    # gallery
+    ('POST', '/api/get-gallery', view_gallery.get_gallery),
 
     # misc
     ('GET', '/api/custom-url/<path:path>', view_misc.get_custom_url),

@@ -384,7 +384,7 @@ form > * {
     background: #fefefe;
     padding: 2rem 3rem;
     box-shadow: 0 0 5px #ddd;
-    margin: 1rem 0;
+    margin: 1rem auto;
   }
 
   .panel {
@@ -532,7 +532,7 @@ form > * {
   margin: 0 auto;
 }
 
-.info .filter {
+.info .filter, .info.filter {
   filter: opacity(.3);
 }
 
@@ -761,14 +761,27 @@ img.large.avatar {
   margin: 2rem 0;
 }
 
+.gallery.item-view {
+  margin: .5rem 0;
+}
+
+.gallery .img {
+  margin: 1rem;
+}
+
 .gallery img {
-  display: block;
-  max-width: 300px;
   width: auto;
   height: auto;
-  margin: 1rem;
   box-shadow: 0px 0px 10px #aaa;
   transition: 1s;
+}
+
+.gallery.item-view img {
+  margin: .5rem;
+}
+
+.gallery.item-view {
+  cursor: pointer;
 }
 
 .gallery img:hover {
@@ -776,6 +789,11 @@ img.large.avatar {
   cursor: pointer;
   transform: scale(1.02);
   transition: 0.8s;
+}
+
+.gallery.item-view img:hover {
+  transform: none;
+  box-shadow: 0px 0px 10px #aaa;
 }
 
 /* ------------------------------------------ files */

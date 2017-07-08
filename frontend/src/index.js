@@ -90,7 +90,7 @@ class App extends React.Component {
             <Route exact path="/about" component={About}/>
             <Route exact path="/login" component={Login}/>
             <Route exact path="/register" component={Register}/>
-            <Route exact path="/gallery" component={Gallery}/>
+            {/*<Route exact path="/gallery" component={Gallery}/>*/}
 
             {/* ---------------------------------------------- blog */}
             {/* blogs */}

@@ -1,6 +1,9 @@
+import os
 import json
+import traceback
 
 import flask
+from PIL import Image
 from f6 import each
 
 import db
@@ -15,6 +18,30 @@ def get_static(path):
 
 
 def get_file(path):
+    args = flask.request.args
+    if len(args):
+        width = int(args.get('width', 0))
+        height = int(args.get('height', 0))
+        if width or height:
+            try:
+                fpath = util.rooted_path(conf.FILES_ROOT, path)
+                im = Image.open(fpath)
+                img_width, img_height = im.size
+                if width and not height:
+                    height = int(width / float(img_width) * img_height)
+                elif height and not width:
+                    width = int(height / float(img_height) * img_width)
+                width = min(width, img_width)
+                height = min(height, img_height)
+                im = im.resize((width, height), Image.ANTIALIAS)
+                dirname = os.path.dirname(fpath)
+                fname = os.path.basename(fpath)
+                fname = 'tmp-' + fname
+                fpath = os.path.join(dirname, fname)
+                im.save(fpath)
+                return flask.send_file(fpath)
+            except Exception:
+                traceback.print_exc()
     return util.send_from_directory(conf.FILES_ROOT, path)
 
 
