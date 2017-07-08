@@ -64,17 +64,22 @@ export default class Gallery extends Component {
         >{srcs.length + ' pics'}</p>
       </div>
     } else {
+      const isMobile = window.matchMedia(
+        '(max-device-width: 800px)').matches;
+      const windowWidth = window.innerWidth;
       return <div className="gallery">
         {
           srcs.map((src, i) => {
             const parts = src.split('/');
             const fname = parts[parts.length - 1];
             const name = fname.match(/(.*)\.[^.]*/)[1];
-            const width = Math.floor(window.innerWidth / this.cols);
+            const width = isMobile
+              ? windowWidth : Math.floor(window.innerWidth / this.cols);
             const description = this.descriptions[i] || name;
+            console.log('???????????????', isMobile);
             return <div className="img"
                 style={{
-                  maxWidth: `${90 / this.cols}%`,
+                  maxWidth: isMobile ? '100%' : `${90 / this.cols}%`,
                 }}
             >
               <img
