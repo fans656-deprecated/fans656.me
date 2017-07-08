@@ -3,6 +3,7 @@ import IconSearch from 'react-icons/lib/md/search'
 import $ from 'jquery'
 
 import { Icon } from './common'
+import installMatrix from './matrix'
 
 export default class Console extends Component {
   constructor(props) {
@@ -47,6 +48,10 @@ export default class Console extends Component {
     this.typeEaseTimer = null;
 
     const text = this.state.text;
+    if (text === '  matrix') {
+      installMatrix();
+      return;
+    }
     const event = new Event({
       type: type || 'typeEase',
       data: text,

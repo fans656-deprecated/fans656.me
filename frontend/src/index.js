@@ -14,6 +14,7 @@ import About from './About'
 import Files from './Files'
 
 import { fetchJSON, fetchData, getCurrentUser } from './utils'
+import installMatrix from './matrix'
 
 import './style.css'
 
@@ -32,6 +33,15 @@ const Nav = ({user}) => {
       {user.isMe() && <li>|</li>}
       {user.isMe() && <li><Link to="/files">Files</Link></li>}
     </ul>
+    <div className="easter-egg-trigger"
+      style={{
+        position: 'absolute',
+        width: '1rem',
+        height: '1rem',
+      }}
+      onClick={installMatrix}
+    >
+    </div>
   </nav>
 }
 
