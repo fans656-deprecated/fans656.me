@@ -133,6 +133,25 @@ export default class Blog extends Component {
           ),
           replaceAll: this.props.isSingleView,
         });
+      } else if (json.type === 'only-single-view') {
+        console.log('hi');
+        if (this.props.isSingleView) {
+          this.setState({
+            replaceContent: (
+              <ReactMarkdown className="blog-content"
+                source={content}
+              />
+            ),
+          });
+        } else {
+          this.setState({
+            replaceContent: (
+              <ReactMarkdown className="blog-content"
+                source={json.placeholder}
+              />
+            ),
+          });
+        }
       }
     }
   }
