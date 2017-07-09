@@ -85,7 +85,7 @@ export default class Gallery extends Component {
             >
               <img
                 src={src + `?width=${width}`}
-                title={description}
+                title={this.props.json['show-tooltip'] && description}
                 onClick={() => {window.open(src, '_blank');}}
                 style={{
                   width: '100%',
