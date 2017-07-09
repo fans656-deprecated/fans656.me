@@ -73,14 +73,15 @@ export default class Gallery extends Component {
             const parts = src.split('/');
             const fname = parts[parts.length - 1];
             const name = fname.match(/(.*)\.[^.]*/)[1];
-            const width = isMobile
+            let width = isMobile
               ? windowWidth : Math.floor(window.innerWidth / this.cols);
+            width = Math.max(400, width);
             const description = this.descriptions[i] || name;
-            console.log('???????????????', isMobile);
             return <div className="img"
-                style={{
-                  maxWidth: isMobile ? '100%' : `${90 / this.cols}%`,
-                }}
+              key={i}
+              style={{
+                maxWidth: isMobile ? '100%' : `${90 / this.cols}%`,
+              }}
             >
               <img
                 src={src + `?width=${width}`}
