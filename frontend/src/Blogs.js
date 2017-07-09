@@ -111,11 +111,10 @@ export default class Blogs extends Component {
     const tagsText = `${total} ${blogsPlural} tagged ${tags.join(', ')}`;
     return <div>
       {(this.state.searched || tagged) &&
-          <p
+          <p className="search-prompt"
             style={{
               width: '100%',
               marginTop: '1.2rem',
-              marginBottom: '-2.0rem',
               textAlign: 'center',
               color: 'steelblue',
               fontSize: '.8rem',

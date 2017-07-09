@@ -167,6 +167,10 @@ form > * {
 /* mobile (portrait and landscape) ----------- */
 @media only screen and (min-device-width: 320px) and (max-device-width: 800px) {
   
+  .search-prompt {
+    margin-bottom: -1rem;
+  }
+  
   .reader {
     margin: 0 auto;
     padding: 0 .8rem;
@@ -304,8 +308,13 @@ form > * {
 /* desktop ----------- */
 @media only screen and (min-width: 800px) {
   
+  .search-prompt {
+    margin-bottom: -2rem;
+  }
+  
   .reader {
-    width: 70%;
+    max-width: 35%;
+    min-width: 35em;
     margin: 0 auto;
     padding: 0 4em;
     line-height: 2;
