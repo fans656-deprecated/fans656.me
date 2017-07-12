@@ -454,8 +454,9 @@ form > * {
 
 .blog pre, .blog code {
   font-family: "Consolas", "Courier New", "monospace";
-  font-size: .9rem;
+  font-size: .7rem;
   overflow-x: auto;
+  line-height: 1.1;
 }
 
 .blog-content img {
