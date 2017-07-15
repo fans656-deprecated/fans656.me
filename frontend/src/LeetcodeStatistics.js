@@ -60,9 +60,12 @@ export default class Gallery extends Component {
           padding: 0,
         }}>
           {this.state.blogLinks.reverse().map(blogs => (
-            <div style={{
-              marginBottom: '1em',
-            }}>
+            <div>
+              <div className="info filter" style={{
+                textAlign: 'right',
+              }}>
+                {blogs.length}
+              </div>
               {blogs.map(link => (
                 <li>
                   <a
