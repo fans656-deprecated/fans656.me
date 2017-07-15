@@ -1,5 +1,5 @@
 import view_user, view_node, view_blog, view_console, view_misc, view_file
-import view_read, view_gallery
+import view_read, view_gallery, view_leetcode
 
 endpoints = [
     # login
@@ -37,6 +37,9 @@ endpoints = [
 
     # gallery
     ('POST', '/api/get-gallery', view_gallery.get_gallery),
+
+    # leetcode-statistics
+    ('GET', '/api/leetcode-statistics', view_leetcode.get_statistics),
 
     # misc
     ('GET', '/api/custom-url/<path:path>', view_misc.get_custom_url),

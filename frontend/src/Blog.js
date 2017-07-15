@@ -10,6 +10,7 @@ import $ from 'jquery'
 import Comments from './Comments'
 import Reader from './Reader'
 import Gallery from './Gallery'
+import LeetcodeStatistics from './LeetcodeStatistics'
 import { Icon } from './common'
 import { fetchData } from './utils'
 
@@ -134,7 +135,6 @@ export default class Blog extends Component {
           replaceAll: this.props.isSingleView,
         });
       } else if (json.type === 'only-single-view') {
-        console.log('hi');
         if (this.props.isSingleView) {
           this.setState({
             replaceContent: (
@@ -152,6 +152,19 @@ export default class Blog extends Component {
             ),
           });
         }
+      } else if (json.type === 'leetcode-statistics') {
+        this.setState({
+          replaceContent: <div>
+            <ReactMarkdown className="blog-content"
+              source={content}
+            />
+            <LeetcodeStatistics
+              title={json.title}
+              content={content}
+              isSingleView={this.props.isSingleView}
+            />
+          </div>
+        });
       }
     }
   }
