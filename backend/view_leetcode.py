@@ -7,17 +7,19 @@ from dateutil.parser import parse as parse_datetime
 import db
 from util import success_response, error_response
 
+def ctime_to_date(ctime):
+    return (parse_datetime(ctime) + timedelta(hours=8)).date()
+
 def get_statistics():
     blogs = db.query('''
         match (blog:Blog)-[:has_tag]->(:Tag{content: "leetcode"})
         return blog
                      ''', cols=1)
+    blogs.sort(key=lambda blog: parse_datetime(blog['ctime']))
     blogs_by_day = [
-        {'blogs': list(blogs), 'date': date} for date, blogs in
-        itertools.groupby(blogs,
-                          lambda blog: (parse_datetime(blog['ctime']) + timedelta(hours=8)).date())
+        {'blogs': list(g), 'date': date} for date, g in
+        itertools.groupby(blogs, lambda blog: ctime_to_date(blog['ctime']))
     ]
-    blogs_by_day.sort(key=lambda o: o['date'])
     blog_links = [[{
         'url': '/blog/{}'.format(blog['id']),
         'date': blog['ctime'],
