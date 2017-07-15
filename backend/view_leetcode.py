@@ -24,19 +24,18 @@ def get_statistics():
         'title': json.loads(blog['leetcode'])['title']
     } for blog in item['blogs']] for item in blogs_by_day]
 
-    date = blogs_by_day[0]['date']
+    date_beg = blogs_by_day[0]['date']
     date_end = blogs_by_day[-1]['date']
+    n_days = (date_end - date_beg).days + 1
 
-    all_blogs_by_day = []
-    i = 0
-    while date <= date_end:
-        if blogs_by_day[i]['date'] == date:
-            item = blogs_by_day[i]
-            i += 1
-        else:
-            item = {'blogs': [], 'date': date}
-        all_blogs_by_day.append(item)
-        date += timedelta(days=1)
+    all_blogs_by_day = [{
+        'date': date_beg + timedelta(days=i),
+        'blogs': [],
+    } for i in xrange(n_days)]
+    for item in blogs_by_day:
+        idx = (item['date'] - date_beg).days
+        all_blogs_by_day[idx]['date'] = item['date']
+        all_blogs_by_day[idx]['blogs'] = item['blogs']
 
     dates = [item['date'] for item in all_blogs_by_day]
     counts = [len(item['blogs']) for item in all_blogs_by_day]
