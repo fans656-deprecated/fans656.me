@@ -81,12 +81,17 @@ XYZ_ONLY = {
     1062: 1120,
     1122: 1121,
 }
+FME_ONLY = {
+    1120: 1062,
+    1121: 1122,
+}
 
 
 def do_get_blog_by_id(id):
     if id in XYZ_ONLY and flask.request.host.startswith('fans656.xyz'):
-    #if id in XYZ_ONLY and flask.request.host.startswith('1'):
         id = XYZ_ONLY[id]
+    if id in FME_ONLY and flask.request.host.startswith('fans656.me'):
+        id = FME_ONLY[id]
     query = (
         'match (blog:Blog{id: {id}}) where True '
         + get_blog_mandatory_preds()
