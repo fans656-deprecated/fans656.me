@@ -84,8 +84,8 @@ XYZ_ONLY = {
 
 
 def do_get_blog_by_id(id):
-    #if id in XYZ_ONLY and flask.request.host.startswith('fans656.xyz'):
-    if id in XYZ_ONLY and flask.request.host.startswith('1'):
+    if id in XYZ_ONLY and flask.request.host.startswith('fans656.xyz'):
+    #if id in XYZ_ONLY and flask.request.host.startswith('1'):
         id = XYZ_ONLY[id]
     query = (
         'match (blog:Blog{id: {id}}) where True '
