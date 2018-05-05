@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+      body {
+        font-size: .9em;
+      }
+      table, th, td {
+        border: 1px solid black;
+        border-collapse: collapse;
+        padding: .9em;
+        font-size: .95em;
+      }
+      code {
+        font-family: "Courier New"
+      }
+    </style>
+  </head>
+  <body>
+    <table>
+      <tr>
+        <th>Function</th>
+        <th>Request</th>
+        <th>Success</th>
+        <th>Error</th>
+      </tr>
+      <tr>
+        <td>Get specific node</td>
+        <td><code>GET {{origin}}/api/node?id=138</code></td>
+        <td>
+<pre><code>{
+  "id": 138,
+  "content": "this is a test node"
+}</code></pre>
+        </td>
+        <td>
+          <code>
+            NotFound
+          </code>
+        </td>
+      </tr>
+      <tr>
+        <td>Search node</td>
+        <td><code>GET {{origin}}/api/node?q=good-eat</code></td>
+        <td>
+<pre><code>{
+  "nodes": [
+    138, 1080, 1081
+  ]
+}</code></pre>
+        </td>
+        <td></td>
+      </tr>
+    </table>
+  </body>
+</html>

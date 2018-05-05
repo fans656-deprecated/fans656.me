@@ -119,3 +119,75 @@ Functional:
 # node (a more robust lib with file support)
     # when delete, just mark (can set expire time)
 (reason: use neo4j)
+
+2018-04-30 21:17:24
+之前写了几天的stome(storage for fans656.me)的devlog，结果手贱删了
+无所谓啦
+stome的原型已经就绪，现在想着手更新fme(fans656.me)了
+基本打算重写
+
+
+刚在想，最基本的功能是什么呢？——我是指基础设施
+差不多就是custom url + script
+可以指定任一url上接到请求后调用哪个脚本
+脚本可以放在stome上
+然后就可以在此基础上创建出可以执行各种功能的api，还可以更新
+
+2018-05-01 14:14:38
+整理一下url对应要做的
+
+    GET /
+        index.html
+        拉去文章列表，显示文章内容
+    PUT /blog
+        创建文章
+    PUT /blog?id=138
+        创建或更新文章
+
+2018-05-01 15:00:44
+整理一下use case
+
+plain-text
+
+    this is just a note
+
+markdown
+
+    # this is title
+    
+    and this is code:
+    
+        def hello():
+            print "hi, world"
+
+gallery
+
+2018-05-03 22:59:59
+可以用
+
+    npx babel index.js
+
+来编译jsx文件
+
+2018-05-05 08:34:37
+https://github.com/jamesmartin/react-remote-component-demo
+动态加载react component
+
+2018-05-05 09:14:16
+实验成功，至少可以用window.eval加载动态的component
+
+    import React from 'react';
+    import ReactDOM from 'react-dom';
+    
+    window.React = React;
+
+    $.get('http://ub:8000/T.js', (src) => {
+        window.eval(src);
+        ReactDOM.render(<T/>, document.getElementById('root'));
+    });
+
+感觉这个动态加载component打通了前端这里就不着急了
+
+下来该考虑考虑内容服务——file storage已经打通
+另一个就是blog内容了，要有全文搜索的功能
+而且编辑的文本跟显示出来的不一定一样，涉及预处理后处理之类的，回头case by case地考虑
