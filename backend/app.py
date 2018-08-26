@@ -92,4 +92,4 @@ if __name__ == '__main__':
     #from gevent.wsgi import WSGIServer
     #server = WSGIServer(('', 6561), app)
     #server.serve_forever()
-    app.run(host='0.0.0.0', port=6561, debug=True)
+    app.run(host='0.0.0.0', port=4430, threaded=True)
